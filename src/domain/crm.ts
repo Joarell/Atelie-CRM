@@ -31,6 +31,11 @@ export interface Contact {
   createdAt: string;
 }
 
+export const CONTACT_FIELDS: Record<keyof Contact, true> = {
+  id: true, name: true, phone: true, email: true, notes: true, tags: true,
+  assignedUserId: true, createdAt: true
+};
+
 export interface Pipeline {
   id: string;
   name: string;

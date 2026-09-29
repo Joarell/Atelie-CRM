@@ -1,10 +1,92 @@
 // A minimal in-memory D1 test double. It understands exactly the SQL
 // statements the app generates (crud.ts + the settings route) and keeps
 // per-table rows so SELECT/INSERT/UPDATE/DELETE round-trip correctly.
+import { readFileSync, readdirSync } from 'node:fs';
+
 type Row = Record<string, unknown>;
 
+/** The columns one table has, and which of them are NOT NULL. */
+export interface TableSchema {
+  columns: Set<string>;
+  required: Set<string>;
+}
+
+const CREATE_TABLE_RE = /^CREATE TABLE (?:IF NOT EXISTS )?(\w+) \((.+)\)$/;
+const ALTER_ADD_RE = /^ALTER TABLE (\w+) ADD COLUMN (\w+) (.+)$/;
+const CREATE_INDEX_RE = /^CREATE (?:UNIQUE )?INDEX/;
+const MIGRATIONS_DIR = 'migrations';
+
+/** Every `.sql` file under migrations/, in the order the scripts apply them. */
+export function migrationFiles(): string[] {
+  return readdirSync(MIGRATIONS_DIR)
+    .filter((name: string) => name.endsWith('.sql'))
+    .sort()
+    .map((name: string) => `${MIGRATIONS_DIR}/${name}`);
+}
+
+/**
+ * The schema a set of migrations produces, so a test can assert the columns
+ * the code writes actually exist. CREATE TABLE contributes its column list;
+ * a later ALTER TABLE ... ADD COLUMN contributes one more.
+ */
+export function schemaFromMigrations(
+  files: string[]
+): Map<string, TableSchema> {
+  const schema = new Map<string, TableSchema>();
+  for (const entry of files) {
+    const file = entry.startsWith(`${MIGRATIONS_DIR}/`)
+      ? entry
+      : `${MIGRATIONS_DIR}/${entry}`;
+    const sql = readFileSync(file, 'utf8');
+    for (const statement of splitStatements(sql)) {
+      applySchemaStatement(schema, statement);
+    }
+  }
+  return schema;
+}
+
+function splitStatements(sql: string): string[] {
+  return sql
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('--'))
+    .join('\n')
+    .split(';')
+    .map((s) => s.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+}
+
+function applySchemaStatement(
+  schema: Map<string, TableSchema>,
+  statement: string
+): void {
+  const created = CREATE_TABLE_RE.exec(statement);
+  if (created) {
+    schema.set(created[1], readColumns(created[2]));
+    return;
+  }
+  const altered = ALTER_ADD_RE.exec(statement);
+  if (!altered) return;
+  const [, table, column, definition] = altered;
+  const entry = schema.get(table) ?? { columns: new Set(), required: new Set() };
+  entry.columns.add(column);
+  if (/\bNOT NULL\b/.test(definition)) entry.required.add(column);
+  schema.set(table, entry);
+}
+
+function readColumns(body: string): TableSchema {
+  const entry: TableSchema = { columns: new Set(), required: new Set() };
+  for (const line of body.split(',')) {
+    const [rawName, ...rest] = line.trim().split(/\s+/);
+    const name = rawName.replace(/[^A-Za-z0-9_]/g, '');
+    if (!name) continue;
+    entry.columns.add(name);
+    if (/\bNOT NULL\b/.test(rest.join(' '))) entry.required.add(name);
+  }
+  return entry;
+}
+
 const INSERT_RE = /^INSERT(?: OR (?:IGNORE|REPLACE))? INTO (\w+) \(([^)]+)\) VALUES \(([^)]+)\)$/;
-const UPDATE_RE = /^UPDATE (\w+) SET (.+) WHERE (\w+) = \?$/;
+const UPDATE_RE = /^UPDATE (\w+) SET (.+) WHERE (.+)$/;
 const DELETE_RE = /^DELETE FROM (\w+) WHERE (\w+) = \?$/;
 const DELETE_WHERE_RE = /^DELETE FROM (\w+)\s+WHERE\s+(.+)$/;
 const SELECT_ONE_RE = /^SELECT \* FROM (\w+) WHERE (\w+) = \?$/;
@@ -52,6 +134,8 @@ export class FakeD1 {
 
   execute(sql: string, values: unknown[]): Row[] {
     const normalized = sql.replace(/\s+/g, ' ').trim();
+    const ddl = this.executeDdl(normalized);
+    if (ddl) return ddl;
     const handled = this.executeDelete(normalized, values);
     if (handled) return handled;
     const updated = this.executeUpdate(normalized, values);
@@ -61,6 +145,20 @@ export class FakeD1 {
     const inserted = this.executeInsert(normalized, values);
     if (inserted) return inserted;
     throw new Error(`FakeD1: unsupported SQL: ${sql}`);
+  }
+
+  private executeDdl(sql: string): Row[] | null {
+    if (CREATE_INDEX_RE.test(sql)) return [];
+    const altered = ALTER_ADD_RE.exec(sql);
+    if (!altered) return null;
+    const [, table, column, definition] = altered;
+    if (!this.tables.has(table)) this.tables.set(table, []);
+    const fallback = readDefault(definition);
+    const rows = this.rows(table).map((r) =>
+      column in r ? r : { ...r, [column]: fallback }
+    );
+    this.tables.set(table, rows);
+    return [];
   }
 
   private executeDelete(sql: string, values: unknown[]): Row[] | null {
@@ -90,19 +188,19 @@ export class FakeD1 {
   private executeUpdate(sql: string, values: unknown[]): Row[] | null {
     const match = UPDATE_RE.exec(sql);
     if (!match) return null;
-    const [, table, setClause, whereColumn] = match;
-    const pairs = splitIdentifiers(setClause);
-    const setValues = values.slice(0, pairs.length);
-    const whereValue = values[pairs.length];
-    const patch = buildPatch(pairs, setValues);
-    if (externalConflict(table, this.rows(table), patch, String(whereValue))) {
+    const [, table, setClause, whereClause] = match;
+    const bound = (setClause.match(/\?/g) ?? []).length;
+    const patch = buildPatch(splitIdentifiers(setClause), values.slice(0, bound));
+    const conditions = this.parseWhereClause(whereClause, values.slice(bound));
+    const excludingId = findIdValue(conditions);
+    if (externalConflict(table, this.rows(table), patch, excludingId)) {
       throw new Error('UNIQUE constraint failed: messages.externalId');
     }
-    const rows = this.rows(table).map((r) =>
-      r[whereColumn] === String(whereValue) ? { ...r, ...patch } : r
-    );
+    const matches = (r: Row) =>
+      conditions.every(([col, , val]) => r[col] === String(val));
+    const rows = this.rows(table).map((r) => (matches(r) ? { ...r, ...patch } : r));
     this.tables.set(table, rows);
-    return rows.filter((r) => r[whereColumn] === String(whereValue));
+    return rows.filter(matches);
   }
 
   private executeSelect(sql: string, values: unknown[]): Row[] | null {
@@ -262,6 +360,13 @@ function externalConflict(
   );
 }
 
+function readDefault(definition: string): unknown {
+  const literal = /DEFAULT\s+'([^']*)'/i.exec(definition);
+  if (literal) return literal[1];
+  const numeric = /DEFAULT\s+(-?\d+(?:\.\d+)?)/i.exec(definition);
+  return numeric ? Number(numeric[1]) : '';
+}
+
 function likeMatch(value: string, pattern: string): boolean {
   const regex = new RegExp(
     '^' + pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/%/g, '.*') + '$'
@@ -269,10 +374,20 @@ function likeMatch(value: string, pattern: string): boolean {
   return regex.test(value);
 }
 
+function findIdValue(conditions: Array<[string, string, unknown]>): string | null {
+  const id = conditions.find(([col, op]) => col === 'id' && op === '=');
+  return id ? String(id[2]) : null;
+}
+
 function buildPatch(pairs: string[], values: unknown[]): Row {
   const patch: Row = {};
-  pairs.forEach((pair, i) => {
-    patch[pair.slice(0, pair.indexOf(' = '))] = values[i];
+  let next = 0;
+  pairs.forEach((pair) => {
+    const eq = pair.indexOf(' = ');
+    if (eq < 0) return;
+    const column = pair.slice(0, eq);
+    const literal = /'([^']*)'/.exec(pair.slice(eq + 3));
+    patch[column] = literal ? literal[1] : values[next++];
   });
   delete patch.id;
   return patch;
