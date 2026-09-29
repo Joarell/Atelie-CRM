@@ -71,11 +71,13 @@ vi.mock('cloudflare:workers', () => ({
 }));
 
 async function beforeEachRun(): Promise<FakeD1> {
+  const digest = await hashPassword(PASSWORD);
   const admin: User = {
     id: 'seed-user-e2e',
     name: 'E2E Admin',
     email: EMAIL,
-    passwordHash: await hashPassword(PASSWORD),
+    passwordHash: digest.hash,
+    passwordSalt: digest.salt,
     role: 'admin',
     createdAt: '2026-01-01T00:00:00Z'
   };

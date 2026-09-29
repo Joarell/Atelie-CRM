@@ -33,20 +33,26 @@ export const POST: APIRoute = async (context) => {
   if (!ROLES.includes(body.role as Role)) {
     return json({ error: 'papel_invalido' }, 400);
   }
-  const user: User = {
-    id: typeof body.id === 'string' && body.id ? body.id : uid(),
-    name: String(body.name),
-    email: String(body.email),
-    passwordHash: await hashPassword(String(body.password)),
-    role: body.role as Role,
-    createdAt: nowISO()
-  };
+  const user = await buildUser(body);
   await insertEntity(db, USERS_TABLE, USERS_SHAPE, user);
   await recordAudit(
     db, newAuditEntry(user.id, 'user_created', user.email, ip)
   );
   return json(publicUser(user), 201);
 };
+
+async function buildUser(body: UserBody): Promise<User> {
+  const digest = await hashPassword(String(body.password));
+  return {
+    id: typeof body.id === 'string' && body.id ? body.id : uid(),
+    name: String(body.name),
+    email: String(body.email),
+    passwordHash: digest.hash,
+    passwordSalt: digest.salt,
+    role: body.role as Role,
+    createdAt: nowISO()
+  };
+}
 
 async function readUserBody(request: Request): Promise<UserBody> {
   const raw = (await request.json()) as Partial<UserBody> | null;

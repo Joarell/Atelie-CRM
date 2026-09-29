@@ -53,9 +53,9 @@ describe('password hashing (matches migrations/0004_crm_seed.sql)', () => {
   });
 
   it('hashPassword produces a 64-char hex digest that round-trips', async () => {
-    const hash = await hashPassword('abc');
+    const { hash, salt } = await hashPassword('abc');
     expect(hash).toMatch(/^[0-9a-f]{64}$/);
-    expect(await verifyPassword('abc', hash)).toBe(true);
+    expect(await verifyPassword('abc', hash, salt)).toBe(true);
   });
 
   it('publicUser never leaks passwordHash', () => {

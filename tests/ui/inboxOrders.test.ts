@@ -49,7 +49,8 @@ function order(
 
 function contact(id: string, name: string, phone: string): Contact {
   return {
-    id, name, phone, email: '', notes: '', tags: [], createdAt: NOW
+    id, name, phone, email: '', notes: '', tags: [], assignedUserId: '',
+    createdAt: NOW
   };
 }
 

@@ -32,7 +32,9 @@ export const POST: APIRoute = async (context) => {
   }
   const user = await userByEmail(db, body.email);
   const valid = user
-    ? await verifyPassword(body.password, user.passwordHash)
+    ? await verifyPassword(
+        body.password, user.passwordHash, user.passwordSalt
+      )
     : false;
   if (!user || !valid) {
     return fail(db, user?.id ?? '', 'login_failed', body.email, ip, 401,

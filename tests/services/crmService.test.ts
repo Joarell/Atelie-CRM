@@ -7,7 +7,7 @@ import type {
 } from '../../src/domain/crm';
 
 const contact = (id: string, name: string): Contact =>
-  ({ id, name, phone: '5511999990000', email: '', notes: '', tags: [], createdAt: '2026-09-01T00:00:00Z' });
+  ({ id, name, phone: '5511999990000', email: '', notes: '', tags: [], assignedUserId: '', createdAt: '2026-09-01T00:00:00Z' });
 
 const pipeline = (id: string, isDefault = false): Pipeline => ({ id, name: 'Funil ' + id, isDefault });
 
@@ -15,7 +15,7 @@ const stage = (id: string, pipelineId: string, position: number): Stage =>
   ({ id, pipelineId, name: 'Etapa ' + position, position });
 
 const deal = (id: string, stageId: string, pipelineId: string, valueCents: number, status: Deal['status'] = 'open'): Deal =>
-  ({ id, pipelineId, stageId, contactId: 'c1', title: id, valueCents, status, lostReason: '', nextActionAt: '', createdAt: '2026-09-01T00:00:00Z' });
+  ({ id, pipelineId, stageId, contactId: 'c1', title: id, valueCents, status, lostReason: '', nextActionAt: '', assignedUserId: '', createdAt: '2026-09-01T00:00:00Z' });
 
 const task = (id: string, dueAt: string): Task =>
   ({ id, title: id, done: false, dueAt, assigneeUserId: '', contactId: '', createdAt: '2026-09-01T00:00:00Z' });
@@ -228,6 +228,36 @@ describe('CrmService conversation lifecycle', () => {
     await svc.addNote('cv-other', '  olhar depois  ', 'u1');
     expect(svc.notesForConversation('cv-target').map((n) => n.id)).toEqual(['n1']);
     expect(svc.notesForConversation('cv-other').map((n) => n.body)).toEqual(['olhar depois']);
+  });
+
+  it('updateNote trims the body and records note.updated', async () => {
+    const notes = InMemoryRepository.seeded([note('n1', 'cv1')]);
+    const activities = InMemoryRepository.seeded<CrmActivity>([]);
+    const svc = harness({ notes, activities });
+    await svc.updateNote('n1', '  ligar amanhã  ', 'u1');
+    expect(notes.getById('n1')?.body).toBe('ligar amanhã');
+    const actions = activities.getAll().map((a) => a.action);
+    expect(actions).toContain('note.updated');
+  });
+
+  it('updateNote ignores an empty body and records nothing', async () => {
+    const notes = InMemoryRepository.seeded([note('n1', 'cv1')]);
+    const activities = InMemoryRepository.seeded<CrmActivity>([]);
+    const svc = harness({ notes, activities });
+    await svc.updateNote('n1', '   ', 'u1');
+    expect(notes.getById('n1')?.body).toBe('lembrete');
+    expect(activities.getAll()).toHaveLength(0);
+  });
+
+  it('deleteNote removes the row and records note.deleted', async () => {
+    const notes = InMemoryRepository.seeded([note('n1', 'cv1')]);
+    const activities = InMemoryRepository.seeded<CrmActivity>([]);
+    const svc = harness({ notes, activities });
+    await svc.deleteNote('n1', 'u1');
+    expect(notes.getById('n1')).toBeUndefined();
+    const deleted = activities.getAll().find((a) => a.action === 'note.deleted');
+    expect(deleted?.evidence).toBe('lembrete');
+    expect(deleted?.actorUserId).toBe('u1');
   });
 });
 

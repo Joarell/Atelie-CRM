@@ -30,14 +30,12 @@ export const PUT: APIRoute = async (context) => {
   if (!existing) return json({ error: NOT_FOUND }, 404);
   const body = await readPutBody(context.request);
   const patch = editablePatch(body);
-  if (typeof body.password === 'string' && body.password) {
-    patch.passwordHash = await hashPassword(body.password);
-  }
+  const changed = await applyPassword(patch, body.password);
   const saved = await updateEntity<User>(
     db, USERS_TABLE, USERS_SHAPE, id!, patch
   );
   if (!saved) return json({ error: NOT_FOUND }, 404);
-  if (patch.passwordHash) {
+  if (changed) {
     await deleteSessionsForUser(db, id!);
     await recordAudit(
       db, newAuditEntry(id!, 'user_password_reset', saved.email, ip)
@@ -56,6 +54,17 @@ export const DELETE: APIRoute = async (context) => {
   );
   return json({ ok: true });
 };
+
+async function applyPassword(
+  patch: Partial<User>,
+  password: unknown
+): Promise<boolean> {
+  if (typeof password !== 'string' || !password) return false;
+  const digest = await hashPassword(password);
+  patch.passwordHash = digest.hash;
+  patch.passwordSalt = digest.salt;
+  return true;
+}
 
 function editablePatch(body: PutBody): Partial<User> {
   const patch: Partial<User> = {};

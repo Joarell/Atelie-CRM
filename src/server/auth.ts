@@ -16,31 +16,39 @@ import {
 } from './tables';
 
 // Login/session helpers for the ported DeskcommCRM module. Passwords are
-// PBKDF2-SHA256 with the same scheme used by migrations/0004_crm_seed.sql
-// (100k iterations, salt "deskcomm-seed-v1") so the seeded admin works
-// out of the box. Sessions are plain rows in D1 with an expiry timestamp.
+// PBKDF2-SHA256 (100k iterations). The seeded admin is hashed with the fixed
+// salt "deskcomm-seed-v1"; every password written after that gets its own
+// random salt stored in users.passwordSalt (migrations/0019). verifyPassword
+// falls back to the seed salt for rows that predate 0019. Sessions are plain
+// rows in D1 with an expiry timestamp.
 const ITERATIONS = 100_000;
 const KEY_BITS = 256;
 const SALT = 'deskcomm-seed-v1';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-export function publicUser(user: User): Omit<User, 'passwordHash'> {
-  const { passwordHash: _ignored, ...rest } = user;
+export type PasswordDigest = { hash: string; salt: string };
+
+export function publicUser(
+  user: User
+): Omit<User, 'passwordHash' | 'passwordSalt'> {
+  const { passwordHash: _h, passwordSalt: _s, ...rest } = user;
   return rest;
 }
 
-export async function hashPassword(password: string): Promise<string> {
-  const bits = await deriveBits(password);
-  return toHex(bits);
+export async function hashPassword(
+  password: string
+): Promise<PasswordDigest> {
+  const salt = newSalt();
+  return { hash: await deriveHex(password, salt), salt };
 }
 
 export async function verifyPassword(
   password: string,
-  storedHash: string
+  storedHash: string,
+  salt: string = SALT
 ): Promise<boolean> {
   if (!storedHash) return false;
-  const hash = await hashPassword(password);
-  return hash === storedHash;
+  return (await deriveHex(password, salt)) === storedHash;
 }
 
 export function newSession(userId: string): Session {
@@ -154,8 +162,10 @@ export async function updateUserPassword(
   userId: string,
   newPassword: string
 ): Promise<User | null> {
+  const { hash, salt } = await hashPassword(newPassword);
   return updateEntity<User>(db, USERS_TABLE, USERS_SHAPE, userId, {
-    passwordHash: await hashPassword(newPassword)
+    passwordHash: hash,
+    passwordSalt: salt
   });
 }
 
@@ -173,7 +183,10 @@ function bearerToken(request: Request): string | null {
   return header.slice('Bearer '.length).trim() || null;
 }
 
-async function deriveBits(password: string): Promise<ArrayBuffer> {
+async function deriveBits(
+  password: string,
+  salt: string
+): Promise<ArrayBuffer> {
   const encoder = new TextEncoder();
   const material = await crypto.subtle.importKey(
     'raw',
@@ -185,13 +198,22 @@ async function deriveBits(password: string): Promise<ArrayBuffer> {
   return crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt: encoder.encode(SALT),
+      salt: encoder.encode(salt),
       iterations: ITERATIONS,
       hash: 'SHA-256'
     },
     material,
     KEY_BITS
   );
+}
+
+async function deriveHex(password: string, salt: string): Promise<string> {
+  return toHex(await deriveBits(password, salt));
+}
+
+function newSalt(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 function toHex(buffer: ArrayBuffer): string {

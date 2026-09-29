@@ -53,9 +53,9 @@ interface SeedState {
 function seed(): SeedState {
   const contacts = InMemoryRepository.seeded<Contact>([
     { id: 'p1', name: 'Ana', phone: '5511999990001', email: '',
-      notes: '', tags: [], createdAt: T1 },
+      notes: '', tags: [], assignedUserId: '', createdAt: T1 },
     { id: 'p2', name: 'Bruno', phone: '5511999990002', email: '',
-      notes: '', tags: [], createdAt: T2 }
+      notes: '', tags: [], assignedUserId: '', createdAt: T2 }
   ]);
   const conversations = InMemoryRepository.seeded<Conversation>([
     { id: 'conv-1', contactId: 'p1', channel: 'whatsapp',

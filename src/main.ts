@@ -24,6 +24,9 @@ import { renderCrmWhatsAppView } from "./ui/views/crm/CrmWhatsAppView";
 import { renderLoginView } from "./ui/views/LoginView";
 import { qs } from "./ui/dom";
 import { initMode, mountThemeToggle } from "./ui/theme";
+import {
+	mountFreshness, menuKeyFor, setActiveMenu, markDataChanged
+} from "./ui/freshness";
 import { icon } from "./ui/icons";
 import { registerPwa } from "./ui/pwa";
 import { pwaInstallable, setupPwaInstall } from "./ui/pwaInstall";
@@ -110,6 +113,8 @@ function wirePwa(win: Window): void {
 function mountApp(app: HTMLElement, ctx: AppContext): void {
 	app.innerHTML = shellHtml();
 	mountThemeToggle(qs("#theme-slot"));
+	mountFreshness(qs("#page-freshness"));
+	subscribeFreshness(ctx);
 	const router = new Router();
 	const activate = buildActivator(app, ctx, router);
 
@@ -125,6 +130,18 @@ function mountApp(app: HTMLElement, ctx: AppContext): void {
 	router.start();
 }
 
+function subscribeFreshness(ctx: AppContext): void {
+	const repos = [
+		ctx.ingredients, ctx.components, ctx.products, ctx.customers,
+		ctx.orders, ctx.movements, ctx.settings, ctx.users,
+		ctx.contacts, ctx.pipelines, ctx.stages, ctx.deals,
+		ctx.tasks, ctx.quickReplies, ctx.events, ctx.conversations,
+		ctx.messages, ctx.catalog, ctx.activities, ctx.notes,
+		ctx.tags, ctx.appointmentTypes, ctx.auth
+	];
+	repos.forEach((repo) => repo.subscribe(() => markDataChanged()));
+}
+
 function buildActivator(
 	app: HTMLElement,
 	ctx: AppContext,
@@ -137,6 +154,7 @@ function buildActivator(
 		disposeCurrentView?.();
 		renderNav(app, ctx, resolved);
 		qs("#page-title").textContent = titleFor(resolved);
+		setActiveMenu(menuKeyFor(resolved));
 		disposeCurrentView = VIEW_BY_PATH[resolved](qs("#view-root"), ctx);
 		wireFooter(app, ctx, () => activate(router.currentPath()), () =>
 			router.currentPath(),
@@ -209,6 +227,7 @@ function shellHtml(): string {
         <div><button class="hamburger" id="hamburger" aria-label=` +
 		`"Menu">${icon('menu')}</button></div>
         <h1 id="page-title" style="flex:1;"></h1>
+        <span id="page-freshness"></span>
         <div id="theme-slot"></div>
       </div>
       <div class="content" id="view-root"></div>

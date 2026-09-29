@@ -66,7 +66,7 @@ function serverState(): {
   return {
     contacts: [{
       id: 'p1', name: 'Ana', phone: '5511999990001', email: '',
-      notes: '', tags: [], createdAt: T1
+      notes: '', tags: [], assignedUserId: '', createdAt: T1
     }],
     conversations: [{
       id: 'conv-1', contactId: 'p1', channel: 'whatsapp',
@@ -150,7 +150,7 @@ function deliver(
   if (!contact) {
     contact = {
       id: `p-${normalized}`, name: peer.name, phone: peer.phone, email: '',
-      notes: '', tags: [], createdAt: message.createdAt
+      notes: '', tags: [], assignedUserId: '', createdAt: message.createdAt
     };
     state.contacts.push(contact);
   }
@@ -335,7 +335,8 @@ describe('Inbox recebimento (poll de histórico)', () => {
     });
     state.contacts.push({
       id: 'p0', name: 'Zeca', phone: '5511999990000', email: '',
-      notes: '', tags: [], createdAt: '2026-09-21T08:00:00.000Z'
+      notes: '', tags: [], assignedUserId: '',
+      createdAt: '2026-09-21T08:00:00.000Z'
     });
     const { root, testRefresh } = buildCtx(state);
     expect(Array.from(root.querySelectorAll<HTMLElement>('[data-open]'))

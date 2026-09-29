@@ -16,6 +16,9 @@ import {
 import { qs, qsIf } from '../../src/ui/dom';
 
 vi.mock('../../src/ui/Toast', () => ({ showToast: vi.fn() }));
+
+import { showToast } from '../../src/ui/Toast';
+
 vi.stubGlobal('EventSource', class {
   onerror: (() => void) | null = null;
   addEventListener = vi.fn();
@@ -157,7 +160,9 @@ async function flush(): Promise<void> {
   }
 }
 
-function field<T extends HTMLElement>(root: HTMLElement, id: string): T {
+// `T = HTMLElement` not `extends`: worker-configuration.d.ts merges workerd's
+// `remove(): Element` into lib.dom, breaking `extends HTMLElement`. As in dom.ts.
+function field<T = HTMLElement>(root: HTMLElement, id: string): T {
   return qs<T>(`#${id}`, root);
 }
 
@@ -359,5 +364,89 @@ describe('Inbox — a mensagem recebida continua chegando durante a digitação'
       .toBe('digitando…');
     expect(document.activeElement)
       .toBe(field(root, 'composer-text'));
+  });
+});
+
+describe('Inbox — notas (editar e excluir)', () => {
+  async function seedNote(body: string): Promise<Harness> {
+    const harness = buildCtx();
+    await harness.ctx.crm.addNote('conv-1', body, 'u1');
+    openNotes(harness.root);
+    return harness;
+  }
+
+  it('abre a edição com o corpo atual e salva o novo valor', async () => {
+    const { root, notes } = await seedNote('ligar amanhã');
+    qs<HTMLElement>('[data-note-edit]', root).click();
+    const area = field<HTMLTextAreaElement>(root, 'note-edit-text');
+    expect(area.value).toBe('ligar amanhã');
+
+    area.value = '  ligar hoje  ';
+    qs<HTMLFormElement>('#note-edit-form', root).dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true })
+    );
+    await flush();
+
+    expect(notes.getAll().map((n) => n.body)).toEqual(['ligar hoje']);
+    expect(qsIf('#note-edit-text', root)).toBeNull();
+    expect(showToast).toHaveBeenCalledWith('Anotação editada');
+  });
+
+  it('cancelar fecha a edição sem alterar a anotação', async () => {
+    const { root, notes } = await seedNote('ligar amanhã');
+    qs<HTMLElement>('[data-note-edit]', root).click();
+    field<HTMLTextAreaElement>(root, 'note-edit-text').value = 'descartado';
+    vi.mocked(showToast).mockClear();
+    qs<HTMLElement>('[data-note-cancel]', root).click();
+    await flush();
+
+    expect(notes.getAll().map((n) => n.body)).toEqual(['ligar amanhã']);
+    expect(qsIf('#note-edit-text', root)).toBeNull();
+    expect(qsIf('[data-note-edit]', root)).not.toBeNull();
+    expect(showToast).not.toHaveBeenCalled();
+  });
+
+  it('exclui a anotação depois da confirmação', async () => {
+    window.confirm = vi.fn(() => true);
+    const { root, notes } = await seedNote('temporária');
+    qs<HTMLElement>('[data-note-del]', root).click();
+    await flush();
+
+    expect(notes.getAll()).toHaveLength(0);
+    expect(qsIf('.note-row', root)).toBeNull();
+    expect(showToast).toHaveBeenCalledWith('Anotação excluída');
+  });
+
+  it('mantém a anotação quando o usuário cancela a exclusão', async () => {
+    window.confirm = vi.fn(() => false);
+    const { root, notes } = await seedNote('fica aqui');
+    vi.mocked(showToast).mockClear();
+    qs<HTMLElement>('[data-note-del]', root).click();
+    await flush();
+
+    expect(notes.getAll()).toHaveLength(1);
+    expect(qsIf('[data-note-del]', root)).not.toBeNull();
+    expect(showToast).not.toHaveBeenCalled();
+  });
+
+  it('a edição não sobrevive à troca de contato', async () => {
+    const { root, ctx } = await seedNote('ligar amanhã');
+    qs<HTMLElement>('[data-note-edit]', root).click();
+    expect(qsIf('#note-edit-text', root)).not.toBeNull();
+
+    await ctx.conversations.add({
+      id: 'conv-2', contactId: 'p1', channel: 'whatsapp',
+      channelPhone: '5511999990001', lastMessageAt: T2, assignedUserId: '',
+      status: 'open', snoozedUntil: '', createdAt: T2
+    });
+    await backgroundRefresh();
+
+    qs<HTMLElement>('[data-open="conv-2"]', root).click();
+    qs<HTMLElement>('[data-open="conv-1"]', root).click();
+    openNotes(root);
+
+    expect(qsIf('#note-edit-text', root)).toBeNull();
+    expect(qsIf('.notes-list', root)).not.toBeNull();
+    expect(qsIf('[data-note-edit]', root)).not.toBeNull();
   });
 });

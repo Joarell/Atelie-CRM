@@ -81,7 +81,7 @@ function buildCtx(
   const contacts = InMemoryRepository.seeded<Contact>([
     {
       id: 'p1', name: 'Ana', phone: '5511999990001', email: '',
-      notes: '', tags: [], createdAt: NOW
+      notes: '', tags: [], assignedUserId: '', createdAt: NOW
     }
   ]);
   const quickReplies = InMemoryRepository.seeded<QuickReply>([]);

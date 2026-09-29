@@ -5,7 +5,7 @@ import { formatPriceCents } from '../../../domain/crmMath';
 import { openModal, closeModal } from '../../Modal';
 import { showToast } from '../../Toast';
 import { autoRerender } from '../../reactive';
-import { qs, qsa, formValues } from '../../dom';
+import { qs, qsa, qsIf, formValues } from '../../dom';
 import {
   section,
   textField,
@@ -178,7 +178,7 @@ function eachClick(
 function wireEvents(root: HTMLElement, ctx: AppContext, stages: Stage[]): void {
   qs('#new-deal', root).addEventListener('click', () =>
     openDealForm(ctx, stages));
-  qs('#toggle-risk', root)?.addEventListener('click', () => {
+  qsIf('#toggle-risk', root)?.addEventListener('click', () => {
     showRisk = !showRisk;
     draw(root, ctx);
   });
@@ -300,11 +300,26 @@ async function handleSubmit(
 ): Promise<void> {
   event.preventDefault();
   const values = formValues(event.target as HTMLFormElement);
+  const data = dealData(ctx, values, existing);
+  if (existing) {
+    await ctx.crm.updateDeal(existing.id, data);
+  } else {
+    await ctx.crm.addDeal(data);
+  }
+  closeModal();
+  showToast('Negócio salvo');
+}
+
+function dealData(
+  ctx: AppContext,
+  values: Record<string, string>,
+  existing?: Deal
+): Omit<Deal, 'id' | 'createdAt'> {
   const rawNext = values.nextActionAt;
   const nextActionAt = rawNext
     ? new Date(`${rawNext}T00:00:00`).toISOString()
     : '';
-  const data = {
+  return {
     pipelineId: existing?.pipelineId ?? ctx.crm.defaultPipeline()?.id ?? '',
     stageId: values.stageId,
     contactId: values.contactId,
@@ -315,11 +330,4 @@ async function handleSubmit(
     nextActionAt,
     assignedUserId: existing?.assignedUserId ?? ''
   };
-  if (existing) {
-    await ctx.crm.updateDeal(existing.id, data);
-  } else {
-    await ctx.crm.addDeal(data);
-  }
-  closeModal();
-  showToast('Negócio salvo');
 }

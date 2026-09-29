@@ -188,6 +188,8 @@ const ACTIVITY_LABELS: Record<string, string> = {
   'conversation.resumed': 'Conversa retomada',
   'message.sent': 'Mensagem enviada',
   'note.added': 'Anotação adicionada',
+  'note.updated': 'Anotação editada',
+  'note.deleted': 'Anotação excluída',
   'deal.created': 'Negócio criado',
   'deal.updated': 'Negócio atualizado',
   'deal.moved': 'Negócio movido',

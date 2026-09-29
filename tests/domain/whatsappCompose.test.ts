@@ -14,6 +14,7 @@ function contact(overrides: Partial<Contact>): Contact {
     email: '',
     notes: '',
     tags: [],
+    assignedUserId: '',
     createdAt: '2026-01-01T00:00:00Z',
     ...overrides
   };

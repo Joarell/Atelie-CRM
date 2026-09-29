@@ -19,14 +19,15 @@ import {
   snoozedConversations,
   sortActivitiesDesc,
   lastActivityAt,
-  daysBetweenISO
+  daysBetweenISO,
+  activityLabel
 } from '../../src/domain/crmMath';
 import type { Deal, Stage, Task, CalendarEvent, Message, Conversation, Contact, CrmActivity } from '../../src/domain/crm';
 
 const stage = (id: string, pipelineId: string, position: number): Stage => ({ id, pipelineId, name: id, position });
 
 const deal = (id: string, stageId: string, pipelineId = 'p', valueCents = 1000, status: Deal['status'] = 'open'): Deal => ({
-  id, pipelineId, stageId, contactId: 'c1', title: id, valueCents, status, lostReason: '', nextActionAt: '', createdAt: '2026-09-01T10:00:00Z'
+  id, pipelineId, stageId, contactId: 'c1', title: id, valueCents, status, lostReason: '', nextActionAt: '', assignedUserId: '', createdAt: '2026-09-01T10:00:00Z'
 });
 
 describe('formatPriceCents', () => {
@@ -129,7 +130,7 @@ describe('openConversations', () => {
 
 describe('contact duplicates', () => {
   const contact = (id: string, phone: string, email = ''): Contact =>
-    ({ id, name: id, phone, email, notes: '', tags: [], createdAt: '' });
+    ({ id, name: id, phone, email, notes: '', tags: [], assignedUserId: '', createdAt: '' });
 
   it('normalizePhoneDigits strips formatting and the BR country code prefix', () => {
     expect(normalizePhoneDigits('(11) 99999-0000')).toBe('11999990000');
@@ -210,5 +211,10 @@ describe('activities bus', () => {
   it('daysBetweenISO counts whole days between two instants', () => {
     expect(daysBetweenISO('2026-09-14T10:00:00Z', '2026-09-17T10:00:00Z')).toBe(3);
     expect(daysBetweenISO('2026-09-17T10:00:00Z', '2026-09-15T10:00:00Z')).toBe(0);
+  });
+
+  it('activityLabel translates the note edit and delete actions', () => {
+    expect(activityLabel('note.updated')).toBe('Anotação editada');
+    expect(activityLabel('note.deleted')).toBe('Anotação excluída');
   });
 });

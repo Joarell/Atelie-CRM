@@ -157,7 +157,10 @@ describe('session hygiene helpers (src/server/auth.ts)', () => {
       db, 'seed-user-admin', 'nova-senha-123'
     );
     expect(saved?.passwordHash).not.toBe(SEED_ADMIN_HASH);
-    expect(await verifyPassword('nova-senha-123', saved!.passwordHash)).toBe(true);
+    const ok = await verifyPassword(
+      'nova-senha-123', saved!.passwordHash, saved!.passwordSalt
+    );
+    expect(ok).toBe(true);
   });
 });
 
@@ -276,8 +279,14 @@ describe('POST /api/auth/change-password', () => {
     }, 'tok1'));
     expect((await changePasswordPost(ctx)).status).toBe(200);
     const user = state.db.rows(USERS_TABLE)[0] as unknown as User;
-    expect(await verifyPassword('nova-senha-123', user.passwordHash)).toBe(true);
-    expect(await verifyPassword('admin123', user.passwordHash)).toBe(false);
+    const next = await verifyPassword(
+      'nova-senha-123', user.passwordHash, user.passwordSalt
+    );
+    expect(next).toBe(true);
+    const stale = await verifyPassword(
+      'admin123', user.passwordHash, user.passwordSalt
+    );
+    expect(stale).toBe(false);
     const tokens = state.db.rows(SESSIONS_TABLE).map((r) => r.token);
     expect(tokens).toEqual(['tok1', 'toku2']);
     const audits = state.db.rows(AUTH_AUDIT_TABLE);

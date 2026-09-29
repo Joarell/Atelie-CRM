@@ -5,10 +5,11 @@ import { readFileSync, readdirSync } from 'node:fs';
 
 type Row = Record<string, unknown>;
 
-/** The columns one table has, and which of them are NOT NULL. */
+/** The columns one table has, which are NOT NULL, and their SQL defaults. */
 export interface TableSchema {
   columns: Set<string>;
   required: Set<string>;
+  defaults: Map<string, () => unknown>;
 }
 
 const CREATE_TABLE_RE = /^CREATE TABLE (?:IF NOT EXISTS )?(\w+) \((.+)\)$/;
@@ -67,20 +68,29 @@ function applySchemaStatement(
   const altered = ALTER_ADD_RE.exec(statement);
   if (!altered) return;
   const [, table, column, definition] = altered;
-  const entry = schema.get(table) ?? { columns: new Set(), required: new Set() };
+  const entry = schema.get(table) ?? {
+    columns: new Set(), required: new Set(), defaults: new Map()
+  };
   entry.columns.add(column);
   if (/\bNOT NULL\b/.test(definition)) entry.required.add(column);
+  const makeDefault = parseDefault(definition);
+  if (makeDefault) entry.defaults.set(column, makeDefault);
   schema.set(table, entry);
 }
 
 function readColumns(body: string): TableSchema {
-  const entry: TableSchema = { columns: new Set(), required: new Set() };
+  const entry: TableSchema = {
+    columns: new Set(), required: new Set(), defaults: new Map()
+  };
   for (const line of body.split(',')) {
     const [rawName, ...rest] = line.trim().split(/\s+/);
     const name = rawName.replace(/[^A-Za-z0-9_]/g, '');
     if (!name) continue;
     entry.columns.add(name);
-    if (/\bNOT NULL\b/.test(rest.join(' '))) entry.required.add(name);
+    const definition = rest.join(' ');
+    if (/\bNOT NULL\b/.test(definition)) entry.required.add(name);
+    const makeDefault = parseDefault(definition);
+    if (makeDefault) entry.defaults.set(name, makeDefault);
   }
   return entry;
 }
@@ -91,8 +101,9 @@ const DELETE_RE = /^DELETE FROM (\w+) WHERE (\w+) = \?$/;
 const DELETE_WHERE_RE = /^DELETE FROM (\w+)\s+WHERE\s+(.+)$/;
 const SELECT_ONE_RE = /^SELECT \* FROM (\w+) WHERE (\w+) = \?$/;
 const SELECT_ALL_RE = /^SELECT \* FROM (\w+)$/;
-const SELECT_COLS_RE = /^SELECT (.+?) FROM (\w+)$/;
-const SELECT_COLS_WHERE_RE = /^SELECT (.+?) FROM (\w+)\s+WHERE\s+(.+)$/s;
+const SELECT_COLS_RE = /^SELECT (?!\*)(.+?) FROM (\w+)$/;
+const SELECT_COLS_WHERE_RE =
+  /^SELECT (?!\*)(.+?) FROM (\w+)\s+WHERE\s+(.+)$/s;
 const SELECT_WHERE_RE = /^SELECT \* FROM (\w+)\s+WHERE\s+(.+?)\s+ORDER BY\s+(\w+)\s+(DESC|ASC)\s+LIMIT\s+\?\s+OFFSET\s+\?$/s;
 const SELECT_WHERE_SIMPLE_RE = /^SELECT \* FROM (\w+)\s+WHERE\s+(.+)$/s;
 
@@ -167,20 +178,9 @@ export class FakeD1 {
     const [, table, whereClause] = whereMatch;
     const conditions = this.parseWhereClause(whereClause, values);
     this.tables.set(table, this.rows(table).filter((r) =>
-      !conditions.every(([col, op, val]) => {
-        const cell = r[col];
-        switch (op) {
-          case '=': return cell === val;
-          case '!=': return cell !== val;
-          case '>': return String(cell) > String(val);
-          case '<': return String(cell) < String(val);
-          case '>=': return String(cell) >= String(val);
-          case '<=': return String(cell) <= String(val);
-          case 'NOT LIKE': return !likeMatch(String(cell), String(val));
-          case 'LIKE': return likeMatch(String(cell), String(val));
-          default: return true;
-        }
-      })
+      !conditions.every(([col, op, val]) =>
+        matchesCondition(r[col], op, val)
+      )
     ));
     return [];
   }
@@ -217,20 +217,9 @@ export class FakeD1 {
       const colList = splitIdentifiers(columns);
       const conditions = this.parseWhereClause(whereClause, values);
       return this.rows(table)
-        .filter((r) => conditions.every(([col, op, val]) => {
-          const cell = r[col];
-          switch (op) {
-            case '=': return cell === val;
-            case '!=': return cell !== val;
-            case '>': return String(cell) > String(val);
-            case '<': return String(cell) < String(val);
-            case '>=': return String(cell) >= String(val);
-            case '<=': return String(cell) <= String(val);
-            case 'NOT LIKE': return !likeMatch(String(cell), String(val));
-            case 'LIKE': return likeMatch(String(cell), String(val));
-            default: return true;
-          }
-        }))
+        .filter((r) => conditions.every(([col, op, val]) =>
+          matchesCondition(r[col], op, val)
+        ))
         .map((r) => {
           const projected: Row = {};
           for (const c of colList) projected[c] = r[c];
@@ -252,18 +241,9 @@ export class FakeD1 {
       const [, table, whereClause, orderBy, orderDir, limit, offset] = whereMatch;
       let rows = this.rows(table);
       const conditions = this.parseWhereClause(whereClause, values.slice(0, -2));
-      rows = rows.filter((r) => conditions.every(([col, op, val]) => {
-        const cell = r[col];
-        switch (op) {
-          case '=': return cell === val;
-          case '!=': return cell !== val;
-          case '>': return String(cell) > String(val);
-          case '<': return String(cell) < String(val);
-          case '>=': return String(cell) >= String(val);
-          case '<=': return String(cell) <= String(val);
-          default: return true;
-        }
-      }));
+      rows = rows.filter((r) => conditions.every(([col, op, val]) =>
+        matchesCondition(r[col], op, val)
+      ));
       if (orderDir === 'DESC') {
         rows.sort((a, b) => String(b[orderBy]).localeCompare(String(a[orderBy])));
       } else {
@@ -278,14 +258,9 @@ export class FakeD1 {
       const [, table, whereClause] = simpleWhere;
       let rows = this.rows(table);
       const conditions = this.parseWhereClause(whereClause, values);
-      return rows.filter((r) => conditions.every(([col, op, val]) => {
-        const cell = r[col];
-        switch (op) {
-          case '=': return cell === val;
-          case '!=': return cell !== val;
-          default: return true;
-        }
-      }));
+      return rows.filter((r) => conditions.every(([col, op, val]) =>
+        matchesCondition(r[col], op, val)
+      ));
     }
     return null;
   }
@@ -326,7 +301,9 @@ export class FakeD1 {
     const [, table, cols, placeholders] = match;
     const columns = splitIdentifiers(cols);
     const placeholdersCount = splitIdentifiers(placeholders).length;
-    const row = buildRow(columns, values, placeholdersCount);
+    const row = this.withDefaults(
+      table, buildRow(columns, values, placeholdersCount)
+    );
     const existing = this.rows(table);
     const replace = /^INSERT OR REPLACE /.test(sql);
     const ignore = /^INSERT OR IGNORE /.test(sql);
@@ -342,6 +319,16 @@ export class FakeD1 {
     }
     this.tables.set(table, [...existing, row]);
     return [row];
+  }
+
+  private withDefaults(table: string, row: Row): Row {
+    const entry = migrationSchema().get(table);
+    if (!entry) return row;
+    const out = { ...row };
+    for (const [column, make] of entry.defaults) {
+      if (!(column in out)) out[column] = make();
+    }
+    return out;
   }
 }
 
@@ -361,10 +348,40 @@ function externalConflict(
 }
 
 function readDefault(definition: string): unknown {
+  return parseDefault(definition)?.() ?? '';
+}
+
+function parseDefault(definition: string): (() => unknown) | undefined {
+  if (!/\bDEFAULT\b/i.test(definition)) return undefined;
+  if (/datetime\('now'\)|CURRENT_TIMESTAMP/i.test(definition)) {
+    return () => new Date().toISOString();
+  }
   const literal = /DEFAULT\s+'([^']*)'/i.exec(definition);
-  if (literal) return literal[1];
+  if (literal) return () => literal[1];
   const numeric = /DEFAULT\s+(-?\d+(?:\.\d+)?)/i.exec(definition);
-  return numeric ? Number(numeric[1]) : '';
+  if (numeric) return () => Number(numeric[1]);
+  return undefined;
+}
+
+function matchesCondition(cell: unknown, op: string, val: unknown): boolean {
+  switch (op) {
+    case '=': return cell === val;
+    case '!=': return cell !== val;
+    case '>': return String(cell) > String(val);
+    case '<': return String(cell) < String(val);
+    case '>=': return String(cell) >= String(val);
+    case '<=': return String(cell) <= String(val);
+    case 'NOT LIKE': return !likeMatch(String(cell), String(val));
+    case 'LIKE': return likeMatch(String(cell), String(val));
+    default: return true;
+  }
+}
+
+let schemaCache: Map<string, TableSchema> | null = null;
+
+function migrationSchema(): Map<string, TableSchema> {
+  schemaCache ??= schemaFromMigrations(migrationFiles());
+  return schemaCache;
 }
 
 function likeMatch(value: string, pattern: string): boolean {

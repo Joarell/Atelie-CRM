@@ -183,6 +183,27 @@ export class CrmService {
     return saved;
   }
 
+  async updateNote(
+    noteId: string, body: string, userId: string
+  ): Promise<void> {
+    const clean = body.trim();
+    if (!clean) return;
+    await this.repos.notes.update(noteId, { body: clean });
+    await this.recordActivity({
+      contactId: '', dealId: '', action: ACTIVITY.NOTE_UPDATED,
+      evidence: clean.slice(0, 80), actorUserId: userId
+    });
+  }
+
+  async deleteNote(noteId: string, userId: string): Promise<void> {
+    const note = this.repos.notes.getById(noteId);
+    await this.repos.notes.remove(noteId);
+    await this.recordActivity({
+      contactId: '', dealId: '', action: ACTIVITY.NOTE_DELETED,
+      evidence: (note?.body ?? '').slice(0, 80), actorUserId: userId
+    });
+  }
+
   async snoozeConversation(
     conversationId: string, untilISO: string
   ): Promise<void> {

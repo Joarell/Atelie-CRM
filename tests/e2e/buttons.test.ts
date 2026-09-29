@@ -886,7 +886,6 @@ it('renders "Novo pedido" button and toggles composer', async () => {
       await waitFor(() => {
         if (stampAt() <= before) throw new Error('stamp not advanced');
       });
-      vi.unstubAllGlobals();
     });
   });
 

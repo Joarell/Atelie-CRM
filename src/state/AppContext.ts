@@ -18,6 +18,12 @@ import type {
   CrmActivity, ConversationNote, Tag, AppointmentType
 } from '../domain/crm';
 
+type CrmRepoBundle = CrmRepositories & {
+  users: IRepository<User>;
+  auth: ApiAuthRepository;
+  waha: WahaApiRepository;
+};
+
 // The ONLY place that knows concrete classes. Everything downstream
 // (services, views) is handed interfaces/instances, never `new`s
 // a repository itself. Data now lives in Cloudflare D1, reached through
@@ -80,49 +86,33 @@ export class AppContext {
       products: new ApiRepository<Product>('/api/products', token),
       customers: new ApiRepository<Customer>('/api/customers', token),
       orders: new ApiRepository<Order>('/api/orders', token),
-      movements: new ApiRepository<StockMovement>('/api/stock-movements', token),
+      movements: new ApiRepository<StockMovement>(
+        '/api/stock-movements', token
+      ),
       settings: new ApiSettingsRepository('/api/settings')
     };
   }
 
-  private buildCrmRepos(): {
-    users: IRepository<User>;
-    contacts: IRepository<Contact>;
-    pipelines: IRepository<Pipeline>;
-    stages: IRepository<Stage>;
-    deals: IRepository<Deal>;
-    tasks: IRepository<Task>;
-    quickReplies: IRepository<QuickReply>;
-    events: IRepository<CalendarEvent>;
-    conversations: IRepository<Conversation>;
-    messages: IRepository<Message>;
-    catalog: IRepository<CatalogProduct>;
-    activities: IRepository<CrmActivity>;
-    notes: IRepository<ConversationNote>;
-    tags: IRepository<Tag>;
-    appointmentTypes: IRepository<AppointmentType>;
-    auth: ApiAuthRepository;
-    waha: WahaApiRepository;
-  } {
+  private buildCrmRepos(): CrmRepoBundle {
     const token = () => this.auth.token();
+    const api = <T extends { id: string }>(path: string) =>
+      new ApiRepository<T>(path, token);
     return {
-      users: new ApiRepository<User>('/api/users', token),
-      contacts: new ApiRepository<Contact>('/api/crm/contacts', token),
-      pipelines: new ApiRepository<Pipeline>('/api/crm/pipelines', token),
-      stages: new ApiRepository<Stage>('/api/crm/stages', token),
-      deals: new ApiRepository<Deal>('/api/crm/deals', token),
-      tasks: new ApiRepository<Task>('/api/crm/tasks', token),
-      quickReplies: new ApiRepository<QuickReply>('/api/crm/quick-replies', token),
-      events: new ApiRepository<CalendarEvent>('/api/crm/calendar-events', token),
-      conversations: new ApiRepository<Conversation>('/api/crm/conversations', token),
-      messages: new ApiRepository<Message>('/api/crm/messages', token),
-      catalog: new ApiRepository<CatalogProduct>('/api/crm/catalog-products', token),
-      activities: new ApiRepository<CrmActivity>('/api/crm/activities', token),
-      notes: new ApiRepository<ConversationNote>('/api/crm/conversation-notes', token),
-      tags: new ApiRepository<Tag>('/api/crm/tags', token),
-      appointmentTypes: new ApiRepository<AppointmentType>(
-        '/api/crm/appointment-types', token
-      ),
+      users: api<User>('/api/users'),
+      contacts: api<Contact>('/api/crm/contacts'),
+      pipelines: api<Pipeline>('/api/crm/pipelines'),
+      stages: api<Stage>('/api/crm/stages'),
+      deals: api<Deal>('/api/crm/deals'),
+      tasks: api<Task>('/api/crm/tasks'),
+      quickReplies: api<QuickReply>('/api/crm/quick-replies'),
+      events: api<CalendarEvent>('/api/crm/calendar-events'),
+      conversations: api<Conversation>('/api/crm/conversations'),
+      messages: api<Message>('/api/crm/messages'),
+      catalog: api<CatalogProduct>('/api/crm/catalog-products'),
+      activities: api<CrmActivity>('/api/crm/activities'),
+      notes: api<ConversationNote>('/api/crm/conversation-notes'),
+      tags: api<Tag>('/api/crm/tags'),
+      appointmentTypes: api<AppointmentType>('/api/crm/appointment-types'),
       auth: new ApiAuthRepository(),
       waha: new WahaApiRepository('/api/whatsapp', token)
     };

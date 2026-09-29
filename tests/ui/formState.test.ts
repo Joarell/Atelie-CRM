@@ -28,7 +28,9 @@ const FORM_AGAIN = `
   <select id="c"><option value="x">x</option><option value="y">y</option></select>
 `;
 
-function field<T extends HTMLElement>(root: HTMLElement, id: string): T {
+// `T = HTMLElement` not `extends`: worker-configuration.d.ts merges workerd's
+// `remove(): Element` into lib.dom, breaking `extends HTMLElement`. As in dom.ts.
+function field<T = HTMLElement>(root: HTMLElement, id: string): T {
   return root.querySelector(`#${id}`) as T;
 }
 

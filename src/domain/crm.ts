@@ -9,6 +9,8 @@ export interface User {
   name: string;
   email: string;
   passwordHash: string;
+  // Optional: absent on rows created before 0019 (they use the seed salt).
+  passwordSalt?: string;
   role: Role;
   createdAt: string;
 }
@@ -218,6 +220,8 @@ export const ACTIVITY = {
   CONVERSATION_RESUMED: 'conversation.resumed',
   MESSAGE_SENT: 'message.sent',
   NOTE_ADDED: 'note.added',
+  NOTE_UPDATED: 'note.updated',
+  NOTE_DELETED: 'note.deleted',
   DEAL_CREATED: 'deal.created',
   DEAL_UPDATED: 'deal.updated',
   DEAL_MOVED: 'deal.moved',

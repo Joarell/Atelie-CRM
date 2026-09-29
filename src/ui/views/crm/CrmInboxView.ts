@@ -40,6 +40,9 @@ import type { ChartPeriod } from '../../../domain/inboxChartPeriod';
 
 let activeId = '';
 let showNotes = false;
+// Note currently being edited inline (empty = none). Module-level so a
+// redraw mid-edit keeps the open row, cleared on contact switch/close.
+let editingNoteId = '';
 let rerender = () => {};
 
 // Scroll management for the chat thread. `scrollOwnerId` tracks which
@@ -99,6 +102,7 @@ export function renderCrmInboxView(
   activeId = '';
   scrollOwnerId = '';
   showNotes = false;
+  editingNoteId = '';
   rerender = () => draw(root, ctx);
   draw(root, ctx);
   const disposeSSE = startSSE(ctx);
@@ -772,10 +776,33 @@ function notesList(ctx: AppContext, conversationId: string): string {
 }
 
 function noteRow(n: ConversationNote): string {
+  if (n.id === editingNoteId) return noteEditRow(n);
   const body = escapeHtml(n.body);
   return `
       <div class="note-row"><div class="note-body">${body}</div>
-      <div class="note-meta">${shortTime(n.createdAt)}</div></div>`;
+      <div class="note-meta">${shortTime(n.createdAt)}</div>
+      <div class="note-actions">
+        <button type="button" class="btn btn-ghost btn-sm"
+          data-note-edit="${n.id}">Editar</button>
+        <button type="button" class="btn btn-ghost btn-sm"
+          data-note-del="${n.id}">Excluir</button>
+      </div></div>`;
+}
+
+function noteEditRow(n: ConversationNote): string {
+  const body = escapeHtml(n.body);
+  return `
+      <div class="note-row">
+        <form id="note-edit-form" class="note-edit-form">
+          <textarea class="input input-sm" id="note-edit-text"
+            rows="2">${body}</textarea>
+          <div class="note-actions">
+            <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
+            <button type="button" class="btn btn-ghost btn-sm"
+              data-note-cancel>Cancelar</button>
+          </div>
+        </form>
+      </div>`;
 }
 
 function wireEvents(root: HTMLElement, ctx: AppContext): void {
@@ -785,6 +812,7 @@ function wireEvents(root: HTMLElement, ctx: AppContext): void {
   bindSnooze(root, ctx);
   bindNotes(root);
   bindNoteForm(root, ctx);
+  bindNoteActions(root, ctx);
   bindClose(root, ctx);
   bindComposer(root, ctx);
   bindNewOrder(root, ctx);
@@ -876,11 +904,50 @@ function bindNoteForm(root: HTMLElement, ctx: AppContext): void {
   });
 }
 
+function bindNoteActions(root: HTMLElement, ctx: AppContext): void {
+  root.querySelectorAll<HTMLElement>('[data-note-edit]').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      editingNoteId = btn.dataset.noteEdit ?? '';
+      rerender();
+    }));
+  root.querySelectorAll<HTMLElement>('[data-note-del]').forEach((btn) =>
+    btn.addEventListener('click', () => void deleteNote(btn, ctx)));
+  qsIf('[data-note-cancel]', root)?.addEventListener('click', () => {
+    editingNoteId = '';
+    rerender();
+  });
+  qsIf('#note-edit-form', root)?.addEventListener('submit', (event) =>
+    void saveNoteEdit(event, root, ctx));
+}
+
+async function saveNoteEdit(
+  event: Event, root: HTMLElement, ctx: AppContext
+): Promise<void> {
+  event.preventDefault();
+  const body = qs<HTMLTextAreaElement>('#note-edit-text', root).value.trim();
+  if (!body || !editingNoteId) return;
+  const id = editingNoteId;
+  editingNoteId = '';
+  await ctx.crm.updateNote(id, body, ctx.auth.currentUser()?.id ?? '');
+  showToast('Anotação editada');
+  rerender();
+}
+
+async function deleteNote(btn: HTMLElement, ctx: AppContext): Promise<void> {
+  const id = btn.dataset.noteDel;
+  if (!id || !confirm('Excluir esta anotação?')) return;
+  await ctx.crm.deleteNote(id, ctx.auth.currentUser()?.id ?? '');
+  if (editingNoteId === id) editingNoteId = '';
+  showToast('Anotação excluída');
+  rerender();
+}
+
 function bindClose(root: HTMLElement, ctx: AppContext): void {
   qsIf('#close-conv', root)?.addEventListener('click', async () => {
     if (!activeId) return;
     await ctx.crm.closeConversation(activeId);
     activeId = '';
+    editingNoteId = '';
     showToast('Conversa encerrada');
     rerender();
   });
@@ -922,6 +989,7 @@ function bindOrderComposer(root: HTMLElement, ctx: AppContext): void {
 function select(id: string): void {
   activeId = id;
   showNotes = false;
+  editingNoteId = '';
   composing = false;
   picks = [];
   rerender();

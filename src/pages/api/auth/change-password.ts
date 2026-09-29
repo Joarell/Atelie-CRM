@@ -35,9 +35,10 @@ export const POST: APIRoute = async (context) => {
   if (newPassword.length < MIN_PASSWORD_LENGTH) {
     return json({ error: 'senha_curta' }, 400);
   }
-  if (!(await verifyPassword(currentPassword, user.passwordHash))) {
-    return wrongCurrent(db, user.id, ip);
-  }
+  const ok = await verifyPassword(
+    currentPassword, user.passwordHash, user.passwordSalt
+  );
+  if (!ok) return wrongCurrent(db, user.id, ip);
   return changeSuccess(
     db, user.id, newPassword, context.request, ip
   );

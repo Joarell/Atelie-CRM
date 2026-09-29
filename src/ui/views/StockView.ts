@@ -2,13 +2,15 @@ import type { AppContext } from '../../state/AppContext';
 import type {
   Ingredient,
   StockMovement,
-  StockMovementType
+  StockMovementType,
+  Unit
 } from '../../domain/types';
 import { formatNumber, escapeHtml, formatDate } from '../../domain/format';
 import {
   renderCrudTable,
   renderEmptyState,
-  type TableColumn
+  type TableColumn,
+  type TableSummary
 } from '../CrudTable';
 import { openModal, closeModal } from '../Modal';
 import { showToast } from '../Toast';
@@ -39,16 +41,48 @@ function draw(root: HTMLElement, ctx: AppContext): void {
 }
 
 function crudTableHtml(ctx: AppContext): string {
+  const rows = groupIngredientsByName(ctx.ingredients.getAll());
   return renderCrudTable({
     columns: columns(),
-    rows: ctx.ingredients.getAll(),
+    rows,
     actions: actionButtons,
     emptyTitle: 'Sem ingredientes',
-    emptyHint: 'Cadastre ingredientes na aba Ingredientes.'
+    emptyHint: 'Cadastre ingredientes na aba Ingredientes.',
+    summary: buildSummary(rows)
   });
 }
 
-function columns(): TableColumn<Ingredient>[] {
+export type GroupedIngredient = {
+  name: string;
+  unit: Unit;
+  stock: number;
+  minStock: number;
+  ids: string[];
+};
+
+export function groupIngredientsByName(
+  ingredients: Ingredient[]
+): GroupedIngredient[] {
+  const grouped = new Map<string, GroupedIngredient>();
+  for (const ing of ingredients) {
+    const key = ing.name.toLowerCase();
+    const hit = grouped.get(key);
+    if (hit) {
+      hit.stock += ing.stock;
+      hit.minStock = Math.min(hit.minStock, ing.minStock);
+      hit.ids.push(ing.id);
+    } else {
+      grouped.set(key, {
+        name: ing.name, unit: ing.unit, stock: ing.stock,
+        minStock: ing.minStock, ids: [ing.id]
+      });
+    }
+  }
+  return [...grouped.values()]
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function columns(): TableColumn<GroupedIngredient>[] {
   return [
     { header: 'Ingrediente', render: (i) => escapeHtml(i.name) },
     {
@@ -65,7 +99,23 @@ function columns(): TableColumn<Ingredient>[] {
   ];
 }
 
-function statusBadge(i: Ingredient): string {
+export function buildSummary(
+  rows: GroupedIngredient[]
+): TableSummary<GroupedIngredient> {
+  const total = rows.reduce((sum, i) => sum + i.stock, 0);
+  const low = rows.filter((i) => i.stock <= i.minStock).length;
+  const critical = rows.filter((i) => i.stock <= i.minStock * 0.5).length;
+  return {
+    render: () => [
+      '',
+      `Total: ${formatNumber(total)} itens`,
+      `Baixo: ${low} · Crítico: ${critical}`,
+      ''
+    ]
+  };
+}
+
+function statusBadge(i: GroupedIngredient): string {
   if (i.stock <= i.minStock * 0.5) {
     return `<span class="badge badge-danger">Crítico</span>`;
   }
@@ -75,10 +125,10 @@ function statusBadge(i: Ingredient): string {
   return `<span class="badge badge-sage">OK</span>`;
 }
 
-function actionButtons(ingredient: Ingredient): string {
+function actionButtons(ingredient: GroupedIngredient): string {
   return (
-    `<button class="btn btn-ghost btn-sm" data-move="${ingredient.id}">` +
-    `Movimentar</button>`
+    `<button class="btn btn-ghost btn-sm" data-move=` +
+    `"${ingredient.ids[0]}">Movimentar</button>`
   );
 }
 
