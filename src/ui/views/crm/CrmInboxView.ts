@@ -26,7 +26,11 @@ import {
   type OrderPick
 } from '../../../domain/orderHistory';
 import { autoRerender } from '../../reactive';
-import { qs, qsIf } from '../../dom';
+import { qs, qsIf, qsa } from '../../dom';
+import {
+  restoreFields,
+  snapshotFields
+} from '../../formState';
 import { showToast } from '../../Toast';
 import { section, badge, clientClassBadge } from './crmUi';
 import { inboxPeriodChartHtml } from './inboxPeriodChart';
@@ -104,27 +108,40 @@ export function renderCrmInboxView(
 }
 
 function draw(root: HTMLElement, ctx: AppContext): void {
-  const draft = draftText(root);
+  // The SSE stream repaints the whole inbox whenever the server pushes a
+  // message, so the swap has to be invisible: capture every field (value,
+  // focus, caret) and put it back on the far side.
+  const fields = snapshotFields(root);
   const items = ctx.crm.inbox();
   const dormant = ctx.crm.dormantInbox();
   if (items.length && !items.some((i) => i.conversation.id === activeId)) {
     activeId = items[0].conversation.id;
   }
   const current = items.find((i) => i.conversation.id === activeId);
-  // Same chat keeps the reader's place; a new message pins the thread to
-  // the bottom — always on send, on receive only at/near the bottom.
+  const anchor = threadAnchor(root, ctx);
+  root.innerHTML = pageHtml(ctx, items, dormant, current);
+  scrollOwnerId = activeId;
+  restoreFields(root, fields);
+  wireEvents(root, ctx);
+  applyThreadScroll(root, anchor.prevTop, anchor.pin);
+  stickToBottom = false;
+}
+
+interface ThreadAnchor {
+  prevTop: number;
+  pin: boolean;
+}
+
+// Same chat keeps the reader's place; a new message pins the thread to the
+// bottom — always on send, on receive only at/near the bottom. Read while the
+// old nodes are still mounted; `newestAppeared` must run on every redraw or
+// the next message reads as already-seen.
+function threadAnchor(root: HTMLElement, ctx: AppContext): ThreadAnchor {
   const sameChat = scrollOwnerId === activeId;
   const prevTop = sameChat ? threadScrollTop(root) : 0;
   const wasAtBottom = sameChat && threadAtBottom(root);
   const gotMessage = newestAppeared(ctx) && sameChat;
-  root.innerHTML = pageHtml(ctx, items, dormant, current);
-  scrollOwnerId = activeId;
-  restoreDraft(root, draft);
-  wireEvents(root, ctx);
-  applyThreadScroll(
-    root, prevTop, stickToBottom || (gotMessage && wasAtBottom)
-  );
-  stickToBottom = false;
+  return { prevTop, pin: stickToBottom || (gotMessage && wasAtBottom) };
 }
 
 function threadScrollTop(root: HTMLElement): number {
@@ -223,16 +240,6 @@ function startSSE(ctx: AppContext): () => void {
       eventSource = null;
     }
   };
-}
-
-function draftText(root: HTMLElement): string {
-  const area = root.querySelector<HTMLTextAreaElement>('#composer-text');
-  return area ? area.value : '';
-}
-
-function restoreDraft(root: HTMLElement, draft: string): void {
-  const area = root.querySelector<HTMLTextAreaElement>('#composer-text');
-  if (area && draft) area.value = draft;
 }
 
 function pageHtml(
@@ -794,14 +801,14 @@ function bindPeriodMenu(root: HTMLElement): void {
     }));
 }
 
+// Bound to the select, never to `root`: the root outlives every redraw, so a
+// root-level listener would stack up and fire once per accumulated draw.
 function bindMonthMenu(root: HTMLElement): void {
-  root.addEventListener('change', (event) => {
-    const target = event.target as HTMLSelectElement | null;
-    if (target?.classList.contains('month-select')) {
-      chartMonth = target.value;
+  qsa<HTMLSelectElement>('.month-select', root).forEach((select) =>
+    select.addEventListener('change', () => {
+      chartMonth = select.value;
       rerender();
-    }
-  });
+    }));
 }
 
 function bindOpen(root: HTMLElement): void {
@@ -861,11 +868,10 @@ function bindNotes(root: HTMLElement): void {
 function bindNoteForm(root: HTMLElement, ctx: AppContext): void {
   qsIf('#note-form', root)?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const input = qs<HTMLInputElement>('#note-text', root);
-    const body = input.value.trim();
+    const body = qs<HTMLInputElement>('#note-text', root).value.trim();
     if (!body || !activeId) return;
     await ctx.crm.addNote(activeId, body, ctx.auth.currentUser()?.id ?? '');
-    input.value = '';
+    clearField(root, '#note-text', body);
     rerender();
   });
 }
@@ -882,7 +888,7 @@ function bindClose(root: HTMLElement, ctx: AppContext): void {
 
 function bindComposer(root: HTMLElement, ctx: AppContext): void {
   qsIf('#composer', root)?.addEventListener('submit', (event) =>
-    sendMessage(event, ctx));
+    sendMessage(root, event, ctx));
 }
 
 function bindNewOrder(root: HTMLElement, ctx: AppContext): void {
@@ -921,13 +927,20 @@ function select(id: string): void {
   rerender();
 }
 
-async function sendMessage(event: Event, ctx: AppContext): Promise<void> {
+// Both submit paths `await` the network, and a redraw may swap the node in
+// the meantime — clearing the captured one is then a no-op and the redraw
+// snapshots the stale text right back in. Clear the LIVE field, and only
+// while it still holds what was submitted, so text typed mid-flight stays.
+function clearField(root: HTMLElement, selector: string, sent: string): void {
+  const field = qsIf<HTMLInputElement | HTMLTextAreaElement>(selector, root);
+  if (field && field.value.trim() === sent) field.value = '';
+}
+
+async function sendMessage(
+  root: HTMLElement, event: Event, ctx: AppContext
+): Promise<void> {
   event.preventDefault();
-  const textarea = qs<HTMLTextAreaElement>(
-    '#composer-text',
-    event.target as HTMLElement
-  );
-  const text = textarea.value.trim();
+  const text = qs<HTMLTextAreaElement>('#composer-text', root).value.trim();
   if (!text || !activeId) return;
   const channel = ctx.conversations.getById(activeId)?.channel ?? '';
   if (channel === 'whatsapp') {
@@ -940,7 +953,7 @@ async function sendMessage(event: Event, ctx: AppContext): Promise<void> {
   } else {
     await ctx.crm.sendMessage(activeId, text, ctx.auth.currentUser()?.id ?? '');
   }
-  textarea.value = '';
+  clearField(root, '#composer-text', text);
   stickToBottom = true;
   rerender();
 }
