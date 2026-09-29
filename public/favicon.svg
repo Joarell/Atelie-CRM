@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="oklch(0.5015 0.0664 139.0)"/>
+  <path
+    d="M20 22a6 6 0 0 1 6-6h12a6 6 0 0 1 6 6v10a6 6 0 0 1-6 6h-8l-7 5v-5h-3a6 6 0 0 1-6-6V22z"
+    fill="oklch(0.9820 0.0041 91.4)"
+  />
+  <circle cx="26" cy="27" r="2.4" fill="oklch(0.5015 0.0664 139.0)"/>
+  <circle cx="32" cy="27" r="2.4" fill="oklch(0.5015 0.0664 139.0)"/>
+  <circle cx="38" cy="27" r="2.4" fill="oklch(0.5015 0.0664 139.0)"/>
+</svg>

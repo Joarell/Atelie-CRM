@@ -1,0 +1,191 @@
+{
+  "runId": "atelie-erp(1)-lgpd-privacidade-mum3os9z",
+  "feature": "lgpd-privacidade",
+  "agent": "claude",
+  "modo": "paralelo",
+  "paralelizar": [
+    "T-002",
+    "T-003",
+    "T-004",
+    "T-005",
+    "T-006",
+    "T-007"
+  ],
+  "modeloForcado": null,
+  "esforcoForcado": null,
+  "geradoEm": "2026-09-29 03:12",
+  "branchTrabalho": "spec/lgpd-privacidade",
+  "baseDir": ".spec/features/lgpd-privacidade",
+  "specDir": ".spec",
+  "repoName": "atelie-erp(1)",
+  "logsDir": "../onp-worktrees/atelie-erp(1)-lgpd-privacidade-logs",
+  "ondas": [
+    [
+      "faixa-1",
+      "faixa-2",
+      "faixa-3"
+    ],
+    [
+      "faixa-4",
+      "faixa-5",
+      "faixa-6"
+    ]
+  ],
+  "faixas": [
+    {
+      "id": "faixa-1",
+      "branch": "spec/lgpd-privacidade-faixa-1",
+      "worktree": "../onp-worktrees/atelie-erp(1)-lgpd-privacidade-faixa-1",
+      "tarefas": [
+        {
+          "id": "T-002",
+          "titulo": "Testes de consentimento (AC-001 a AC-004)",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "tests/server/consent.test.ts"
+          ],
+          "refs": [
+            "US-001",
+            "AC-001",
+            "AC-002",
+            "AC-003",
+            "AC-004"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-2",
+      "branch": "spec/lgpd-privacidade-faixa-2",
+      "worktree": "../onp-worktrees/atelie-erp(1)-lgpd-privacidade-faixa-2",
+      "tarefas": [
+        {
+          "id": "T-003",
+          "titulo": "Anotar testes de rate limit existentes (AC-005 a AC-008)",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "tests/server/rateLimitWiring.test.ts"
+          ],
+          "refs": [
+            "US-002",
+            "AC-005",
+            "AC-006",
+            "AC-007",
+            "AC-008"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-3",
+      "branch": "spec/lgpd-privacidade-faixa-3",
+      "worktree": "../onp-worktrees/atelie-erp(1)-lgpd-privacidade-faixa-3",
+      "tarefas": [
+        {
+          "id": "T-004",
+          "titulo": "Anotar testes de retenção existentes (AC-009 a AC-015)",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "tests/server/retention.test.ts",
+            "tests/server/retentionCron.test.ts"
+          ],
+          "refs": [
+            "US-003",
+            "AC-009",
+            "AC-010",
+            "AC-011",
+            "AC-012",
+            "AC-013",
+            "AC-014",
+            "AC-015"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-4",
+      "branch": "spec/lgpd-privacidade-faixa-4",
+      "worktree": "../onp-worktrees/atelie-erp(1)-lgpd-privacidade-faixa-4",
+      "tarefas": [
+        {
+          "id": "T-005",
+          "titulo": "Testes de pseudonimização (AC-016 a AC-019)",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "tests/domain/pseudonymize.test.ts"
+          ],
+          "refs": [
+            "US-004",
+            "AC-016",
+            "AC-017",
+            "AC-018",
+            "AC-019"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-5",
+      "branch": "spec/lgpd-privacidade-faixa-5",
+      "worktree": "../onp-worktrees/atelie-erp(1)-lgpd-privacidade-faixa-5",
+      "tarefas": [
+        {
+          "id": "T-006",
+          "titulo": "Testes de direitos do titular (AC-020 a AC-022)",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "tests/server/lgpdRights.test.ts"
+          ],
+          "refs": [
+            "US-005",
+            "AC-020",
+            "AC-021",
+            "AC-022"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-6",
+      "branch": "spec/lgpd-privacidade-faixa-6",
+      "worktree": "../onp-worktrees/atelie-erp(1)-lgpd-privacidade-faixa-6",
+      "tarefas": [
+        {
+          "id": "T-007",
+          "titulo": "Testes de princípios LGPD (P-004, P-005, P-006)",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "tests/domain/lgpdPrinciples.test.ts"
+          ],
+          "refs": []
+        }
+      ]
+    }
+  ],
+  "sequenciais": [
+    {
+      "id": "T-001",
+      "titulo": "Fundação: tipos e exports faltantes",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
+      "arquivos": [
+        "src/domain/crm.ts",
+        "src/server/tables.ts"
+      ],
+      "refs": [
+        "US-001",
+        "US-002",
+        "AC-001",
+        "AC-005"
+      ]
+    }
+  ],
+  "concluidas": [],
+  "avisos": []
+}

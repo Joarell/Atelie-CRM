@@ -1,0 +1,49 @@
+{
+  "name": "DeskcommCRM — Vendas · Equipe · Ateliê",
+  "short_name": "DeskcommCRM",
+  "description": "CRM e ERP do ateliê: inbox de conversas, vendas, estoque e produção.",
+  "id": "/",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#506d48",
+  "background_color": "#faf9f6",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Inbox",
+      "short_name": "Inbox",
+      "description": "Abrir conversas do WhatsApp",
+      "url": "/#/inbox"
+    },
+    {
+      "name": "Pedidos",
+      "short_name": "Pedidos",
+      "description": "Quadro de pedidos do dia",
+      "url": "/#/atelie/pedidos"
+    }
+  ]
+}

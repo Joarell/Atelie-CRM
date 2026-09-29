@@ -1,0 +1,32 @@
+# Example local env for the WAHA (WhatsApp) integration.
+# Copy to `.dev.vars` (gitignored) for `astro dev` / `wrangler dev`.
+# In production the API key is a secret: `wrangler secret put WAHA_API_KEY`.
+#
+# `dev_plaintext_change_me` is the placeholder from the reference app: the app
+# treats it as "not configured", so a fresh clone shows the start-WAHA state
+# instead of trying a fake credential.
+WAHA_API_BASE_URL="http://localhost:3000"
+WAHA_API_KEY="dev_plaintext_change_me"
+WAHA_SESSION_NAME="default"
+
+# Realtime (webhooks) — o APP é o dono do webhook. Ao iniciar a sessão
+# (`POST /api/whatsapp/session`) o app cria a sessão do engine COM
+# `config.webhooks` apontando pro seu próprio receiver (para o WAHA navegar até
+# esta máquina em dev), e registra uma inscrição por mensagem nova.
+#   - `WHATSAPP_HOOK_URL`: o receiver do app. Obrigatório para registrar;
+#     ausente = nenhuma inscrição (a rota /api/whatsapp/webhook-config responde
+#     configured:false, GET/POST de /api/whatsapp/session reportam
+#     webhook:{configured:false} e a aba WhatsApp mostra o banner de ingress).
+#   - `WHATSAPP_HOOK_EVENTS`: lista (separada por vírgula) opcional. O default
+#     é o conjunto curado do app (message.any + ack/edit/revoke + session.status).
+#     NUNCA inscreva `message` E `message.any` juntos: o WAHA dispara os dois
+#     para a mesma mensagem nova (requisição duplicada). O app normaliza isso.
+#   - `WAHA_HMAC_SECRET`: o MESMO plaintext usado como `hmac.key` do engine e
+#     verificado pelo receiver (x-webhook-hmac, SHA-512 hex). O container dev
+#     não tem mais gancho global (ver waha/docker-compose.waha.yml) — o caminho
+#     único é o registro desta sessão. Set `WAHA_WEBHOOK_REQUIRE_SIGNATURE="true"`
+#     para falhar fechado na ausência de assinatura.
+WHATSAPP_HOOK_URL="http://host.containers.internal:4322/api/whatsapp/webhook"
+WHATSAPP_HOOK_EVENTS=""
+WAHA_HMAC_SECRET=""
+WAHA_WEBHOOK_REQUIRE_SIGNATURE=""

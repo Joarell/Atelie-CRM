@@ -1,0 +1,48 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+}
+const { title = 'DeskcommCRM' } = Astro.props;
+// Tema decidido no <head>, antes da primeira pintura (mesmo padrão do app de
+// origem): `deskcomm-theme` no localStorage, `prefers-color-scheme` como
+// padrão, aplicado como atributo `data-theme` no <html>. A chave e os modos
+// ficam em src/domain/theme.ts; o botão de alternância em src/ui/theme.ts.
+// Precisa ser inline (sem import) para não piscar o tema na primeira pintura.
+const themeInitScript = `(function(){try{var s=localStorage.getItem('deskcomm-theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;var r=(s==='dark'||s==='light')?s:((s==='system'||!s)&&d?'dark':'light');document.documentElement.setAttribute('data-theme',r);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
+---
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>{title}</title>
+    <meta
+      name="description"
+      content="DeskcommCRM — Vendas · Equipe · Ateliê. CRM e ERP do ateliê."
+    />
+    <meta name="theme-color" content="oklch(0.9820 0.0041 91.4)" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="oklch(0.1950 0.0098 97.9)" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="DeskcommCRM" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script is:inline set:html={themeInitScript}></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+      <body>
+        <slot />
+      </body>
+</html>

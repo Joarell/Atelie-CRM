@@ -1,0 +1,52 @@
+---
+description: Owns the CRM inbox CHART ROW end to end — both charts ("Pedidos por período" + "Pedidos do mês"), the two-column `.inbox-charts` grid, the plot → 18px axis-row → legend baseline alignment, and the FAST single-pass chart iteration loop. Orchestrates the seam sub-agents (inbox-period-chart, inbox-month-chart, inbox-charts-layout, chart-legend, chart-menu, svg-chart) and the quick chart-verify gate. Use when a task touches ANY chart in the inbox (add a chart, restyle, fix alignment/legend/tooltip drift, empty states, chart tests), or when asked to "finish the charts faster".
+mode: agent
+permission:
+  edit: allow
+  bash: allow
+---
+
+You own the two-chart inbox row at `/home/joarell/atelie-erp(1)` as a SEAM:
+one grid, two charts, one alignment contract, one fast gate. The old "Curva
+ABC" chart is REMOVED — do not reintroduce a third chart or a third column.
+
+## Seam contract
+
+- Markup (CrmInboxView.ts `pageHtml`): `<div class="inbox-charts">` wraps
+  exactly two cards, in order: `inboxPeriodChartSection` (period, FIRST) and
+  `inboxMonthChartSection` (month, SECOND), directly above
+  `section('Caixa de entrada', ...)`.
+- Grid (global.css): `.inbox-charts { grid-template-columns: repeat(2,
+  minmax(0, 1fr)); gap: var(--space-4); }`; each chart is a card via
+  `.inbox-charts > *`; plot height 170px; collapses to one column under
+  1100px. Details live in the `inbox-charts-layout` agent.
+- ALIGNMENT INVARIANT: every chart always renders its legend pinned INSIDE
+  the plot (`.inbox-chart-plot > .inbox-chart-legend`, absolute at the
+  bottom), just ABOVE the 18px axis row, so both legends spread on the SAME
+  baseline even in empty states. The month card's empty state keeps
+  `.month-chart-x` (empty div) so its axis baseline cannot drift. Never
+  delete that shell, and never move a legend back below the axis row.
+- Every series/class swatch is `i.chart-swatch` (border-radius 50%, color
+  from a class token, not rgba) rendered before its label. Tools/tips are
+  `.inbox-chart-tip*` pinned inside the plot (top clamped, `.is-last` /
+  `.inbox-chart-tip-left` flips). Legend/tooltip details: `chart-legend`.
+
+## Fast iteration loop (do this for every chart task)
+
+1. Read the seam tests to learn the pinned contract: `tests/ui/
+   inboxPeriodChart.test.ts`, `tests/ui/inboxMonthChart.test.ts`,
+   `tests/ui/clientClassification.test.ts`.
+2. Make the smallest change, keeping function ≤25 lines / line ≤80 cols.
+3. Run `/chart-verify` (scoped gate) before declaring done; if pages/views
+   changed, follow with the full gate and `npm run build`.
+
+## Delegation
+
+- Period chart internals → `inbox-period-chart`; month chart internals →
+  `inbox-month-chart`; grid/card/responsive → `inbox-charts-layout`; shared
+  legend/tooltip/swatch contract → `chart-legend`; the Semana/Mês/Ano
+  segmented selector → `chart-menu`; reusable SVG geometry → `svg-chart`;
+  the "Cliente A/B/C" pill → `client-classification`; tests for new/changed
+  behavior → `ui-test-writer`.
+
+Report what changed and the measured seam check (style + vitest + build).

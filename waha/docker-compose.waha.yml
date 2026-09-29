@@ -1,0 +1,77 @@
+# WAHA (WhatsApp HTTP API) via Podman para o Ateliê ERP — DEV ONLY.
+#
+# Compose canônico de dev do WAHA deste repo (a antiga variante `docker compose`
+# da raiz não existe mais).
+# Sobe apenas o servidor WAHA (engine NOWEB) para desenvolvimento e para o teste de
+# conexão (src/server/waha.ts + src/pages/api/whatsapp/health.ts). Não é usado em
+# produção: o Ateliê roda em Cloudflare Workers/D1 e o WAHA de prod vive fora
+# (ver docs/whatsapp-waha.md -> Índice de referências).
+#
+# Como subir (a partir da raiz do repo):
+#   podman compose -f waha/docker-compose.waha.yml up -d        (usa o binário docker-compose)
+#   # ou
+#   podman-compose -f waha/docker-compose.waha.yml up -d        (implementação Python nativa)
+#
+# Health endpoint (sem auth):  curl -fsS http://127.0.0.1:3000/ping
+# Versão (exige chave):        curl -s -H "X-Api-Key: <plaintext>" http://127.0.0.1:3000/api/server/version
+#
+# Convenção da chave (NUNCA o plaintext aqui):
+#   - O WAHA aceita "sha512:<hex>" na env e hasheia o X-Api-Key recebido pra comparar.
+#   - O compose usa o valor padrão = sha512 de `local-test-key` (que também vive em
+#     .dev.vars). Para rotacionar: crie `waha/.env` a partir de `waha/.env.example`
+#     com WAHA_API_KEY_SHA512=<sha512 do novo plaintext> e atualize o `.dev.vars`
+#     com o plaintext correspondente (os dois lados precisam estar sincronizados).
+#   - Para gerar o hex de um plaintext:  echo -n "$KEY" | shasum -a 512 | awk '{print $1}'
+#   - A env que o WAHA lê para a engine é WHATSAPP_DEFAULT_ENGINE (WAHA_DEFAULT_ENGINE
+#     não existe no WAHA e cai silenciosamente no default WEBJS) — não use.
+
+services:
+  waha:
+    image: devlikeapro/waha:noweb
+    container_name: atelie-erp-waha
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Padrão pré-configurado: sha512 de `local-test-key` (corresponde ao plaintext no
+      # .dev.vars). Sobrescreva via `waha/.env` (ver .env.example) ao rotacionar.
+      WAHA_API_KEY: "${WAHA_API_KEY_SHA512:-sha512:b6eb06b35fa2dd4c9b0c9db7faa94e8246ffb472b26668bd9d523fc01cb13a91a54e23e69ccd50c7f9702572e97522ee69f4d16cd2c0e1653f9e43661c410412}"
+      # Engine NOWEB (mais leve, ~150MB; estável). Env correta: WHATSAPP_DEFAULT_ENGINE.
+      WHATSAPP_DEFAULT_ENGINE: NOWEB
+      # Retoma as sessões existentes no restart do container (equivale a podman restart
+      # do container sem re-scan de QR).
+      WHATSAPP_RESTART_ALL_SESSIONS: "True"
+      # Sem dashboard em dev — a operação é via API/curl conforme README.md.
+      WAHA_DASHBOARD_ENABLED: "false"
+      # Realtime (DEV): quem entrega eventos é o APP, não este container. Ao
+      # iniciar a sessão (`POST /api/whatsapp/session`) o app CREATE a sessão
+      # no engine com `config.webhooks` apontando pro próprio receiver
+      # (`/api/whatsapp/webhook`), lendo WHATSAPP_HOOK_URL/WHATSAPP_HOOK_EVENTS/
+      # WAHA_HMAC_SECRET do `.dev.vars`. É UMA inscrição por mensagem nova.
+      # NÃO re-habilite o gancho global abaixo apontando pro mesmo URL: cada
+      # mensagem nova seria entregue duas vezes (gancho global + gancho da
+      # sessão) — exatamente o que o registro do app evita.
+      # Comente/desligue do lado do app se o receiver não estiver rodando
+      # (o engine só irá retentar alguns envios — ou nada, sem inscrição).
+      # WHATSAPP_HOOK_URL: "http://host.containers.internal:4322/api/whatsapp/webhook"
+      # WHATSAPP_HOOK_EVENTS: "message"
+      # WHATSAPP_HOOK_HMAC: "local-test-key"
+    extra_hosts:
+      # Podman: `host.containers.internal` já aponta pro host por padrão no rootful;
+      # deploy usa isso como convenção, ajuste a porta do WHATSAPP_HOOK_URL se o app
+      # não subir na 4322.
+      - "host.containers.internal:host-gateway"
+    volumes:
+      - waha-data:/app/.sessions   # estado de pareamento — apagar = re-scan de QR
+      - waha-media:/app/.media     # cache curto de mídia inbound
+    healthcheck:
+      # /ping é o único endpoint sem auth desta build (api/health = 401/404 sem chave).
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  waha-data:
+  waha-media:

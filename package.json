@@ -1,0 +1,39 @@
+{
+  "name": "atelie-erp",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "wrangler types && astro dev",
+    "build": "astro build",
+    "preview": "wrangler dev",
+    "deploy": "astro build && wrangler deploy",
+    "check": "tsc --noEmit",
+    "check:tests": "tsc --noEmit -p tsconfig.tests.json",
+    "check:style": "node scripts/check-style.ts",
+    "check:style:tests": "node scripts/check-style.ts --fn-only tests/helpers",
+    "pwa:icons": "node scripts/generate-pwa-icons.ts",
+    "test": "vitest run",
+    "waha:smoke": "bun run scripts/waha-smoke.ts",
+    "db:migrate:local": "wrangler d1 execute atelie_erp_db --local --file=./migrations/0001_init.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0003_crm.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0005_crm_features.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0007_waha.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0009_inbox_orders.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0014_auth_security.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0015_action_logs.sql",
+    "db:migrate:remote": "wrangler d1 execute atelie_erp_db --remote --file=./migrations/0001_init.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0003_crm.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0005_crm_features.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0007_waha.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0009_inbox_orders.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0014_auth_security.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0015_action_logs.sql",
+    "db:seed:local": "wrangler d1 execute atelie_erp_db --local --file=./migrations/0002_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0004_crm_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0006_crm_seed_features.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0008_order_history_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0010_inbox_orders_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0011_inbox_orders_chart_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0012_inbox_month_chart_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0013_abc_curve_seed.sql",
+    "db:seed:remote": "wrangler d1 execute atelie_erp_db --remote --file=./migrations/0002_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0004_crm_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0006_crm_seed_features.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0008_order_history_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0010_inbox_orders_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0011_inbox_orders_chart_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0012_inbox_month_chart_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0013_abc_curve_seed.sql",
+    "waha:online": "vitest run tests/server/wahaOnline.test.ts",
+    "waha:egress": "bun run scripts/waha-smoke.ts"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/cloudflare": "14.3.2",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "7.3.3",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.1"
+  },
+  "devDependencies": {
+    "eventsource": "^5.1.2",
+    "happy-dom": "^20.14.5",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.2",
+    "wrangler": "4"
+  }
+}

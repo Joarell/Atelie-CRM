@@ -1,0 +1,18 @@
+name = "atelie-erp"
+main = "@astrojs/cloudflare/entrypoints/server"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Created with: wrangler d1 create atelie_erp_db
+# Paste the resulting database_id below before deploying/running locally.
+[[d1_databases]]
+binding = "DB"
+database_name = "atelie_erp_db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# WhatsApp (WAHA). The base URL is not a secret; the API key is, so it does not
+# live here — set it locally in `.dev.vars` (see `.dev.vars.example`) and in
+# production with `wrangler secret put WAHA_API_KEY`.
+[vars]
+WAHA_API_BASE_URL = "http://localhost:3000"
+WAHA_SESSION_NAME = "default"

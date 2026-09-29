@@ -1,0 +1,25 @@
+{
+  "testCommand": "npx vitest run --reporter=tap",
+  "reporter": "tap",
+  "testGlobs": [
+    "test/**",
+    "tests/**",
+    "src/**/*.test.*",
+    "src/**/*.spec.*",
+    "__tests__/**"
+  ],
+  "srcGlobs": [
+    "src/domain/pseudonymize.ts",
+    "src/domain/dataFreshness.ts",
+    "src/domain/crm.ts",
+    "src/server/consent.ts",
+    "src/server/rateLimit.ts",
+    "src/server/retention.ts",
+    "src/server/retentionCron.ts",
+    "src/server/tables.ts",
+    "src/middleware.ts",
+    "src/worker.ts",
+    "src/pages/api/me/",
+    "src/ui/freshness.ts"
+  ]
+}
