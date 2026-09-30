@@ -10,32 +10,32 @@
 export const NO_FRESHNESS = 0;
 
 export class FreshnessLog {
-  private readonly byMenu = new Map<string, number>();
+	private readonly byMenu = new Map<string, number>();
 
-  /** Records that `menu` data changed at `at` (defaults to now). */
-  touch(menu: string, at: number = Date.now()): void {
-    this.byMenu.set(menu, at);
-  }
+	/** Records that `menu` data changed at `at` (defaults to now). */
+	touch(menu: string, at: number = Date.now()): void {
+		this.byMenu.set(menu, at);
+	}
 
-  /** Epoch millis of the last change for `menu`, or NO_FRESHNESS. */
-  read(menu: string): number {
-    return this.byMenu.get(menu) ?? NO_FRESHNESS;
-  }
+	/** Epoch millis of the last change for `menu`, or NO_FRESHNESS. */
+	read(menu: string): number {
+		return this.byMenu.get(menu) ?? NO_FRESHNESS;
+	}
 
-  /** True once `menu` has recorded at least one change. */
-  has(menu: string): boolean {
-    return this.read(menu) !== NO_FRESHNESS;
-  }
+	/** True once `menu` has recorded at least one change. */
+	has(menu: string): boolean {
+		return this.read(menu) !== NO_FRESHNESS;
+	}
 
-  /** Menus carrying a stamp, in insertion order. */
-  menus(): string[] {
-    return [...this.byMenu.keys()];
-  }
+	/** Menus carrying a stamp, in insertion order. */
+	menus(): string[] {
+		return [...this.byMenu.keys()];
+	}
 
-  /** Drops every stamp — used when the session data is replaced. */
-  clear(): void {
-    this.byMenu.clear();
-  }
+	/** Drops every stamp — used when the session data is replaced. */
+	clear(): void {
+		this.byMenu.clear();
+	}
 }
 
 /**
@@ -44,10 +44,10 @@ export class FreshnessLog {
  * format would hide that.
  */
 export function formatFreshness(at: number): string {
-  const date = new Date(at);
-  return [date.getHours(), date.getMinutes(), date.getSeconds()]
-    .map((part) => String(part).padStart(2, '0'))
-    .join(':');
+	const date = new Date(at);
+	return [date.getHours(), date.getMinutes(), date.getSeconds()]
+		.map((part) => String(part).padStart(2, '0'))
+		.join(':');
 }
 
 /**
@@ -56,5 +56,5 @@ export function formatFreshness(at: number): string {
  * simply write it into the element and let CSS hide the empty state.
  */
 export function freshnessLabel(log: FreshnessLog, menu: string): string {
-  return log.has(menu) ? formatFreshness(log.read(menu)) : '';
+	return log.has(menu) ? formatFreshness(log.read(menu)) : '';
 }

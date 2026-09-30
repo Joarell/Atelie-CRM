@@ -11,50 +11,50 @@ import { json } from '../../../server/http';
 const ROLES: Role[] = ['viewer', 'agent', 'manager', 'admin'];
 
 type UserBody = {
-  id?: unknown;
-  name?: unknown;
-  email?: unknown;
-  role?: unknown;
-  password?: unknown;
+	id?: unknown;
+	name?: unknown;
+	email?: unknown;
+	role?: unknown;
+	password?: unknown;
 };
 
 export const GET: APIRoute = async () => {
-  const users = await listEntities<User>(getDb(), USERS_TABLE, USERS_SHAPE);
-  return json(users.map(publicUser));
+	const users = await listEntities<User>(getDb(), USERS_TABLE, USERS_SHAPE);
+	return json(users.map(publicUser));
 };
 
 export const POST: APIRoute = async (context) => {
-  const db = getDb();
-  const body = await readUserBody(context.request);
-  const ip = clientIp(context.request);
-  if (!body.name || !body.email || !body.password || !body.role) {
-    return json({ error: 'campos_obrigatorios' }, 400);
-  }
-  if (!ROLES.includes(body.role as Role)) {
-    return json({ error: 'papel_invalido' }, 400);
-  }
-  const user = await buildUser(body);
-  await insertEntity(db, USERS_TABLE, USERS_SHAPE, user);
-  await recordAudit(
-    db, newAuditEntry(user.id, 'user_created', user.email, ip)
-  );
-  return json(publicUser(user), 201);
+	const db = getDb();
+	const body = await readUserBody(context.request);
+	const ip = clientIp(context.request);
+	if (!body.name || !body.email || !body.password || !body.role) {
+		return json({ error: 'campos_obrigatorios' }, 400);
+	}
+	if (!ROLES.includes(body.role as Role)) {
+		return json({ error: 'papel_invalido' }, 400);
+	}
+	const user = await buildUser(body);
+	await insertEntity(db, USERS_TABLE, USERS_SHAPE, user);
+	await recordAudit(
+		db, newAuditEntry(user.id, 'user_created', user.email, ip)
+	);
+	return json(publicUser(user), 201);
 };
 
 async function buildUser(body: UserBody): Promise<User> {
-  const digest = await hashPassword(String(body.password));
-  return {
-    id: typeof body.id === 'string' && body.id ? body.id : uid(),
-    name: String(body.name),
-    email: String(body.email),
-    passwordHash: digest.hash,
-    passwordSalt: digest.salt,
-    role: body.role as Role,
-    createdAt: nowISO()
-  };
+	const digest = await hashPassword(String(body.password));
+	return {
+		id: typeof body.id === 'string' && body.id ? body.id : uid(),
+		name: String(body.name),
+		email: String(body.email),
+		passwordHash: digest.hash,
+		passwordSalt: digest.salt,
+		role: body.role as Role,
+		createdAt: nowISO()
+	};
 }
 
 async function readUserBody(request: Request): Promise<UserBody> {
-  const raw = (await request.json()) as Partial<UserBody> | null;
-  return raw ?? {};
+	const raw = (await request.json()) as Partial<UserBody> | null;
+	return raw ?? {};
 }

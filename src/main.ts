@@ -212,7 +212,7 @@ function errorHtml(error: unknown): string {
 		`<div style="display:flex;align-items:center;justify-content:` +
 		`center;min-height:100vh;flex-direction:column;gap:8px;font-family:` +
 		`var(--font-atkinson);color:var(--color-error);">
-    <strong>Não foi possível carregar os dados.</strong><span ` +
+		<strong>Não foi possível carregar os dados.</strong><span ` +
 		`style="color:var(--color-text-subtle);font-size:13px;">${message}` +
 		`</span></div>`
 	);
@@ -221,17 +221,17 @@ function errorHtml(error: unknown): string {
 function shellHtml(): string {
 	return (
 		`<div class="app-shell">
-    <aside class="sidebar" id="sidebar"><div id="sidebar-slot"></div></aside>
-    <div class="main">
-      <div class="topbar">
-        <div><button class="hamburger" id="hamburger" aria-label=` +
+		<aside class="sidebar" id="sidebar"><div id="sidebar-slot"></div></aside>
+		<div class="main">
+			<div class="topbar">
+				<div><button class="hamburger" id="hamburger" aria-label=` +
 		`"Menu">${icon('menu')}</button></div>
-        <h1 id="page-title" style="flex:1;"></h1>
-        <span id="page-freshness"></span>
-        <div id="theme-slot"></div>
-      </div>
-      <div class="content" id="view-root"></div>
-    </div></div>`
+				<h1 id="page-title" style="flex:1;"></h1>
+				<span id="page-freshness"></span>
+				<div id="theme-slot"></div>
+			</div>
+			<div class="content" id="view-root"></div>
+		</div></div>`
 	);
 }
 

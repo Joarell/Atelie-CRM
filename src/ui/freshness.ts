@@ -6,8 +6,8 @@
 // screen. That keeps the feature out of the ~20 view files.
 
 import {
-  FreshnessLog,
-  freshnessLabel
+	FreshnessLog,
+	freshnessLabel
 } from '../domain/dataFreshness';
 
 const log = new FreshnessLog();
@@ -17,7 +17,7 @@ let currentMenu = '';
 
 /** Exposed for tests and for the main.ts shell. */
 export function freshnessLog(): FreshnessLog {
-  return log;
+	return log;
 }
 
 /**
@@ -25,8 +25,8 @@ export function freshnessLog(): FreshnessLog {
  * "" and "/" are both the dashboard.
  */
 export function menuKeyFor(path: string): string {
-  const trimmed = path.replace(/^#/, '').trim();
-  return trimmed === '' ? '/' : trimmed;
+	const trimmed = path.replace(/^#/, '').trim();
+	return trimmed === '' ? '/' : trimmed;
 }
 
 /**
@@ -38,16 +38,16 @@ export function menuKeyFor(path: string): string {
  * later repository change overwrites it with the real mutation time.
  */
 export function setActiveMenu(menu: string): void {
-  currentMenu = menu;
-  if (menu !== '' && !log.has(menu)) log.touch(menu);
-  renderFreshness();
+	currentMenu = menu;
+	if (menu !== '' && !log.has(menu)) log.touch(menu);
+	renderFreshness();
 }
 
 /** Records a data change for the menu currently on screen. */
 export function markDataChanged(at?: number): void {
-  if (currentMenu === '') return;
-  log.touch(currentMenu, at);
-  renderFreshness();
+	if (currentMenu === '') return;
+	log.touch(currentMenu, at);
+	renderFreshness();
 }
 
 /**
@@ -56,24 +56,24 @@ export function markDataChanged(at?: number): void {
  * textContent would dirty the DOM for nothing.
  */
 export function renderFreshness(): void {
-  if (!stampEl || currentMenu === '') return;
-  const label = freshnessLabel(log, currentMenu);
-  const next = label === '' ? '' : `Atualizado às ${label}`;
-  if (stampEl.textContent !== next) stampEl.textContent = next;
-  stampEl.dataset.menu = currentMenu;
-  stampEl.dataset.updatedAt = label === '' ? '' : String(log.read(currentMenu));
-  stampEl.classList.toggle('is-empty', next === '');
+	if (!stampEl || currentMenu === '') return;
+	const label = freshnessLabel(log, currentMenu);
+	const next = label === '' ? '' : `Atualizado às ${label}`;
+	if (stampEl.textContent !== next) stampEl.textContent = next;
+	stampEl.dataset.menu = currentMenu;
+	stampEl.dataset.updatedAt = label === '' ? '' : String(log.read(currentMenu));
+	stampEl.classList.toggle('is-empty', next === '');
 }
 
 /** Installs the stamp element once, when the shell is first built. */
 export function mountFreshness(host: HTMLElement): void {
-  stampEl = host;
-  renderFreshness();
+	stampEl = host;
+	renderFreshness();
 }
 
 /** Test seam: drops the element and every recorded stamp. */
 export function resetFreshness(): void {
-  stampEl = null;
-  currentMenu = '';
-  log.clear();
+	stampEl = null;
+	currentMenu = '';
+	log.clear();
 }

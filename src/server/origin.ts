@@ -8,13 +8,13 @@ const FORBIDDEN = json({ error: 'origem_nao_permitida' }, 403);
 // change passwords with a session it never held. Non-browser clients (no
 // Origin header) pass through: the WAHA engine calls webhooks server-side.
 export function assertSameOrigin(request: Request): Response | null {
-  const origin = request.headers.get('origin');
-  if (!origin) return null;
-  const requestOrigin = new URL(request.url).origin;
-  try {
-    const received = new URL(origin).origin;
-    return received === requestOrigin ? null : FORBIDDEN;
-  } catch {
-    return FORBIDDEN;
-  }
+	const origin = request.headers.get('origin');
+	if (!origin) return null;
+	const requestOrigin = new URL(request.url).origin;
+	try {
+		const received = new URL(origin).origin;
+		return received === requestOrigin ? null : FORBIDDEN;
+	} catch {
+		return FORBIDDEN;
+	}
 }

@@ -9,13 +9,13 @@ import { applyRetentionPolicies, readRetentionDays } from './retention';
 // `unknown` because `readRetentionDays` parses it by name, which lets the
 // Worker pass its whole `Env` and the tests pass a plain literal.
 export async function runRetention(
-  db: Database,
-  config: unknown
+	db: Database,
+	config: unknown
 ): Promise<void> {
-  const report = await applyRetentionPolicies(db, readRetentionDays(config));
-  if (report.errors.length > 0) {
-    console.error('retention run failed', JSON.stringify(report));
-    return;
-  }
-  console.log('retention run', JSON.stringify(report));
+	const report = await applyRetentionPolicies(db, readRetentionDays(config));
+	if (report.errors.length > 0) {
+		console.error('retention run failed', JSON.stringify(report));
+		return;
+	}
+	console.log('retention run', JSON.stringify(report));
 }

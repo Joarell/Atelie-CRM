@@ -8,7 +8,7 @@ export const COMPONENTS_SHAPE: TableShape = { jsonFields: ['items'] };
 
 export const PRODUCTS_TABLE = 'products';
 export const PRODUCTS_SHAPE: TableShape = {
-  jsonFields: ['labor', 'fixedExpenses', 'items']
+	jsonFields: ['labor', 'fixedExpenses', 'items']
 };
 
 export const CUSTOMERS_TABLE = 'customers';
@@ -16,8 +16,8 @@ export const CUSTOMERS_SHAPE: TableShape = {};
 
 export const ORDERS_TABLE = 'orders';
 export const ORDERS_SHAPE: TableShape = {
-  jsonFields: ['lines'],
-  boolFields: ['stockDeducted']
+	jsonFields: ['lines'],
+	boolFields: ['stockDeducted']
 };
 
 export const STOCK_MOVEMENTS_TABLE = 'stock_movements';
@@ -92,8 +92,8 @@ export const APPOINTMENT_TYPES_SHAPE: TableShape = { boolFields: ['ativo'] };
 
 export const ACTION_LOGS_TABLE = 'action_logs';
 export const ACTION_LOGS_SHAPE: TableShape = {
-  jsonFields: ['metadata'],
-  boolFields: []
+	jsonFields: ['metadata'],
+	boolFields: []
 };
 
 // ── LGPD (consent + rate limit) ─────────────────────────────────────────
@@ -103,5 +103,5 @@ export const CONSENT_SHAPE: TableShape = {};
 
 export const RATE_LIMIT_TABLE = 'rate_limits';
 export const RATE_LIMIT_SHAPE: TableShape = {
-  jsonFields: ['metadata']
+	jsonFields: ['metadata']
 };

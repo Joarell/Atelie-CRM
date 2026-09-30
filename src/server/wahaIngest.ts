@@ -10,28 +10,28 @@
 
 export type { WahaMessageRow } from './wahaMessage';
 export {
-  insertWahaMessage,
-  messageByWahaId,
-  bareIdOf
+	insertWahaMessage,
+	messageByWahaId,
+	bareIdOf
 } from './wahaMessage';
 export {
-  ensureWahaContact,
-  ensureWahaConversation,
-  phoneOf
+	ensureWahaContact,
+	ensureWahaConversation,
+	phoneOf
 } from './wahaContact';
 export {
-  handleInboundMessage,
-  handleOutboundEcho,
-  handleWahaAck,
-  handleWahaEdited,
-  handleWahaRevoked,
-  handleWahaSessionStatus,
-  mirrorWahaSessionState,
-  dispatchWahaEvent
+	handleInboundMessage,
+	handleOutboundEcho,
+	handleWahaAck,
+	handleWahaEdited,
+	handleWahaRevoked,
+	handleWahaSessionStatus,
+	mirrorWahaSessionState,
+	dispatchWahaEvent
 } from './wahaDispatch';
 export {
-  sendWahaText,
-  sendChatIdFor,
-  WahaSendError,
-  type SendWahaTextInput
+	sendWahaText,
+	sendChatIdFor,
+	WahaSendError,
+	type SendWahaTextInput
 } from './wahaSend';

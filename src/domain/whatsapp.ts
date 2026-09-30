@@ -5,8 +5,8 @@
 // DeskcommCRM-RecipeCosting/lib/channels/waha-server.ts.
 import type { Contact, Conversation } from "./crm";
 import {
-  wahaSessionWebhooks,
-  type WahaEngineWebhook
+	wahaSessionWebhooks,
+	type WahaEngineWebhook
 } from "./wahaWebhookConfig";
 
 // Clock ceiling for every WAHA call. The reference spec (03-spec-whatsapp-waha)

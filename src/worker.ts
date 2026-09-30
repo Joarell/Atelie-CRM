@@ -10,16 +10,16 @@ import { runRetention } from './server/retentionCron';
 // than wrapping it. Do not point `main` at both.
 // See the Astro Cloudflare adapter docs, "Using advanced routing".
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext) {
-    const state = new FetchState(request);
-    const asset = await cf(state, env, ctx);
-    if (asset) return asset;
-    return finalize(state, await astro(state));
-  },
+	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+		const state = new FetchState(request);
+		const asset = await cf(state, env, ctx);
+		if (asset) return asset;
+		return finalize(state, await astro(state));
+	},
 
-  // LGPD retention, daily at 03:00 UTC (off-peak). The windows come from the
-  // RETENTION_* vars, so a deployment can tighten them without a redeploy.
-  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext) {
-    await runRetention(env.DB, env);
-  }
+	// LGPD retention, daily at 03:00 UTC (off-peak). The windows come from the
+	// RETENTION_* vars, so a deployment can tighten them without a redeploy.
+	async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext) {
+		await runRetention(env.DB, env);
+	}
 };

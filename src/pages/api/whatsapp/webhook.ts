@@ -3,9 +3,9 @@ import { env } from 'cloudflare:workers';
 import { getDb } from '../../../server/context';
 import { json } from '../../../server/http';
 import {
-  authenticateWahaWebhook,
-  handleWahaWebhook,
-  readWahaWebhookConfig
+	authenticateWahaWebhook,
+	handleWahaWebhook,
+	readWahaWebhookConfig
 } from '../../../server/wahaWebhook';
 
 // WAHA webhook endpoint (POST). Reaches the app over the network from the WAHA
@@ -15,26 +15,26 @@ import {
 // absent). Everything is archived in `webhook_events` before interpretation;
 // refusal is 400 (never 5xx — WAHA redelivers what can never pass).
 export const POST: APIRoute = async (context) => {
-  const config = readWahaWebhookConfig(env);
-  const auth = await authenticateWahaWebhook(context.request, config);
-  if (!auth.ok) {
-    return json(
-      { accepted: false, reason: auth.reason, hmacVerified: false },
-      401
-    );
-  }
+	const config = readWahaWebhookConfig(env);
+	const auth = await authenticateWahaWebhook(context.request, config);
+	if (!auth.ok) {
+		return json(
+			{ accepted: false, reason: auth.reason, hmacVerified: false },
+			401
+		);
+	}
 
-  const rawBody = await context.request.text();
-  const outcome = await handleWahaWebhook(getDb(), rawBody);
-  if (!outcome.accepted) {
-    return json(
-      {
-        accepted: false,
-        reason: outcome.reason,
-        hmacVerified: auth.signatureVerified
-      },
-      400
-    );
-  }
-  return json({ accepted: true, hmacVerified: auth.signatureVerified });
+	const rawBody = await context.request.text();
+	const outcome = await handleWahaWebhook(getDb(), rawBody);
+	if (!outcome.accepted) {
+		return json(
+			{
+				accepted: false,
+				reason: outcome.reason,
+				hmacVerified: auth.signatureVerified
+			},
+			400
+		);
+	}
+	return json({ accepted: true, hmacVerified: auth.signatureVerified });
 };

@@ -5,69 +5,69 @@ import { getDb } from '../../../server/context';
 import { assertSameOrigin } from '../../../server/origin';
 import { json } from '../../../server/http';
 import {
-  userByEmail,
-  verifyPassword,
-  publicUser,
-  newSession,
-  createSessionRow,
-  deleteSessionsForUser,
-  purgeExpiredSessions
+	userByEmail,
+	verifyPassword,
+	publicUser,
+	newSession,
+	createSessionRow,
+	deleteSessionsForUser,
+	purgeExpiredSessions
 } from '../../../server/auth';
 import { recordAudit, newAuditEntry, clientIp } from '../../../server/audit';
 
 type LoginBody = {
-  email: string;
-  password: string;
+	email: string;
+	password: string;
 };
 
 export const POST: APIRoute = async (context) => {
-  const blocked = assertSameOrigin(context.request);
-  if (blocked) return blocked;
-  const db = getDb();
-  const body = await readLoginBody(context.request);
-  const ip = clientIp(context.request);
-  if (!body.email || !body.password) {
-    return fail(db, '', 'login_missing_fields', body.email, ip, 400,
-      'email_e_senha_obrigatorios');
-  }
-  const user = await userByEmail(db, body.email);
-  const valid = user
-    ? await verifyPassword(
-        body.password, user.passwordHash, user.passwordSalt
-      )
-    : false;
-  if (!user || !valid) {
-    return fail(db, user?.id ?? '', 'login_failed', body.email, ip, 401,
-      'credenciais_invalidas');
-  }
-  return grant(user, db, ip);
+	const blocked = assertSameOrigin(context.request);
+	if (blocked) return blocked;
+	const db = getDb();
+	const body = await readLoginBody(context.request);
+	const ip = clientIp(context.request);
+	if (!body.email || !body.password) {
+		return fail(db, '', 'login_missing_fields', body.email, ip, 400,
+			'email_e_senha_obrigatorios');
+	}
+	const user = await userByEmail(db, body.email);
+	const valid = user
+		? await verifyPassword(
+				body.password, user.passwordHash, user.passwordSalt
+			)
+		: false;
+	if (!user || !valid) {
+		return fail(db, user?.id ?? '', 'login_failed', body.email, ip, 401,
+			'credenciais_invalidas');
+	}
+	return grant(user, db, ip);
 };
 
 async function fail(
-  db: Database,
-  userId: string,
-  action: string,
-  detail: string,
-  ip: string,
-  status: number,
-  message: string
+	db: Database,
+	userId: string,
+	action: string,
+	detail: string,
+	ip: string,
+	status: number,
+	message: string
 ): Promise<Response> {
-  await recordAudit(db, newAuditEntry(userId, action, detail, ip));
-  return json({ error: message }, status);
+	await recordAudit(db, newAuditEntry(userId, action, detail, ip));
+	return json({ error: message }, status);
 }
 
 async function grant(user: User, db: Database, ip: string): Promise<Response> {
-  await purgeExpiredSessions(db);
-  await deleteSessionsForUser(db, user.id);
-  const session = await createSessionRow(db, newSession(user.id));
-  await recordAudit(db, newAuditEntry(user.id, 'login_ok', user.email, ip));
-  return json({ token: session.token, user: publicUser(user) });
+	await purgeExpiredSessions(db);
+	await deleteSessionsForUser(db, user.id);
+	const session = await createSessionRow(db, newSession(user.id));
+	await recordAudit(db, newAuditEntry(user.id, 'login_ok', user.email, ip));
+	return json({ token: session.token, user: publicUser(user) });
 }
 
 async function readLoginBody(request: Request): Promise<LoginBody> {
-  const raw = (await request.json()) as Partial<LoginBody> | null;
-  return {
-    email: typeof raw?.email === 'string' ? raw.email : '',
-    password: typeof raw?.password === 'string' ? raw.password : ''
-  };
+	const raw = (await request.json()) as Partial<LoginBody> | null;
+	return {
+		email: typeof raw?.email === 'string' ? raw.email : '',
+		password: typeof raw?.password === 'string' ? raw.password : ''
+	};
 }

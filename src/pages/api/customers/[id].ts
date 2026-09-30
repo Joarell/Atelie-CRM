@@ -1,10 +1,10 @@
 import { createItemRoutes } from '../../../server/routeFactory';
 import {
-  CUSTOMERS_TABLE,
-  CUSTOMERS_SHAPE
+	CUSTOMERS_TABLE,
+	CUSTOMERS_SHAPE
 } from '../../../server/tables';
 
 export const { PUT, DELETE } = createItemRoutes(
-  CUSTOMERS_TABLE,
-  CUSTOMERS_SHAPE
+	CUSTOMERS_TABLE,
+	CUSTOMERS_SHAPE
 );

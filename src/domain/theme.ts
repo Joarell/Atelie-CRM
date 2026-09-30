@@ -9,27 +9,27 @@ export type ThemeIcon = '☾' | '☀';
 export const THEME_STORAGE_KEY = 'deskcomm-theme';
 
 export function isThemeMode(value: unknown): value is ThemeMode {
-  return value === 'light' || value === 'dark';
+	return value === 'light' || value === 'dark';
 }
 
 // No stored choice means "follow the system"; once the user picks a side we
 // keep it regardless of the OS setting.
 export function preferredMode(
-  stored: unknown,
-  prefersDark: boolean
+	stored: unknown,
+	prefersDark: boolean
 ): ThemeMode {
-  if (isThemeMode(stored)) return stored;
-  return prefersDark ? 'dark' : 'light';
+	if (isThemeMode(stored)) return stored;
+	return prefersDark ? 'dark' : 'light';
 }
 
 export function nextMode(mode: ThemeMode): ThemeMode {
-  return mode === 'dark' ? 'light' : 'dark';
+	return mode === 'dark' ? 'light' : 'dark';
 }
 
 export function modeLabel(mode: ThemeMode): string {
-  return mode === 'dark' ? 'Escuro' : 'Claro';
+	return mode === 'dark' ? 'Escuro' : 'Claro';
 }
 
 export function modeIcon(mode: ThemeMode): ThemeIcon {
-  return mode === 'dark' ? '☾' : '☀';
+	return mode === 'dark' ? '☾' : '☀';
 }

@@ -1,9 +1,9 @@
 import type {
-  Ingredient,
-  RecipeComponent,
-  Product,
-  LaborInputs,
-  FixedExpenses
+	Ingredient,
+	RecipeComponent,
+	Product,
+	LaborInputs,
+	FixedExpenses
 } from './types';
 
 // Every function below is a pure, single-purpose calculation.
@@ -11,117 +11,117 @@ import type {
 // no side effects. Callers (services) are responsible for resolving ids.
 
 export function ingredientUnitCost(ingredient: Ingredient | undefined): number {
-  if (!ingredient || !ingredient.packageSize) return 0;
-  return ingredient.packagePrice / ingredient.packageSize;
+	if (!ingredient || !ingredient.packageSize) return 0;
+	return ingredient.packagePrice / ingredient.packageSize;
 }
 
 export function componentTotalCost(
-  component: RecipeComponent,
-  resolveIngredient: (id: string) => Ingredient | undefined
+	component: RecipeComponent,
+	resolveIngredient: (id: string) => Ingredient | undefined
 ): number {
-  return component.items.reduce((sum, item) => {
-    const cost = ingredientUnitCost(resolveIngredient(item.ingredientId));
-    return sum + cost * item.qty;
-  }, 0);
+	return component.items.reduce((sum, item) => {
+		const cost = ingredientUnitCost(resolveIngredient(item.ingredientId));
+		return sum + cost * item.qty;
+	}, 0);
 }
 
 export function productDirectCost(
-  product: Product,
-  resolveIngredient: (id: string) => Ingredient | undefined,
-  resolveComponent: (id: string) => RecipeComponent | undefined
+	product: Product,
+	resolveIngredient: (id: string) => Ingredient | undefined,
+	resolveComponent: (id: string) => RecipeComponent | undefined
 ): number {
-  return product.items.reduce((sum, item) => {
-    if (item.kind === 'ingredient') {
-      return sum + ingredientUnitCost(resolveIngredient(item.refId)) * item.qty;
-    }
-    const component = resolveComponent(item.refId);
-    const cost = component
-      ? componentTotalCost(component, resolveIngredient)
-      : 0;
-    return sum + cost * item.qty;
-  }, 0);
+	return product.items.reduce((sum, item) => {
+		if (item.kind === 'ingredient') {
+			return sum + ingredientUnitCost(resolveIngredient(item.refId)) * item.qty;
+		}
+		const component = resolveComponent(item.refId);
+		const cost = component
+			? componentTotalCost(component, resolveIngredient)
+			: 0;
+		return sum + cost * item.qty;
+	}, 0);
 }
 
 export function hoursPerMonth(labor: LaborInputs): number {
-  return labor.daysPerMonth * labor.hoursPerDay;
+	return labor.daysPerMonth * labor.hoursPerDay;
 }
 
 export function laborCostPerMinute(labor: LaborInputs): number {
-  const hours = hoursPerMonth(labor);
-  if (!hours) return 0;
-  return labor.salary / hours / 60;
+	const hours = hoursPerMonth(labor);
+	if (!hours) return 0;
+	return labor.salary / hours / 60;
 }
 
 export function fixedMonthlyTotal(fixed: FixedExpenses): number {
-  return fixed.rent + fixed.energy + fixed.water +
-    fixed.internet + fixed.office + fixed.mei;
+	return fixed.rent + fixed.energy + fixed.water +
+		fixed.internet + fixed.office + fixed.mei;
 }
 
 // Fixed costs are allocated using the same monthly working hours as labor
 // (the business only "operates" during those hours), so it takes the
 // product's own labor inputs as the time basis.
 export function fixedCostPerMinute(
-  fixed: FixedExpenses,
-  labor: LaborInputs
+	fixed: FixedExpenses,
+	labor: LaborInputs
 ): number {
-  const hours = hoursPerMonth(labor);
-  if (!hours) return 0;
-  return fixedMonthlyTotal(fixed) / hours / 60;
+	const hours = hoursPerMonth(labor);
+	if (!hours) return 0;
+	return fixedMonthlyTotal(fixed) / hours / 60;
 }
 
 export interface ProductPricing {
-  directCost: number;
-  laborCost: number;
-  fixedCost: number;
-  variableCost: number;
-  totalCost: number;
-  markupPercent: number;
-  markupValue: number;
-  suggestedPrice: number;
-  unitPrice: number;
-  profit: number;
-  profitPercent: number;
+	directCost: number;
+	laborCost: number;
+	fixedCost: number;
+	variableCost: number;
+	totalCost: number;
+	markupPercent: number;
+	markupValue: number;
+	suggestedPrice: number;
+	unitPrice: number;
+	profit: number;
+	profitPercent: number;
 }
 
 // Everything needed to price a product now lives on the product itself
 // (labor, fixed expenses, variable %, markup %) — no external settings
 // object is consulted here anymore.
 export function calculateProductPricing(
-  product: Product,
-  directCost: number
+	product: Product,
+	directCost: number
 ): ProductPricing {
-  const laborCost =
-    laborCostPerMinute(product.labor) * product.prepTime;
-  const fixedPerMin = fixedCostPerMinute(product.fixedExpenses, product.labor);
-  const fixedCost = fixedPerMin * product.prepTime;
-  const variableCost = directCost * (product.variablePercent / 100);
-  const totalCost = directCost + laborCost + fixedCost + variableCost;
-  const markupPercent = product.markupPercent;
-  const markupValue = totalCost * (markupPercent / 100);
-  const suggestedPrice = totalCost + markupValue;
-  const parts = {
-    directCost,
-    laborCost,
-    fixedCost,
-    variableCost,
-    totalCost,
-    markupPercent,
-    markupValue,
-    suggestedPrice
-  };
-  return buildPricingResult(parts, product.yieldUnits);
+	const laborCost =
+		laborCostPerMinute(product.labor) * product.prepTime;
+	const fixedPerMin = fixedCostPerMinute(product.fixedExpenses, product.labor);
+	const fixedCost = fixedPerMin * product.prepTime;
+	const variableCost = directCost * (product.variablePercent / 100);
+	const totalCost = directCost + laborCost + fixedCost + variableCost;
+	const markupPercent = product.markupPercent;
+	const markupValue = totalCost * (markupPercent / 100);
+	const suggestedPrice = totalCost + markupValue;
+	const parts = {
+		directCost,
+		laborCost,
+		fixedCost,
+		variableCost,
+		totalCost,
+		markupPercent,
+		markupValue,
+		suggestedPrice
+	};
+	return buildPricingResult(parts, product.yieldUnits);
 }
 
 function buildPricingResult(
-  parts: Omit<ProductPricing, 'unitPrice' | 'profit' | 'profitPercent'>,
-  yieldUnits: number
+	parts: Omit<ProductPricing, 'unitPrice' | 'profit' | 'profitPercent'>,
+	yieldUnits: number
 ): ProductPricing {
-  const unitPrice = yieldUnits
-    ? parts.suggestedPrice / yieldUnits
-    : parts.suggestedPrice;
-  const profit = parts.suggestedPrice - parts.totalCost;
-  const profitPercent = parts.suggestedPrice
-    ? (parts.markupValue / parts.suggestedPrice) * 100
-    : 0;
-  return { ...parts, unitPrice, profit, profitPercent };
+	const unitPrice = yieldUnits
+		? parts.suggestedPrice / yieldUnits
+		: parts.suggestedPrice;
+	const profit = parts.suggestedPrice - parts.totalCost;
+	const profitPercent = parts.suggestedPrice
+		? (parts.markupValue / parts.suggestedPrice) * 100
+		: 0;
+	return { ...parts, unitPrice, profit, profitPercent };
 }

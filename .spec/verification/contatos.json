@@ -1,7 +1,7 @@
 {
   "feature": "contatos",
-  "timestamp": "2026-09-30T03:14:33.704Z",
-  "gitRev": "da6ad4b",
+  "timestamp": "2026-09-30T03:42:11.683Z",
+  "gitRev": "557b9b7",
   "command": "npx vitest run --reporter=tap",
   "reporter": "tap",
   "exitCode": 0,
@@ -9,47 +9,47 @@
   "results": {
     "AC-028": {
       "status": "pass",
-      "testName": "shows a row for every contact in the repository @spec:AC-028 # time=197.83ms",
+      "testName": "shows a row for every contact in the repository @spec:AC-028 # time=77.41ms",
       "method": "tap"
     },
     "AC-029": {
       "status": "pass",
-      "testName": "renders each saved contact by name, phone and e-mail @spec:AC-029 # time=7.69ms",
+      "testName": "renders each saved contact by name, phone and e-mail @spec:AC-029 # time=11.33ms",
       "method": "tap"
     },
     "AC-030": {
       "status": "pass",
-      "testName": "sorts the whole set by name @spec:AC-030 # time=8.06ms",
+      "testName": "sorts the whole set by name @spec:AC-030 # time=7.24ms",
       "method": "tap"
     },
     "AC-031": {
       "status": "pass",
-      "testName": "shows the empty state when nothing is saved @spec:AC-031 # time=6.11ms",
+      "testName": "shows the empty state when nothing is saved @spec:AC-031 # time=2.55ms",
       "method": "tap"
     },
     "AC-032": {
       "status": "pass",
-      "testName": "persists the submitted fields and shows the new row @spec:AC-032 # time=45.69ms",
+      "testName": "persists the submitted fields and shows the new row @spec:AC-032 # time=23.42ms",
       "method": "tap"
     },
     "AC-033": {
       "status": "pass",
-      "testName": "closes the modal so the new contact is visible @spec:AC-033 # time=21.58ms",
+      "testName": "closes the modal so the new contact is visible @spec:AC-033 # time=17.07ms",
       "method": "tap"
     }
   },
   "principles": {
     "P-004": {
       "status": "pass",
-      "testName": "@principle:P-004 consent is granular per purpose # time=70.61ms"
+      "testName": "@principle:P-004 consent is granular per purpose # time=41.26ms"
     },
     "P-005": {
       "status": "pass",
-      "testName": "@principle:P-005 retention windows are configurable # time=0.77ms"
+      "testName": "@principle:P-005 retention windows are configurable # time=3.09ms"
     },
     "P-006": {
       "status": "pass",
-      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=6.50ms"
+      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=6.23ms"
     }
   }
 }

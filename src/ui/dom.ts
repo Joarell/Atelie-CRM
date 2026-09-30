@@ -15,53 +15,53 @@
 // which would abort the whole wire-up pass and leave buttons like Enviar
 // unbound — this one returns `null` so callers use `?.addEventListener`.
 export function qsIf<T = HTMLElement>(
-  selector: string,
-  root: ParentNode | HTMLElement = document
+	selector: string,
+	root: ParentNode | HTMLElement = document
 ): T | null {
-  return root.querySelector(selector) as T | null;
+	return root.querySelector(selector) as T | null;
 }
 
 export function qs<T = HTMLElement>(
-  selector: string,
-  root: ParentNode | HTMLElement = document
+	selector: string,
+	root: ParentNode | HTMLElement = document
 ): T {
-  const el = root.querySelector(selector) as unknown as T;
-  if (!el) throw new Error(`Element not found: ${selector}`);
-  return el;
+	const el = root.querySelector(selector) as unknown as T;
+	if (!el) throw new Error(`Element not found: ${selector}`);
+	return el;
 }
 
 export function qsa<T extends Node = Node>(
-  selector: string,
-  root: ParentNode | HTMLElement = document
+	selector: string,
+	root: ParentNode | HTMLElement = document
 ): NodeListOf<T> {
-  return root.querySelectorAll(selector) as unknown as NodeListOf<T>;
+	return root.querySelectorAll(selector) as unknown as NodeListOf<T>;
 }
 
 export function mount(root: HTMLElement, html: string): void {
-  root.innerHTML = html;
+	root.innerHTML = html;
 }
 
 export function on<K extends keyof HTMLElementEventMap>(
-  root: ParentNode | HTMLElement,
-  selector: string,
-  type: K,
-  handler: (event: HTMLElementEventMap[K], target: HTMLElement) => void
+	root: ParentNode | HTMLElement,
+	selector: string,
+	type: K,
+	handler: (event: HTMLElementEventMap[K], target: HTMLElement) => void
 ): void {
-  root.addEventListener(type, (event) => {
-    const target = (event.target as HTMLElement).closest<HTMLElement>(selector);
-    if (target && root.contains(target)) {
-      handler(event as HTMLElementEventMap[K], target);
-    }
-  });
+	root.addEventListener(type, (event) => {
+		const target = (event.target as HTMLElement).closest<HTMLElement>(selector);
+		if (target && root.contains(target)) {
+			handler(event as HTMLElementEventMap[K], target);
+		}
+	});
 }
 
 export function formValues(form: HTMLFormElement): Record<string, string> {
-  const data = new FormData(form);
-  const values: Record<string, string> = {};
-  data.forEach((value, key) => { values[key] = String(value); });
-  return values;
+	const data = new FormData(form);
+	const values: Record<string, string> = {};
+	data.forEach((value, key) => { values[key] = String(value); });
+	return values;
 }
 
 export function escapeAttr(text: string): string {
-  return String(text).replace(/"/g, '&quot;');
+	return String(text).replace(/"/g, '&quot;');
 }

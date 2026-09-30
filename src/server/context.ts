@@ -6,5 +6,5 @@ import type { Database } from './db';
 // centralises that access in one place. The narrow `Database` return type
 // documents the only D1 surface the app uses (see ./db).
 export function getDb(): Database {
-  return env.DB;
+	return env.DB;
 }
