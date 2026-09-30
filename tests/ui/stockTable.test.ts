@@ -360,7 +360,7 @@ describe('StockView integration', () => {
     dispose();
   });
 
-  it('updates when ingredients change', () => {
+  it('updates when ingredients change @spec:AC-042', () => {
     const dispose = renderStockView(root, ctx);
     expect(root.innerHTML).toContain('Farinha');
 
@@ -372,6 +372,9 @@ describe('StockView integration', () => {
 
     expect(root.innerHTML).toContain('Fermento');
     expect(root.innerHTML).toContain('10 g');
+    const rows = Array.from(root.querySelectorAll('tbody tr'));
+    const row = rows.find((r) => r.textContent?.includes('Fermento'));
+    expect(row?.textContent).toContain('10 g');
     dispose();
   });
 

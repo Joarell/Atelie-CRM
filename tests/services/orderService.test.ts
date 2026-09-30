@@ -1,7 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { InMemoryRepository } from '../helpers/inMemoryRepository';
 import { OrderService, type NewOrderInput } from '../../src/services/OrderService';
+import { StockService } from '../../src/services/StockService';
 import type { Order, OrderLine } from '../../src/domain/types';
+import type {
+  Ingredient, Product, RecipeComponent, StockMovement
+} from '../../src/domain/types';
 
 const line = (productId: string, qty: number, unitPrice: number): OrderLine => ({ productId, productName: 'Bolo', qty, unitPrice });
 
@@ -19,6 +23,32 @@ function makeHarness() {
   const stock = { deductForOrder: vi.fn() };
   const service = new OrderService(orders, stock as never);
   return { orders, stock, service };
+}
+
+const farinha: Ingredient = {
+  id: 'ing-1', name: 'Farinha 1000g', unit: 'g', packageSize: 1000,
+  packagePrice: 10, stock: 1000, minStock: 200
+};
+
+const bolo: Product = {
+  id: 'p1', name: 'Bolo', category: 'Doce', yieldUnits: 8, prepTime: 60,
+  labor: { salary: 2400, daysPerMonth: 24, hoursPerDay: 8 },
+  fixedExpenses: {
+    rent: 800, energy: 250, water: 90, internet: 120, office: 60, mei: 76
+  },
+  variablePercent: 10, markupPercent: 70,
+  items: [{ kind: 'ingredient', refId: 'ing-1', qty: 300 }]
+};
+
+function makeRealHarness() {
+  const orders = new InMemoryRepository<Order>();
+  const ingredients = InMemoryRepository.seeded([farinha]);
+  const components = new InMemoryRepository<RecipeComponent>();
+  const products = InMemoryRepository.seeded([bolo]);
+  const movements = new InMemoryRepository<StockMovement>();
+  const stock = new StockService(ingredients, components, products, movements);
+  const service = new OrderService(orders, stock);
+  return { orders, ingredients, movements, service };
 }
 
 function input(overrides: Partial<NewOrderInput> = {}): NewOrderInput {
@@ -126,5 +156,35 @@ describe('OrderService.monthRevenue', () => {
     const { orders, service } = makeHarness();
     await orders.add(emptyOrder({ status: 'producao' }));
     expect(service.monthRevenue(reference)).toBe(0);
+  });
+});
+
+describe('OrderService.setStatus baixa automática', () => {
+  it('mover para producao desconta a receita @spec:AC-034', async () => {
+    const { orders, ingredients, service } = makeRealHarness();
+    const order = await orders.add(emptyOrder({ lines: [line('p1', 1, 40)] }));
+    await service.setStatus(order.id, 'producao');
+    expect(ingredients.getById('ing-1')?.stock).toBe(700);
+    expect(orders.getById(order.id)?.stockDeducted).toBe(true);
+  });
+
+  it('segunda passagem por producao nao desconta de novo @spec:AC-035', async () => {
+    const { orders, ingredients, service } = makeRealHarness();
+    const order = await orders.add(emptyOrder({ lines: [line('p1', 1, 40)] }));
+    await service.setStatus(order.id, 'producao');
+    await service.setStatus(order.id, 'pendente');
+    await service.setStatus(order.id, 'producao');
+    expect(ingredients.getById('ing-1')?.stock).toBe(700);
+    expect(orders.getById(order.id)?.stockDeducted).toBe(true);
+  });
+
+  it('sair de producao nao devolve estoque @spec:AC-038', async () => {
+    const { orders, ingredients, movements, service } = makeRealHarness();
+    const order = await orders.add(emptyOrder({ lines: [line('p1', 1, 40)] }));
+    await service.setStatus(order.id, 'producao');
+    expect(ingredients.getById('ing-1')?.stock).toBe(700);
+    await service.setStatus(order.id, 'pendente');
+    expect(ingredients.getById('ing-1')?.stock).toBe(700);
+    expect(movements.getAll().length).toBe(1);
   });
 });

@@ -1,50 +1,50 @@
 {
   "feature": "updated-contacts",
-  "timestamp": "2026-09-29T04:45:35.088Z",
-  "gitRev": "660a2cb9",
+  "timestamp": "2026-09-30T03:16:03.712Z",
+  "gitRev": "da6ad4b",
   "command": "npx vitest run --reporter=tap",
   "reporter": "tap",
-  "exitCode": 1,
-  "testsParsed": 1267,
+  "exitCode": 0,
+  "testsParsed": 1338,
   "results": {
     "AC-023": {
       "status": "pass",
-      "testName": "AC-023: atualiza nome quando notifyName difere e nome atual é o telefone @spec:AC-023 # time=18.73ms",
+      "testName": "AC-023: atualiza nome quando notifyName difere e nome atual é o telefone @spec:AC-023 # time=32.28ms",
       "method": "tap"
     },
     "AC-024": {
       "status": "pass",
-      "testName": "AC-024: não altera nome quando notifyName é igual @spec:AC-024 # time=1.38ms",
+      "testName": "AC-024: não altera nome quando notifyName é igual @spec:AC-024 # time=0.68ms",
       "method": "tap"
     },
     "AC-025": {
       "status": "pass",
-      "testName": "AC-025: cria contato com notifyName quando número é novo @spec:AC-025 # time=13.70ms",
+      "testName": "AC-025: cria contato com notifyName quando número é novo @spec:AC-025 # time=43.04ms",
       "method": "tap"
     },
     "AC-026": {
       "status": "pass",
-      "testName": "AC-026: não sobrescreve nome quando notifyName está vazio @spec:AC-026 # time=0.62ms",
+      "testName": "AC-026: não sobrescreve nome quando notifyName está vazio @spec:AC-026 # time=4.01ms",
       "method": "tap"
     },
     "AC-027": {
       "status": "pass",
-      "testName": "AC-027: não sobrescreve nome definido pelo usuário @spec:AC-027 # time=1.15ms",
+      "testName": "AC-027: não sobrescreve nome definido pelo usuário @spec:AC-027 # time=5.42ms",
       "method": "tap"
     }
   },
   "principles": {
     "P-004": {
       "status": "pass",
-      "testName": "@principle:P-004 consent is granular per purpose # time=29.52ms"
+      "testName": "@principle:P-004 consent is granular per purpose # time=56.93ms"
     },
     "P-005": {
       "status": "pass",
-      "testName": "@principle:P-005 retention windows are configurable # time=1.57ms"
+      "testName": "@principle:P-005 retention windows are configurable # time=2.37ms"
     },
     "P-006": {
       "status": "pass",
-      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=5.83ms"
+      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=7.21ms"
     }
   }
 }

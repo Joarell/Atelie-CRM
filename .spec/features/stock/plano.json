@@ -1,0 +1,119 @@
+{
+  "runId": "atelie-erp(1)-stock-munga4y1",
+  "feature": "stock",
+  "agent": "claude",
+  "modo": "paralelo",
+  "paralelizar": null,
+  "modeloForcado": null,
+  "esforcoForcado": null,
+  "geradoEm": "2026-09-30 01:52",
+  "branchTrabalho": "spec/stock",
+  "baseDir": ".spec/features/stock",
+  "specDir": ".spec",
+  "repoName": "atelie-erp(1)",
+  "logsDir": "../onp-worktrees/atelie-erp(1)-stock-logs",
+  "ondas": [
+    [
+      "faixa-1",
+      "faixa-2",
+      "faixa-3"
+    ],
+    [
+      "faixa-4"
+    ]
+  ],
+  "faixas": [
+    {
+      "id": "faixa-1",
+      "branch": "spec/stock-faixa-1",
+      "worktree": "../onp-worktrees/atelie-erp(1)-stock-faixa-1",
+      "tarefas": [
+        {
+          "id": "T-010",
+          "titulo": "Baixa automática no setStatus do OrderService",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "src/services/OrderService.ts",
+            "tests/services/orderService.test.ts"
+          ],
+          "refs": [
+            "US-009",
+            "US-010",
+            "AC-034",
+            "AC-035",
+            "AC-038"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-2",
+      "branch": "spec/stock-faixa-2",
+      "worktree": "../onp-worktrees/atelie-erp(1)-stock-faixa-2",
+      "tarefas": [
+        {
+          "id": "T-011",
+          "titulo": "Testes de movimentação e saldo negativo",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "tests/services/stockService.test.ts"
+          ],
+          "refs": [
+            "US-009",
+            "AC-036",
+            "AC-037"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-3",
+      "branch": "spec/stock-faixa-3",
+      "worktree": "../onp-worktrees/atelie-erp(1)-stock-faixa-3",
+      "tarefas": [
+        {
+          "id": "T-012",
+          "titulo": "Testes de UI da baixa nos pedidos",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "tests/ui/ordersStockDeduct.test.ts"
+          ],
+          "refs": [
+            "US-009",
+            "US-011",
+            "AC-034",
+            "AC-039",
+            "AC-040",
+            "AC-041"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-4",
+      "branch": "spec/stock-faixa-4",
+      "worktree": "../onp-worktrees/atelie-erp(1)-stock-faixa-4",
+      "tarefas": [
+        {
+          "id": "T-013",
+          "titulo": "Anotar teste do Estoque com AC-042",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "tests/ui/stockTable.test.ts"
+          ],
+          "refs": [
+            "US-012",
+            "AC-042"
+          ]
+        }
+      ]
+    }
+  ],
+  "sequenciais": [],
+  "concluidas": [],
+  "avisos": []
+}

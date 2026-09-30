@@ -41,6 +41,7 @@ export class OrderService {
 
   async setStatus(orderId: string, status: OrderStatus): Promise<void> {
     await this.orders.update(orderId, { status });
+    if (status === 'producao') await this.deductStock(orderId);
   }
 
   async setPaymentStatus(

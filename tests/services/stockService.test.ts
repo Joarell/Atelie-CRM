@@ -31,10 +31,29 @@ const order: Order = {
   notes: '', stockDeducted: false, createdAt: '2026-09-17T10:00:00Z'
 };
 
+const filling: RecipeComponent = {
+  id: 'filling', name: 'Recheio', type: 'recheio', yieldDesc: '1x',
+  prepTime: 15, items: [{ ingredientId: 'butter', qty: 50 }]
+};
+const pie: Product = {
+  ...cake, id: 'pie', name: 'Torta', prepTime: 50,
+  items: [
+    { kind: 'ingredient', refId: 'flour', qty: 300 },
+    { kind: 'component', refId: 'filling', qty: 1 }
+  ]
+};
+
+const pieOrder: Order = {
+  id: 'o2', customerId: 'c1', customerName: 'Ana',
+  lines: [{ productId: 'pie', productName: 'Torta', qty: 1, unitPrice: 60 }],
+  deliveryDate: '2026-09-21', status: 'producao', paymentStatus: 'a_pagar',
+  notes: '', stockDeducted: true, createdAt: '2026-09-17T11:00:00Z'
+};
+
 function makeHarness() {
   const ingredients = InMemoryRepository.seeded([flour, butter]);
-  const components = InMemoryRepository.seeded([dough]);
-  const products = InMemoryRepository.seeded([cake]);
+  const components = InMemoryRepository.seeded([dough, filling]);
+  const products = InMemoryRepository.seeded([cake, pie]);
   const movements = new InMemoryRepository<StockMovement>();
   const stock = new StockService(ingredients, components, products, movements);
   return { ingredients, movements, stock };
@@ -84,5 +103,30 @@ describe('StockService.deductForOrder', () => {
     await stock.deductForOrder(order);
     expect(ingredients.getById('flour')?.stock).toBe(100 - 3000);
     expect(movements.getAll().length).toBe(1);
+  });
+
+  it('each of two ingredients gets its own saida @spec:AC-036', async () => {
+    const { movements, stock } = makeHarness();
+    await stock.deductForOrder(pieOrder);
+    const moves = movements.getAll();
+    expect(moves.length).toBe(2);
+    const ids = moves.map((m) => m.ingredientId).sort();
+    expect(ids).toEqual(['butter', 'flour']);
+    expect(moves.every((m) => m.type === 'saida')).toBe(true);
+    const flourMove = moves.find((m) => m.ingredientId === 'flour');
+    const butterMove = moves.find((m) => m.ingredientId === 'butter');
+    expect([flourMove?.qty, butterMove?.qty]).toEqual([300, 50]);
+  });
+
+  it('negative balance is allowed, not clamped @spec:AC-037', async () => {
+    const { ingredients, movements, stock } = makeHarness();
+    expect(ingredients.getById('flour')?.stock).toBe(100);
+    await stock.deductForOrder(pieOrder);
+    expect(ingredients.getById('flour')?.stock).toBe(-200);
+    expect(movements.getAll().length).toBe(2);
+    const flourSaida = movements.getAll().find(
+      (m) => m.ingredientId === 'flour' && m.type === 'saida'
+    );
+    expect(flourSaida?.qty).toBe(300);
   });
 });
