@@ -1,135 +1,135 @@
 {
   "feature": "lgpd-privacidade",
-  "timestamp": "2026-10-01T19:52:57.235Z",
-  "gitRev": "501332a",
+  "timestamp": "2026-10-01T21:16:13.964Z",
+  "gitRev": "fddc53b",
   "command": "npx vitest run --reporter=tap",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 1525,
+  "testsParsed": 1536,
   "results": {
     "AC-001": {
       "status": "pass",
-      "testName": "@spec:AC-001 recordConsent stores grantedAt, ip, userAgent, version, purposes # time=56.40ms",
+      "testName": "@spec:AC-001 recordConsent stores grantedAt, ip, userAgent, version, purposes # time=24.52ms",
       "method": "tap"
     },
     "AC-002": {
       "status": "pass",
-      "testName": "@spec:AC-002 withdrawConsent marks the record withdrawn with withdrawnAt # time=10.39ms",
+      "testName": "@spec:AC-002 withdrawConsent marks the record withdrawn with withdrawnAt # time=4.16ms",
       "method": "tap"
     },
     "AC-003": {
       "status": "pass",
-      "testName": "@spec:AC-003 hasValidConsent true for granted, false after withdraw # time=6.63ms",
+      "testName": "@spec:AC-003 hasValidConsent true for granted, false after withdraw # time=1.31ms",
       "method": "tap"
     },
     "AC-004": {
       "status": "pass",
-      "testName": "@spec:AC-004 grantConsent revokes the previous grant for the same purpose # time=5.52ms",
+      "testName": "@spec:AC-004 grantConsent revokes the previous grant for the same purpose # time=7.79ms",
       "method": "tap"
     },
     "AC-005": {
       "status": "pass",
-      "testName": "@spec:AC-005 allows the first MAX_LOGIN_ATTEMPTS attempts, then blocks # time=104.61ms",
+      "testName": "@spec:AC-005 allows the first MAX_LOGIN_ATTEMPTS attempts, then blocks # time=73.28ms",
       "method": "tap"
     },
     "AC-006": {
       "status": "pass",
-      "testName": "@spec:AC-006 blocks with 429 and retryAfter after exceeding the limit # time=3.91ms",
+      "testName": "@spec:AC-006 blocks with 429 and retryAfter after exceeding the limit # time=3.24ms",
       "method": "tap"
     },
     "AC-007": {
       "status": "pass",
-      "testName": "@spec:AC-007 stays blocked inside the window and recovers after it expires # time=253.75ms",
+      "testName": "@spec:AC-007 stays blocked inside the window and recovers after it expires # time=256.38ms",
       "method": "tap"
     },
     "AC-008": {
       "status": "pass",
-      "testName": "@spec:AC-008 keys on the connecting IP and the action suffix # time=0.50ms",
+      "testName": "@spec:AC-008 keys on the connecting IP and the action suffix # time=2.22ms",
       "method": "tap"
     },
     "AC-009": {
       "status": "pass",
-      "testName": "@spec:AC-009 anonymizes old messages but keeps recent ones # time=13.30ms",
+      "testName": "@spec:AC-009 anonymizes old messages but keeps recent ones # time=38.44ms",
       "method": "tap"
     },
     "AC-010": {
       "status": "pass",
-      "testName": "@spec:AC-010 anonymizes the phone of old conversations only # time=1.43ms",
+      "testName": "@spec:AC-010 anonymizes the phone of old conversations only # time=1.27ms",
       "method": "tap"
     },
     "AC-011": {
       "status": "pass",
-      "testName": "@spec:AC-011 deletes expired webhook events, audit logs and action logs # time=1.57ms",
+      "testName": "@spec:AC-011 deletes expired webhook events, audit logs and action logs # time=3.49ms",
       "method": "tap"
     },
     "AC-012": {
       "status": "pass",
-      "testName": "@spec:AC-012 deletes old auth_audit and action_logs # time=1.27ms",
+      "testName": "@spec:AC-012 deletes old auth_audit and action_logs # time=3.57ms",
       "method": "tap"
     },
     "AC-013": {
       "status": "pass",
-      "testName": "@spec:AC-013 deletes a withdrawn consent but never a granted one # time=1.92ms",
+      "testName": "@spec:AC-013 deletes a withdrawn consent but never a granted one # time=3.03ms",
       "method": "tap"
     },
     "AC-014": {
       "status": "pass",
-      "testName": "@spec:AC-014 reads windows from the Worker env # time=0.77ms",
+      "testName": "@spec:AC-014 reads windows from the Worker env # time=3.90ms",
       "method": "tap"
     },
     "AC-015": {
       "status": "pass",
-      "testName": "@spec:AC-015 applies the policies to the database in the env # time=20.57ms",
+      "testName": "@spec:AC-015 applies the policies to the database in the env # time=18.71ms",
       "method": "tap"
     },
     "AC-016": {
       "status": "pass",
-      "testName": "@spec:AC-016 pseudonymizePhone keeps country code and last 4 digits # time=2.79ms",
+      "testName": "@spec:AC-016 pseudonymizePhone keeps country code and last 4 digits # time=2.40ms",
       "method": "tap"
     },
     "AC-017": {
       "status": "pass",
-      "testName": "@spec:AC-017 pseudonymizeName keeps first letter of each part # time=2.95ms",
+      "testName": "@spec:AC-017 pseudonymizeName keeps first letter of each part # time=0.67ms",
       "method": "tap"
     },
     "AC-018": {
       "status": "pass",
-      "testName": "@spec:AC-018 pseudonymizeEmail keeps first letter and domain # time=0.35ms",
+      "testName": "@spec:AC-018 pseudonymizeEmail keeps first letter and domain # time=0.42ms",
       "method": "tap"
     },
     "AC-019": {
       "status": "pass",
-      "testName": "@spec:AC-019 pseudonymizeWahaPayload masks known fields including nested # time=4.18ms",
+      "testName": "@spec:AC-019 pseudonymizeWahaPayload masks known fields including nested # time=1.10ms",
       "method": "tap"
     },
     "AC-020": {
       "status": "pass",
-      "testName": "@spec:AC-020 export returns all user data in JSON # time=133.15ms",
+      "testName": "@spec:AC-020 export returns all user data in JSON # time=165.03ms",
       "method": "tap"
     },
     "AC-021": {
       "status": "pass",
-      "testName": "@spec:AC-021 erase anonymizes contacts/messages/deals/tasks and deletes account # time=23.58ms",
+      "testName": "@spec:AC-021 erase anonymizes contacts/messages/deals/tasks and deletes account # time=11.14ms",
       "method": "tap"
     },
     "AC-022": {
       "status": "pass",
-      "testName": "@spec:AC-022 erase is audited with data_erasure_request # time=3.79ms",
+      "testName": "@spec:AC-022 erase is audited with data_erasure_request # time=18.01ms",
       "method": "tap"
     }
   },
   "principles": {
     "P-004": {
       "status": "pass",
-      "testName": "@principle:P-004 consent is granular per purpose # time=19.12ms"
+      "testName": "@principle:P-004 consent is granular per purpose # time=30.68ms"
     },
     "P-005": {
       "status": "pass",
-      "testName": "@principle:P-005 retention windows are configurable # time=1.04ms"
+      "testName": "@principle:P-005 retention windows are configurable # time=0.69ms"
     },
     "P-006": {
       "status": "pass",
-      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=3.19ms"
+      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=2.90ms"
     }
   }
 }

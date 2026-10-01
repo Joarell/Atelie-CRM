@@ -2021,10 +2021,10 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "lgpd-privacidade",
       "ref": "—",
-      "ocorrencias": 8,
+      "ocorrencias": 9,
       "primeiraVez": "2026-09-29T04:38:01.654Z",
-      "ultimaVez": "2026-10-01T19:47:37.766Z",
-      "gitRev": "501332a"
+      "ultimaVez": "2026-10-01T21:15:03.807Z",
+      "gitRev": "fddc53b"
     },
     "VERIFY_FALHOU::contatos::AC-028": {
       "codigo": "VERIFY_FALHOU",
@@ -2084,19 +2084,19 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "updated-contacts",
       "ref": "—",
-      "ocorrencias": 7,
+      "ocorrencias": 8,
       "primeiraVez": "2026-09-29T04:44:30.894Z",
-      "ultimaVez": "2026-10-01T19:47:37.768Z",
-      "gitRev": "501332a"
+      "ultimaVez": "2026-10-01T21:15:03.807Z",
+      "gitRev": "fddc53b"
     },
     "VERIFY_OBSOLETO::contatos::—": {
       "codigo": "VERIFY_OBSOLETO",
       "feature": "contatos",
       "ref": "—",
-      "ocorrencias": 6,
+      "ocorrencias": 7,
       "primeiraVez": "2026-09-30T00:42:24.634Z",
-      "ultimaVez": "2026-10-01T19:47:37.762Z",
-      "gitRev": "501332a"
+      "ultimaVez": "2026-10-01T21:15:03.804Z",
+      "gitRev": "fddc53b"
     },
     "SPEC_SEM_US::stock::.spec/features/stock/spec.md": {
       "codigo": "SPEC_SEM_US",
@@ -2237,10 +2237,10 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "stock",
       "ref": "—",
-      "ocorrencias": 4,
+      "ocorrencias": 5,
       "primeiraVez": "2026-10-01T12:10:20.850Z",
-      "ultimaVez": "2026-10-01T19:47:37.768Z",
-      "gitRev": "501332a"
+      "ultimaVez": "2026-10-01T21:15:03.807Z",
+      "gitRev": "fddc53b"
     },
     "AC_SEM_TASK::security-audit-fixes::AC-100": {
       "codigo": "AC_SEM_TASK",
