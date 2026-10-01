@@ -1,6 +1,6 @@
 import type { AppContext } from '../../../state/AppContext';
 import type { Deal, Pipeline, Stage, Contact } from '../../../domain/crm';
-import { escapeHtml } from '../../../domain/format';
+import { escapeHtml, escapeAtrib } from '../../../domain/format';
 import { formatPriceCents } from '../../../domain/crmMath';
 import { openModal, closeModal } from '../../Modal';
 import { showToast } from '../../Toast';
@@ -160,7 +160,7 @@ function moveSelect(ctx: AppContext, deal: Deal, current: Stage): string {
 function optionTag(o: SelectOption, selected: string): string {
 	const sel = o.value === selected ? ' selected' : '';
 	return (
-		`<option value="${escapeHtml(o.value)}"${sel}>` +
+		`<option value="${escapeAtrib(o.value)}"${sel}>` +
 		`${escapeHtml(o.label)}</option>`
 	);
 }
@@ -289,7 +289,7 @@ function nextActionField(v?: Deal): string {
 		'<div class="field"><label class="field-label">' +
 		'Próxima ação (data)</label>' +
 		`<input class="input" type="date" name="nextActionAt" ` +
-		`value="${escapeHtml(value)}"></div>`
+		`value="${escapeAtrib(value)}"></div>`
 	);
 }
 

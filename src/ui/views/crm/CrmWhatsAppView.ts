@@ -1,7 +1,7 @@
 import type { AppContext } from '../../../state/AppContext';
 import type { WahaSessionState } from '../../../repositories/WahaApiRepository';
 import type { Conversation } from '../../../domain/crm';
-import { escapeHtml } from '../../../domain/format';
+import { escapeHtml, escapeAtrib } from '../../../domain/format';
 import {
 	composeTargets,
 	whatsappConversationFor
@@ -351,7 +351,7 @@ function conversationSelect(
 
 function optHtml(o: { value: string; label: string }): string {
 	return (
-		`<option value="${escapeHtml(o.value)}">` +
+		`<option value="${escapeAtrib(o.value)}">` +
 		`${escapeHtml(o.label)}</option>`
 	);
 }

@@ -1,6 +1,12 @@
 import type { AppContext } from '../../state/AppContext';
 import type { Ingredient } from '../../domain/types';
-import { formatBRL, formatNumber, uid, escapeHtml } from '../../domain/format';
+import {
+	formatBRL,
+	formatNumber,
+	uid,
+	escapeHtml,
+	escapeAtrib
+} from '../../domain/format';
 import {
 	renderCrudTable,
 	type TableColumn,
@@ -179,7 +185,7 @@ function selectUnit(current: string): string {
 
 function textField(name: string, label: string, value: string): string {
 	return `<div class="field"><label class="field-label">${label}</label>
-		<input class="input" name="${name}" value="${escapeHtml(value)}"
+		<input class="input" name="${name}" value="${escapeAtrib(value)}"
 		required></div>`;
 }
 

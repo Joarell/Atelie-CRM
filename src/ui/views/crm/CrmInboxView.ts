@@ -8,6 +8,7 @@ import type {
 import type { Order, OrderStatus } from '../../../domain/types';
 import {
 	escapeHtml,
+	escapeAtrib,
 	formatBRL,
 	formatDate,
 	todayISO
@@ -715,7 +716,7 @@ function messageRow(m: Message): string {
 function tickOf(m: Message): string {
 	if (m.direction !== 'outbound' || !m.waStatus) return '';
 	return (
-		`<span class="bubble-tick" title="${m.waStatus}">` +
+		`<span class="bubble-tick" title="${escapeAtrib(m.waStatus)}">` +
 		`${tickGlyph(m.waStatus)}</span>`
 	);
 }
@@ -747,7 +748,7 @@ function threadComposeHtml(replies: QuickReply[]): string {
 
 function replyChip(r: QuickReply): string {
 	return (
-		`<button class="chip-btn" data-reply="${escapeHtml(r.body)}">` +
+		`<button class="chip-btn" data-reply="${escapeAtrib(r.body)}">` +
 		`/${escapeHtml(r.shortcut)}</button>`
 	);
 }

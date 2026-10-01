@@ -1,4 +1,4 @@
-import { escapeHtml } from '../../../domain/format';
+import { escapeHtml, escapeAtrib } from '../../../domain/format';
 import { ABC_CLIENT_LABELS, type AbcClass } from '../../../domain/abcCurve';
 
 // Small shared builders used by the CRM views — keeps the per-view files
@@ -54,7 +54,7 @@ export function textField(
 	value: string,
 	required = true
 ): string {
-	const attrs = ` class="input" name="${name}" value="${escapeHtml(value)}"`;
+	const attrs = ` class="input" name="${name}" value="${escapeAtrib(value)}"`;
 	const req = required ? ' required' : '';
 	return field(label, `<input${attrs}${req}>`);
 }
@@ -73,13 +73,13 @@ export function numberField(
 export function dateField(name: string, label: string, value = ''): string {
 	const attrs =
 		` class="input" type="date" name="${name}"` +
-		` value="${escapeHtml(value)}"`;
+		` value="${escapeAtrib(value)}"`;
 	return field(label, `<input${attrs}>`);
 }
 
 export function datetimeField(name: string, label: string, value = ''): string {
 	const attrsA = ` class="input" type="datetime-local" name="${name}"`;
-	const attrsB = ` value="${escapeHtml(value)}"`;
+	const attrsB = ` value="${escapeAtrib(value)}"`;
 	return field(label, `<input${attrsA}${attrsB}>`);
 }
 
@@ -89,7 +89,7 @@ function optionHtml(
 ): string {
 	const sel = o.value === selected ? ' selected' : '';
 	return (
-		`<option value="${escapeHtml(o.value)}"${sel}>` +
+		`<option value="${escapeAtrib(o.value)}"${sel}>` +
 		`${escapeHtml(o.label)}</option>`
 	);
 }

@@ -35,3 +35,9 @@ export function escapeHtml(text: string): string {
 	div.textContent = text ?? '';
 	return div.innerHTML;
 }
+
+export function escapeAtrib(text: string): string {
+	return escapeHtml(text)
+		.replace(/\"/g, "&quot;")
+		.replace(/\'/g, "&#x27;")
+}

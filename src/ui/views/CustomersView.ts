@@ -1,6 +1,6 @@
 import type { AppContext } from '../../state/AppContext';
 import type { Customer } from '../../domain/types';
-import { formatBRL, uid, escapeHtml } from '../../domain/format';
+import { formatBRL, uid, escapeHtml, escapeAtrib } from '../../domain/format';
 import { renderCrudTable, type TableColumn } from '../CrudTable';
 import { openModal, closeModal } from '../Modal';
 import { showToast } from '../Toast';
@@ -114,7 +114,7 @@ function textField(
 	required = true
 ): string {
 	return `<div class="field"><label class="field-label">${label}</label>
-		<input class="input" name="${name}" value="${escapeHtml(value)}" ${
+		<input class="input" name="${name}" value="${escapeAtrib(value)}" ${
 			required ? 'required' : ''
 		}></div>`;
 }

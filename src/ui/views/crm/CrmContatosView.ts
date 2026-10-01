@@ -1,7 +1,7 @@
 import type { AppContext } from '../../../state/AppContext';
 import type { Contact, CrmActivity } from '../../../domain/crm';
 import { ACTIVITY } from '../../../domain/crm';
-import { escapeHtml, uid } from '../../../domain/format';
+import { escapeHtml, escapeAtrib, uid } from '../../../domain/format';
 import {
 	openDealsForContact,
 	findPotentialDuplicates,
@@ -263,11 +263,11 @@ function notesField(notes: string): string {
 }
 
 function tagsField(ctx: AppContext, v: ContactInput): string {
-	const value = escapeHtml(v.tags.join(', '));
+	const value = escapeAtrib(v.tags.join(', '));
 	const vocabulary = ctx.tags.getAll().map((t) => t.name).join(', ');
 	const opts = ctx.tags
 		.getAll()
-		.map((t) => `<option value="${escapeHtml(t.name)}"></option>`)
+		.map((t) => `<option value="${escapeAtrib(t.name)}"></option>`)
 		.join('');
 	const hint = vocabulary
 		? `<div class="hint">Vocabulário: ${escapeHtml(vocabulary)}</div>`

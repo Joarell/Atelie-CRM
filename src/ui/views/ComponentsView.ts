@@ -4,7 +4,12 @@ import type {
 	ComponentItem,
 	ComponentType
 } from '../../domain/types';
-import { formatBRL, uid, escapeHtml } from '../../domain/format';
+import {
+	formatBRL,
+	uid,
+	escapeHtml,
+	escapeAtrib
+} from '../../domain/format';
 import { renderEmptyState } from '../CrudTable';
 import { openModal, closeModal } from '../Modal';
 import { showToast } from '../Toast';
@@ -301,7 +306,7 @@ async function handleSubmit(
 
 function textField(name: string, label: string, value: string): string {
 	return `<div class="field"><label class="field-label">${label}</label>
-		<input class="input" name="${name}" value="${escapeHtml(value)}"` +
+		<input class="input" name="${name}" value="${escapeAtrib(value)}"` +
 		` required></div>`;
 }
 
