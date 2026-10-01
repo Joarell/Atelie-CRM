@@ -29,3 +29,40 @@ describe('WAHA secret out of version control', () => {
     expect(example).toContain('<your-hex-here>');
   });
 });
+
+// The sentinel default above means the key is now provisioned, not baked in.
+// These lock the two places that drifted away from that contract: the compose
+// comments/docs (which still advertised a ready-to-use dev key) and the egress
+// probe (which carried its own fallback key and so reported a green the app
+// could not reproduce while every real call answered 401).
+describe('WAHA key provisioning contract', () => {
+  const compose = readFileSync(resolve(repoRoot, 'waha/docker-compose.waha.yml'), 'utf8');
+
+  it('compose does not advertise a ready-to-use dev key', () => {
+    expect(compose).not.toContain('local-test-key');
+    expect(compose).toContain('NÃO existe chave padrão utilizável');
+  });
+
+  it('compose ships the operational scripts the README documents', () => {
+    const pkg = JSON.parse(
+      readFileSync(resolve(repoRoot, 'package.json'), 'utf8')
+    ) as { scripts: Record<string, string> };
+    expect(pkg.scripts['waha:up']).toContain('waha/docker-compose.waha.yml');
+    expect(pkg.scripts['waha:up']).toContain('--env-file waha/.env');
+  });
+
+  it('the egress probe reads the app config instead of inventing a key', () => {
+    const smoke = readFileSync(resolve(repoRoot, 'scripts/waha-smoke.ts'), 'utf8');
+    expect(smoke).toContain("dotEnv('.dev.vars')");
+    expect(smoke).not.toMatch(/WAHA_API_KEY:\s*process\.env\.WAHA_API_KEY\s*\?\?/);
+    expect(smoke).not.toContain('local-test-key');
+  });
+
+  it('docs stop telling the operator that a dev key is preconfigured', () => {
+    for (const doc of ['docs/whatsapp-waha.md', 'waha/README.md']) {
+      const text = readFileSync(resolve(repoRoot, doc), 'utf8');
+      expect(text).not.toContain('local-test-key');
+      expect(text).not.toContain('chave já vem pré-configurada');
+    }
+  });
+});
