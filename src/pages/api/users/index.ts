@@ -5,10 +5,12 @@ import { listEntities, insertEntity } from '../../../server/crud';
 import { USERS_TABLE, USERS_SHAPE } from '../../../server/tables';
 import { publicUser, hashPassword } from '../../../server/auth';
 import { recordAudit, newAuditEntry, clientIp } from '../../../server/audit';
+import { requireRole } from '../../../server/authz';
 import { uid, nowISO } from '../../../domain/format';
 import { json } from '../../../server/http';
 
 const ROLES: Role[] = ['viewer', 'agent', 'manager', 'admin'];
+const USER_MANAGERS: Role[] = ['admin', 'manager'];
 
 type UserBody = {
 	id?: unknown;
@@ -18,12 +20,16 @@ type UserBody = {
 	password?: unknown;
 };
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async (context) => {
+	const denied = await requireRole(context, USER_MANAGERS);
+	if (denied) return denied;
 	const users = await listEntities<User>(getDb(), USERS_TABLE, USERS_SHAPE);
 	return json(users.map(publicUser));
 };
 
 export const POST: APIRoute = async (context) => {
+	const denied = await requireRole(context, USER_MANAGERS);
+	if (denied) return denied;
 	const db = getDb();
 	const body = await readUserBody(context.request);
 	const ip = clientIp(context.request);

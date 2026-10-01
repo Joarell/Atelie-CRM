@@ -8,7 +8,7 @@ import { json } from './http';
 import { recordAudit, newAuditEntry, clientIp } from './audit';
 
 export function sessionUser(context: APIContext): User | null {
-	const locals = context.locals as unknown as Record<string, unknown>;
+	const locals = (context.locals ?? {}) as unknown as Record<string, unknown>;
 	const user = locals.user;
 	if (!user || typeof user !== 'object') return null;
 	return user as User;

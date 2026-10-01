@@ -1,11 +1,14 @@
 import type { APIRoute } from 'astro';
 import type { Settings } from '../../domain/types';
+import type { Role } from '../../domain/crm';
 import type { Database } from '../../server/db';
 import { DEFAULT_SETTINGS } from '../../domain/types';
 import { getDb } from '../../server/context';
+import { requireRole } from '../../server/authz';
 import { json } from '../../server/http';
 
 const SETTINGS_ID = 'global';
+const SETTINGS_MANAGERS: Role[] = ['admin', 'manager'];
 
 export const GET: APIRoute = async () => {
 	const db = getDb();
@@ -16,6 +19,8 @@ export const GET: APIRoute = async () => {
 };
 
 export const PUT: APIRoute = async (context) => {
+	const denied = await requireRole(context, SETTINGS_MANAGERS);
+	if (denied) return denied;
 	const db = getDb();
 	const patch: Partial<Settings> = await context.request.json();
 	const current = (await readSettings(db)) ?? DEFAULT_SETTINGS;

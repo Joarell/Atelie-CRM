@@ -78,7 +78,8 @@ function apiContext(
     ...init,
     headers
   });
-  return { request, params } as unknown as APIContext;
+  const locals = { user: { id: 'caller', role: 'admin' } };
+  return { request, params, locals } as unknown as APIContext;
 }
 
 function jsonBody(data: unknown, token?: string): RequestInit {

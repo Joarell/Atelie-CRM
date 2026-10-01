@@ -3,6 +3,7 @@ import type { APIContext } from 'astro';
 import { FakeD1 } from '../helpers/fakeD1';
 import { GET, PUT } from '../../src/pages/api/settings';
 import { DEFAULT_SETTINGS } from '../../src/domain/types';
+import type { Role, User } from '../../src/domain/crm';
 
 const state = vi.hoisted(() => ({ db: null as unknown as FakeD1 }));
 vi.mock('cloudflare:workers', () => ({
@@ -13,13 +14,18 @@ function getContext(): APIContext {
   return { request: new Request('http://localhost/api/settings') } as unknown as APIContext;
 }
 
-function putContext(patch: Record<string, unknown>): APIContext {
+function putContext(
+  patch: Record<string, unknown>,
+  role: Role = 'admin'
+): APIContext {
+  const locals = { user: { id: 'caller', role } as unknown as User };
   return {
     request: new Request('http://localhost/api/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch)
-    })
+    }),
+    locals
   } as unknown as APIContext;
 }
 
@@ -64,6 +70,18 @@ describe('/api/settings PUT', () => {
     ]);
     const response = await PUT(putContext({ salary: 2500, rent: 1200 }));
     expect(await response.json()).toMatchObject({ salary: 2500, rent: 1200 });
+    expect(state.db.rows('settings')).toHaveLength(1);
+  });
+
+  it('@spec:AC-107 viewer recebe 403 e o registro nao muda', async () => {
+    const response = await PUT(putContext({ salary: 999 }, 'viewer'));
+    expect(response.status).toBe(403);
+    expect(state.db.rows('settings')).toHaveLength(0);
+  });
+
+  it('@spec:AC-107 manager recebe 200', async () => {
+    const response = await PUT(putContext({ salary: 2500 }, 'manager'));
+    expect(response.status).toBe(200);
     expect(state.db.rows('settings')).toHaveLength(1);
   });
 });
