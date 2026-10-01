@@ -52,7 +52,8 @@ export const STOCK_MOVEMENTS_SHAPE: TableShape = {
 export const USERS_TABLE = 'users';
 export const USERS_SHAPE: TableShape = {
 	columns: [
-		'createdAt', 'email', 'id', 'name', 'passwordHash', 'passwordSalt', 'role'
+		'createdAt', 'email', 'id', 'mustChangePassword', 'name',
+		'passwordHash', 'passwordSalt', 'role'
 	],
 	jsonFields: [],
 	boolFields: [],

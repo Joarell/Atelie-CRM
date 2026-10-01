@@ -89,8 +89,10 @@ npm run deploy
 > O projeto usa **bun** como gerenciador de pacotes (`bun.lock`, `mise.toml`).
 > Os scripts continuam acessíveis via `npm run <script>`.
 
-> Login padrão do CRM (criado pelo seed): `admin@deskcomm.local` / `admin123`.
-> Troque a senha pela tela **Equipe** após o primeiro acesso.
+> O primeiro acesso exige troca de senha. O admin criado pelo seed entra com
+> `mustChangePassword = 1`: o login funciona, mas a API responde `403`
+> `troca_de_senha_obrigatoria` até a senha ser rotacionada. A senha do seed
+> não é mais documentada aqui — registre a sua ao criar o ambiente.
 
 `npm run check` roda o `tsc --noEmit` só de `src/**`; `npm run check:tests`
 estende o typecheck a `tests/**` (`tsconfig.tests.json`, com os tipos de Node).

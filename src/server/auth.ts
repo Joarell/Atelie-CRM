@@ -28,11 +28,14 @@ const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export type PasswordDigest = { hash: string; salt: string };
 
-export function publicUser(
-	user: User
-): Omit<User, 'passwordHash' | 'passwordSalt'> {
+export type PublicUser = Omit<
+	User,
+	'passwordHash' | 'passwordSalt' | 'mustChangePassword'
+> & { mustChangePassword: boolean };
+
+export function publicUser(user: User): PublicUser {
 	const { passwordHash: _h, passwordSalt: _s, ...rest } = user;
-	return rest;
+	return { ...rest, mustChangePassword: Number(user.mustChangePassword) === 1 };
 }
 
 export async function hashPassword(
@@ -165,7 +168,8 @@ export async function updateUserPassword(
 	const { hash, salt } = await hashPassword(newPassword);
 	return updateEntity<User>(db, USERS_TABLE, USERS_SHAPE, userId, {
 		passwordHash: hash,
-		passwordSalt: salt
+		passwordSalt: salt,
+		mustChangePassword: 0
 	});
 }
 
