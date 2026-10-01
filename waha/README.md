@@ -38,10 +38,12 @@ troubleshooting geral, veja `docs/whatsapp-waha.md` (no repo) e
 
 ## PROCEDIMENTO 1 — Subir o WAHA
 
-A chave já vem pré-configurada (`local-test-key`, com o SHA-512 no compose e o
-plaintext no `.dev.vars` do app). Para rodar com o padrão, pule direto pro passo 2.
+**A chave precisa ser provisionada — não há padrão utilizável.** O `WAHA_API_KEY`
+do compose cai num sentinela (`sha512:INVALID_CHANGE_ME`) que nenhuma chave real
+casa, então um container recém-criado sem `waha/.env` responde `401` a tudo
+(deliberado: o repo não carrega segredo). O passo 1 é obrigatório.
 
-1. **Rotacionar a chave** (opcional): `cp waha/.env.example waha/.env`, gere um
+1. **Provisionar a chave** (obrigatório): `cp waha/.env.example waha/.env`, gere um
    novo plaintext (`openssl rand -hex 32`), calcule o hex
    (`echo -n "$KEY" | shasum -a 512 | awk '{print $1}'`), preencha
    `WAHA_API_KEY_SHA512="sha512:..."` no `waha/.env` e atualize o `.dev.vars`
@@ -68,7 +70,7 @@ plaintext no `.dev.vars` do app). Para rodar com o padrão, pule direto pro pass
 
 5. **Verificar chave e versão** (exige `X-Api-Key`):
    ```bash
-   KEY=local-test-key   # ou o plaintext que você rotacionou
+   KEY=<o plaintext do passo 1>
    curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:3000/api/server/version
    # → a versão é a do tag `:noweb` no dia do pull (ex.: 2026.8.2), engine NOWEB
    ```
@@ -79,7 +81,7 @@ O teste de conexão não exige sessão pareada, mas a rota de saúde só respond
 com a sessão `WORKING`:
 
 ```bash
-KEY=local-test-key
+KEY=<o plaintext do passo 1>
 # 1. Iniciar / retomar a sessão
 curl -s -X POST -H "X-Api-Key: $KEY" http://127.0.0.1:3000/api/sessions/default/start
 # 2. Ler o QR (data-URI) e decodificar o PNG
@@ -103,11 +105,11 @@ npm run waha:smoke   # precisa do .dev.vars com o plaintext certo — lê http:/
 
 | Ação | Comando |
 |---|---|
-| Subir | `podman compose -f waha/docker-compose.waha.yml up -d` |
-| Parar (mantém volumes) | `podman compose -f waha/docker-compose.waha.yml down` |
-| Reiniciar | `podman compose -f waha/docker-compose.waha.yml restart waha` |
-| Logs | `podman compose -f waha/docker-compose.waha.yml logs -f waha` |
-| Status | `podman compose -f waha/docker-compose.waha.yml ps` |
+| Subir | `npm run waha:up` |
+| Parar (mantém volumes) | `npm run waha:down` |
+| Reiniciar | `npm run waha:restart` |
+| Logs | `npm run waha:logs` |
+| Status | `podman compose -f waha/docker-compose.waha.yml --env-file waha/.env ps` |
 | Volumes | `podman volume ls | grep waha` |
 
 - **Iniciar/parar a sessão**: `POST /api/sessions/default/start` · `POST /api/sessions/default/stop`.

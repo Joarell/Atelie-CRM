@@ -8,14 +8,43 @@
 // Exits 0 when the server is reachable AND the API key is accepted. A paired
 // session is NOT required: an unpaired session legitimately reports
 // `sessao_sem_conexao: SCAN_QR_CODE`, which still proves the connection.
+//
+// The config comes from `.dev.vars` — the same file the dev server loads — NOT
+// from a hardcoded fallback key. Inventing one here made this probe report
+// `saudavel true` while the app itself got 401 on every call, i.e. a green the
+// app could not reproduce. A real env var still wins, so CI can point elsewhere.
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { readWahaConfig, WahaClient } from '../src/server/waha';
 
-const source = {
-  WAHA_API_BASE_URL: process.env.WAHA_API_BASE_URL ?? 'http://127.0.0.1:3000',
-  WAHA_API_KEY: process.env.WAHA_API_KEY ?? 'local-test-key',
-  WAHA_SESSION_NAME: process.env.WAHA_SESSION_NAME ?? 'default'
-};
+function dotEnv(file: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  let text: string;
+  try {
+    text = readFileSync(resolve(file), 'utf8');
+  } catch {
+    return out;
+  }
+  for (const line of text.split('\n')) {
+    const match = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/.exec(line);
+    if (!match) continue;
+    let value = match[2];
+    const quoted =
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"));
+    if (quoted && value.length >= 2) value = value.slice(1, -1);
+    out[match[1]] = value;
+  }
+  return out;
+}
 
+const overrides = Object.fromEntries(
+  Object.entries(process.env).filter(
+    (entry): entry is [string, string] => typeof entry[1] === 'string'
+  )
+);
+
+const source = { ...dotEnv('.dev.vars'), ...overrides };
 const config = readWahaConfig(source);
 if (!config) {
   console.error('WAHA nao configurado: defina WAHA_API_BASE_URL e WAHA_API_KEY.');

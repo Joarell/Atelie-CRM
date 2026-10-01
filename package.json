@@ -19,7 +19,11 @@
     "db:seed:local": "wrangler d1 execute atelie_erp_db --local --file=./migrations/0002_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0004_crm_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0006_crm_seed_features.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0008_order_history_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0010_inbox_orders_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0011_inbox_orders_chart_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0012_inbox_month_chart_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0013_abc_curve_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0021_seed_admin_flag.sql",
     "db:seed:remote": "bun run scripts/generate-admin-seed.ts && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0002_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0004_crm_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0006_crm_seed_features.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0008_order_history_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0010_inbox_orders_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0011_inbox_orders_chart_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0012_inbox_month_chart_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0013_abc_curve_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0021_seed_admin_flag.sql",
     "waha:online": "vitest run tests/server/wahaOnline.test.ts",
-    "waha:egress": "bun run scripts/waha-smoke.ts"
+    "waha:egress": "bun run scripts/waha-smoke.ts",
+    "waha:up": "podman-compose -f waha/docker-compose.waha.yml --env-file waha/.env up -d",
+    "waha:down": "podman-compose -f waha/docker-compose.waha.yml --env-file waha/.env down",
+    "waha:restart": "podman-compose -f waha/docker-compose.waha.yml --env-file waha/.env restart waha",
+    "waha:logs": "podman-compose -f waha/docker-compose.waha.yml --env-file waha/.env logs -f waha"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",

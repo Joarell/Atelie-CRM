@@ -17,10 +17,12 @@
 #
 # Convenção da chave (NUNCA o plaintext aqui):
 #   - O WAHA aceita "sha512:<hex>" na env e hasheia o X-Api-Key recebido pra comparar.
-#   - O compose usa o valor padrão = sha512 de `local-test-key` (que também vive em
-#     .dev.vars). Para rotacionar: crie `waha/.env` a partir de `waha/.env.example`
-#     com WAHA_API_KEY_SHA512=<sha512 do novo plaintext> e atualize o `.dev.vars`
-#     com o plaintext correspondente (os dois lados precisam estar sincronizados).
+#   - NÃO existe chave padrão utilizável: o default abaixo é um sentinela que
+#     nenhuma chave real casa, então um container recém-criado sem `waha/.env`
+#     rejeita TODO request (401). Isso é deliberado — o repo não carrega segredo.
+#     Para subir de verdade: copie `waha/.env.example` para `waha/.env`, ponha
+#     WAHA_API_KEY_SHA512=<sha512 do SEU plaintext> e ponha o mesmo plaintext em
+#     WAHA_API_KEY no `.dev.vars` (os dois lados precisam estar sincronizados).
 #   - Para gerar o hex de um plaintext:  echo -n "$KEY" | shasum -a 512 | awk '{print $1}'
 #   - A env que o WAHA lê para a engine é WHATSAPP_DEFAULT_ENGINE (WAHA_DEFAULT_ENGINE
 #     não existe no WAHA e cai silenciosamente no default WEBJS) — não use.
@@ -33,8 +35,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Padrão pré-configurado: sha512 de `local-test-key` (corresponde ao plaintext no
-      # .dev.vars). Sobrescreva via `waha/.env` (ver .env.example) ao rotacionar.
+      # Sentinela: nenhuma chave real casa com este hash, então o engine rejeita
+      # todo request até `waha/.env` prover WAHA_API_KEY_SHA512 (ver .env.example).
+      # O plaintext correspondente vai em WAHA_API_KEY no `.dev.vars` do app.
       WAHA_API_KEY: "${WAHA_API_KEY_SHA512:-sha512:INVALID_CHANGE_ME}"
       # Engine NOWEB (mais leve, ~150MB; estável). Env correta: WHATSAPP_DEFAULT_ENGINE.
       WHATSAPP_DEFAULT_ENGINE: NOWEB
@@ -55,7 +58,7 @@ services:
       # (o engine só irá retentar alguns envios — ou nada, sem inscrição).
       # WHATSAPP_HOOK_URL: "http://host.containers.internal:4322/api/whatsapp/webhook"
       # WHATSAPP_HOOK_EVENTS: "message"
-      # WHATSAPP_HOOK_HMAC: "local-test-key"
+      # WHATSAPP_HOOK_HMAC: "<mesmo segredo de WAHA_HMAC_SECRET no .dev.vars>"
     extra_hosts:
       # Podman: `host.containers.internal` já aponta pro host por padrão no rootful;
       # deploy usa isso como convenção, ajuste a porta do WHATSAPP_HOOK_URL se o app

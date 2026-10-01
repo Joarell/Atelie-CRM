@@ -76,9 +76,10 @@ chama `GET /api/server/version` e `GET /api/sessions/:name` com `X-Api-Key`, e o
 
 ## 3. PROCEDIMENTO 1 — Subir o WAHA local
 
-O compose já vem pré-configurado com a chave de dev `local-test-key` (o SHA-512 hex
-dela no `WAHA_API_KEY` do container; o plaintext no `.dev.vars`). Se você **rotacionar
-a chave**, aplique os passos 1–3; senão pule direto pro passo 4.
+**Não existe chave padrão utilizável.** O `WAHA_API_KEY` do compose cai num
+sentinela (`sha512:INVALID_CHANGE_ME`) que nenhuma chave real casa, então um
+container recém-criado sem `waha/.env` responde `401` a tudo. Isso é deliberado:
+o repositório não carrega segredo. Aplique os passos 1–3 para provisionar a chave.
 
 1. **Gerar a chave plaintext** (64 hex chars) e anotar em local seguro (1Password):
 
@@ -105,7 +106,9 @@ a chave**, aplique os passos 1–3; senão pule direto pro passo 4.
    > declara a forma hasheada. (CONFIRMADO — spec de referência §2.2/§4.3 e
    > `src/server/waha.ts:136`.)
 
-   Não rotacionou? Nos comandos abaixo, `KEY=local-test-key` (o plaintext do padrão).
+   Use nos comandos abaixo o plaintext que você guardou no passo 1. Os dois lados
+   precisam ser o **mesmo** valor: o container recebe o SHA-512 e o app envia o
+   plaintext. Divergência = `502 credencial_recusada_pelo_transporte`.
 
 4. **Subir o container** (o compose de dev vive em `waha/docker-compose.waha.yml`):
 
