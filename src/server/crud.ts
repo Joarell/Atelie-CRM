@@ -42,7 +42,7 @@ export async function insertEntity<T>(
 		entity as unknown as Record<string, unknown>,
 		shape
 	);
-	const { sql, values } = buildInsert(table, row);
+	const { sql, values } = buildInsert(table, row, shape.columns);
 	await db.prepare(sql).bind(...values).run();
 	return entity;
 }
@@ -61,7 +61,7 @@ export async function updateEntity<T extends { id: string }>(
 		merged as unknown as Record<string, unknown>,
 		shape
 	);
-	const { sql, values } = buildUpdate(table, id, row);
+	const { sql, values } = buildUpdate(table, id, row, shape.columns);
 	await db.prepare(sql).bind(...values).run();
 	return merged;
 }

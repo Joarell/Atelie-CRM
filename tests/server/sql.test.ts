@@ -22,3 +22,33 @@ describe('buildUpdate', () => {
     expect(values).toEqual(['Farinha', 5, 'i1']);
   });
 });
+
+describe('allowed parameter filters columns (defense in depth)', () => {
+  // @spec:AC-110
+  it('buildInsert filtra colunas nao permitidas', () => {
+    const { sql, values } = buildInsert('t', { a: 1, b: 2, evil: 'x' }, ['a', 'b']);
+    expect(sql).toBe('INSERT INTO t (a, b) VALUES (?, ?)');
+    expect(values).toEqual([1, 2]);
+  });
+
+  // @spec:AC-111
+  it('buildUpdate filtra colunas nao permitidas', () => {
+    const { sql, values } = buildUpdate('t', 'id1', { a: 1, b: 2, evil: 'x' }, ['a', 'b']);
+    expect(sql).toBe('UPDATE t SET a = ?, b = ? WHERE id = ?');
+    expect(values).toEqual([1, 2, 'id1']);
+  });
+
+  // @spec:AC-110
+  it('buildInsert sem allowed passa tudo', () => {
+    const { sql, values } = buildInsert('t', { a: 1, b: 2 });
+    expect(sql).toBe('INSERT INTO t (a, b) VALUES (?, ?)');
+    expect(values).toEqual([1, 2]);
+  });
+
+  // @spec:AC-111
+  it('buildUpdate sem allowed passa tudo', () => {
+    const { sql, values } = buildUpdate('t', 'id1', { a: 1, b: 2 });
+    expect(sql).toBe('UPDATE t SET a = ?, b = ? WHERE id = ?');
+    expect(values).toEqual([1, 2, 'id1']);
+  });
+});
