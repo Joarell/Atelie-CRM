@@ -86,27 +86,23 @@ describe('escapeHtml', () => {
 })
 
 describe('escapeAtrib', () => {
-  // @spec:AC-131
-  it('escapes double quotes to &quot;', () => {
+  it('@spec:AC-131 escapes double quotes to &quot;', () => {
     expect(escapeAtrib('a"b')).toBe('a&quot;b');
   });
   it('escapes single quotes to &#x27;', () => {
     expect(escapeAtrib("a'b")).toBe('a&#x27;b');
   });
-  // @spec:AC-132
-  it('quote in attribute does not create a DOM element', () => {
+  it('@spec:AC-132 quote in attribute does not create a DOM element', () => {
     const div = document.createElement('div');
     div.innerHTML = '<span title="' + escapeAtrib('x"y') + '">ok</span>';
     const span = div.querySelector('span');
     expect(span?.getAttribute('title')).toBe('x"y');
     expect(span?.children.length).toBe(0);
   });
-  // @spec:AC-133
-  it('escapeHtml still correct for text content', () => {
+  it('@spec:AC-133 escapeHtml still correct for text content', () => {
     expect(escapeHtml('<b>"x"</b>')).toBe('&lt;b&gt;"x"&lt;/b&gt;');
   });
-  // @spec:AC-134
-  it('leaves safe values untouched', () => {
+  it('@spec:AC-134 leaves safe values untouched', () => {
     expect(escapeAtrib('valor simples')).toBe('valor simples');
     expect(escapeAtrib('')).toBe('');
   });

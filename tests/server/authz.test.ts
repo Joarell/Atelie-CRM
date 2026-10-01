@@ -22,8 +22,7 @@ describe('requireRole', () => {
     state.db = new FakeD1();
   });
 
-  // @spec:AC-108
-  it('nega com 403 e corpo de erro quando o papel nao serve', async () => {
+  it('@spec:AC-108 nega com 403 e corpo de erro quando o papel nao serve', async () => {
     const denied = await requireRole(ctx('viewer'), ['admin']);
     expect(denied).not.toBeNull();
     expect(denied?.status).toBe(403);
@@ -31,14 +30,12 @@ describe('requireRole', () => {
     expect(body).toEqual({ error: 'papel_insuficiente' });
   });
 
-  // @spec:AC-108
-  it('devolve null quando o papel esta na lista permitida', async () => {
+  it('@spec:AC-108 devolve null quando o papel esta na lista permitida', async () => {
     expect(await requireRole(ctx('admin'), ['admin'])).toBeNull();
     expect(await requireRole(ctx('manager'), ['admin', 'manager'])).toBeNull();
   });
 
-  // @spec:AC-108
-  it('registra a negacao em auth_audit', async () => {
+  it('@spec:AC-108 registra a negacao em auth_audit', async () => {
     await requireRole(ctx('agent'), ['admin']);
     const rows = await state.db
       .prepare(`SELECT * FROM ${AUTH_AUDIT_TABLE}`)

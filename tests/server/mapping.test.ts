@@ -54,8 +54,7 @@ const shapeWithCols = {
 };
 
 describe('entityToRow / rowToEntity with column allowlist', () => {
-  // @spec:AC-109
-  it('descarta chave fora da allowlist', () => {
+  it('@spec:AC-109 descarta chave fora da allowlist', () => {
     const out = entityToRow(
       { id: '1', name: 'A', email: 'a@b.com', extra: 'drop', jsonField: { k: 1 }, boolField: true },
       shapeWithCols
@@ -66,29 +65,25 @@ describe('entityToRow / rowToEntity with column allowlist', () => {
     expect(out.boolField).toBe(1);
   });
 
-  // @spec:AC-110
-  it('buildInsert nao interpola coluna desconhecida (via entityToRow)', () => {
+  it('@spec:AC-110 buildInsert nao interpola coluna desconhecida (via entityToRow)', () => {
     const out = entityToRow({ id: '1', name: 'A', malicious: 'DROP TABLE' }, shapeWithCols);
     expect(Object.keys(out)).toEqual(['id', 'name']);
     expect(out).not.toHaveProperty('malicious');
   });
 
-  // @spec:AC-111
-  it('buildUpdate nao interpola coluna desconhecida (via entityToRow)', () => {
+  it('@spec:AC-111 buildUpdate nao interpola coluna desconhecida (via entityToRow)', () => {
     const out = entityToRow({ id: '1', name: 'A', sqlInjection: 'x' }, shapeWithCols);
     expect(Object.keys(out)).toEqual(['id', 'name']);
     expect(out).not.toHaveProperty('sqlInjection');
   });
 
-  // @spec:AC-112
-  it('payload de subquery nao executa nem altera o schema', () => {
+  it('@spec:AC-112 payload de subquery nao executa nem altera o schema', () => {
     const out = entityToRow({ 'id); DROP TABLE users; --': 'x' }, shapeWithCols);
     expect(Object.keys(out)).toHaveLength(0);
     expect(out).not.toHaveProperty('id); DROP TABLE users; --');
   });
 
-  // @spec:AC-114
-  it('escrita legitima preserva as colunas reais', () => {
+  it('@spec:AC-114 escrita legitima preserva as colunas reais', () => {
     const payload = { id: 'x', name: 'Legit', email: 'e@e.com', jsonField: { a: 1 }, boolField: false };
     const out = entityToRow(payload, shapeWithCols);
     expect(out.id).toBe('x');
