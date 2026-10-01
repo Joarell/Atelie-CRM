@@ -4,3 +4,4 @@ dist/
 .wrangler/
 .dev.vars
 /onp-spec-driven/
+.env

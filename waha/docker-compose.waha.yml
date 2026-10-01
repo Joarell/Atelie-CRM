@@ -35,7 +35,7 @@ services:
     environment:
       # Padrão pré-configurado: sha512 de `local-test-key` (corresponde ao plaintext no
       # .dev.vars). Sobrescreva via `waha/.env` (ver .env.example) ao rotacionar.
-      WAHA_API_KEY: "${WAHA_API_KEY_SHA512:-sha512:b6eb06b35fa2dd4c9b0c9db7faa94e8246ffb472b26668bd9d523fc01cb13a91a54e23e69ccd50c7f9702572e97522ee69f4d16cd2c0e1653f9e43661c410412}"
+      WAHA_API_KEY: "${WAHA_API_KEY_SHA512:-sha512:INVALID_CHANGE_ME}"
       # Engine NOWEB (mais leve, ~150MB; estável). Env correta: WHATSAPP_DEFAULT_ENGINE.
       WHATSAPP_DEFAULT_ENGINE: NOWEB
       # Retoma as sessões existentes no restart do container (equivale a podman restart
