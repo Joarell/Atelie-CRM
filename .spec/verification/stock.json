@@ -1,70 +1,70 @@
 {
   "feature": "stock",
-  "timestamp": "2026-10-01T21:16:45.933Z",
-  "gitRev": "fddc53b",
+  "timestamp": "2026-10-01T21:24:43.848Z",
+  "gitRev": "1ecabba",
   "command": "npx vitest run --reporter=tap",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 1536,
+  "testsParsed": 1540,
   "results": {
     "AC-034": {
       "status": "pass",
-      "testName": "mover para producao desconta a receita @spec:AC-034 # time=0.77ms",
+      "testName": "mover para producao desconta a receita @spec:AC-034 # time=2.84ms",
       "method": "tap"
     },
     "AC-035": {
       "status": "pass",
-      "testName": "segunda passagem por producao nao desconta de novo @spec:AC-035 # time=1.12ms",
+      "testName": "segunda passagem por producao nao desconta de novo @spec:AC-035 # time=0.76ms",
       "method": "tap"
     },
     "AC-036": {
       "status": "pass",
-      "testName": "each of two ingredients gets its own saida @spec:AC-036 # time=1.05ms",
+      "testName": "each of two ingredients gets its own saida @spec:AC-036 # time=1.17ms",
       "method": "tap"
     },
     "AC-037": {
       "status": "pass",
-      "testName": "negative balance is allowed, not clamped @spec:AC-037 # time=2.52ms",
+      "testName": "negative balance is allowed, not clamped @spec:AC-037 # time=1.19ms",
       "method": "tap"
     },
     "AC-038": {
       "status": "pass",
-      "testName": "sair de producao nao devolve estoque @spec:AC-038 # time=0.44ms",
+      "testName": "sair de producao nao devolve estoque @spec:AC-038 # time=0.50ms",
       "method": "tap"
     },
     "AC-039": {
       "status": "pass",
-      "testName": "@spec:AC-039 mostra Baixar estoque só quando elegível # time=32.61ms",
+      "testName": "@spec:AC-039 mostra Baixar estoque só quando elegível # time=76.95ms",
       "method": "tap"
     },
     "AC-040": {
       "status": "pass",
-      "testName": "@spec:AC-040 confirmar desconta e esconde o botão # time=29.73ms",
+      "testName": "@spec:AC-040 confirmar desconta e esconde o botão # time=55.92ms",
       "method": "tap"
     },
     "AC-041": {
       "status": "pass",
-      "testName": "@spec:AC-041 cancelar a confirmação não altera saldo # time=32.89ms",
+      "testName": "@spec:AC-041 cancelar a confirmação não altera saldo # time=45.51ms",
       "method": "tap"
     },
     "AC-042": {
       "status": "pass",
-      "testName": "updates when ingredients change @spec:AC-042 # time=17.86ms",
+      "testName": "updates when ingredients change @spec:AC-042 # time=22.25ms",
       "method": "tap"
     }
   },
   "principles": {
     "P-004": {
       "status": "pass",
-      "testName": "@principle:P-004 consent is granular per purpose # time=41.03ms"
+      "testName": "@principle:P-004 consent is granular per purpose # time=33.53ms"
     },
     "P-005": {
       "status": "pass",
-      "testName": "@principle:P-005 retention windows are configurable # time=6.09ms"
+      "testName": "@principle:P-005 retention windows are configurable # time=0.83ms"
     },
     "P-006": {
       "status": "pass",
-      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=4.09ms"
+      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=7.22ms"
     }
   }
 }
