@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FakeD1 } from '../helpers/fakeD1';
 import { hashPassword, newSession } from '../../src/server/auth';
@@ -26,6 +27,7 @@ vi.mock('../../src/server/auth', () => ({
 
 import { userFromToken } from '../../src/server/auth';
 import { GET as exportGet } from '../../src/pages/api/me/export';
+import { GET as dataGet } from '../../src/pages/api/me/data';
 import { DELETE as eraseDelete } from '../../src/pages/api/me/erase';
 
 function ctx(path: string): { request: Request } {
@@ -111,6 +113,33 @@ describe('lgpd rights', () => {
 
     expect(state.db.rows(USERS_TABLE)).toHaveLength(0);
     expect(state.db.rows(SESSIONS_TABLE)).toHaveLength(0);
+  });
+
+  it('@spec:AC-135 data.ts filters contacts exactly once', () => {
+    const source = readFileSync(
+      new URL('../../src/pages/api/me/data.ts', import.meta.url),
+      'utf8'
+    );
+    const contactFilters = source.match(/all\.contacts\.filter/g) ?? [];
+    expect(contactFilters).toHaveLength(1);
+  });
+
+  it('@spec:AC-136 data.ts recorte is identical to the export recorte', async () => {
+    const dataRes = await dataGet(ctx('/api/me/data') as never);
+    expect(dataRes.status).toBe(200);
+    const data = await dataRes.json() as Record<string, unknown>;
+
+    const exportRes = await exportGet(ctx('/api/me/export') as never);
+    const exported = await exportRes.json() as Record<string, unknown>;
+
+    for (const key of [
+      'contacts', 'conversations', 'messages', 'deals', 'tasks',
+      'customers', 'orders', 'consents', 'formatVersion'
+    ]) {
+      expect(data[key]).toEqual(exported[key]);
+    }
+    expect(data.contacts).toHaveLength(1);
+    expect(data.conversations).toHaveLength(1);
   });
 
   it('@spec:AC-022 erase is audited with data_erasure_request', async () => {

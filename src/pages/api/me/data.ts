@@ -49,12 +49,10 @@ async function loadLgpdData(db: Database): Promise<LgpdData> {
 }
 
 function selectUserRows(user: User, all: LgpdData): UserRows {
-	// Filter conversations by the user's contacts
-	const userContactIds = new Set(
-		all.contacts.filter(c => c.assignedUserId === user.id).map(c => c.id)
-	);
+	const myContacts = all.contacts.filter(c => c.assignedUserId === user.id);
+	const userContactIds = new Set(myContacts.map(c => c.id));
 	return {
-		contacts: all.contacts.filter(c => c.assignedUserId === user.id),
+		contacts: myContacts,
 		conversations: all.conversations.filter(
 			c => userContactIds.has(c.contactId)
 		),
