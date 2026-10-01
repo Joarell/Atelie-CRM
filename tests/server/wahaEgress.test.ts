@@ -16,13 +16,13 @@
 // semantics: reachable + authenticated = pass; anything else = fail.
 import { describe, it, expect } from 'vitest';
 import { readWahaConfig, WahaClient } from '../../src/server/waha';
+import { wahaSourceFrom } from '../helpers/dotenv';
 import { WAHA_DEFAULT_SESSION } from '../../src/domain/whatsapp';
 
-const source = {
-  WAHA_API_BASE_URL: process.env.WAHA_API_BASE_URL,
-  WAHA_API_KEY: process.env.WAHA_API_KEY,
-  WAHA_SESSION_NAME: process.env.WAHA_SESSION_NAME
-};
+// Read the app's own config (.dev.vars in dev, real env elsewhere), not just
+// process.env: a tier that only saw process.env skipped itself and reported
+// green while proving nothing about the engine.
+const source = wahaSourceFrom();
 
 const configured = readWahaConfig(source);
 const isOffline = () => !configured;
@@ -40,8 +40,10 @@ describe.skipIf(isOffline())('WAHA egress tier', () => {
   it('uses the exact runtime base URL (the host the Worker egresses to)', async () => {
     // Unreachable when the config gate skips this file, but TS needs the guard.
     if (!configured) return;
-    const expectedBase = (process.env.WAHA_API_BASE_URL ?? '').replace(/\/+$/, '');
-    const expectedSession = process.env.WAHA_SESSION_NAME ?? WAHA_DEFAULT_SESSION;
+    // Compared against `source` (the same record the config was built from),
+    // not process.env — the base URL may have come from .dev.vars.
+    const expectedBase = (source.WAHA_API_BASE_URL ?? '').replace(/\/+$/, '');
+    const expectedSession = source.WAHA_SESSION_NAME ?? WAHA_DEFAULT_SESSION;
     expect(configured.baseUrl).toBe(expectedBase);
     expect(configured.session).toBe(expectedSession);
   });

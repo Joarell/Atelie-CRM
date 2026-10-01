@@ -14,12 +14,12 @@
 // semantics: reachable + authenticated = pass; anything else = fail.
 import { describe, it, expect } from 'vitest';
 import { readWahaConfig, WahaClient } from '../../src/server/waha';
+import { wahaSourceFrom } from '../helpers/dotenv';
 
-const source = {
-  WAHA_API_BASE_URL: process.env.WAHA_API_BASE_URL,
-  WAHA_API_KEY: process.env.WAHA_API_KEY,
-  WAHA_SESSION_NAME: process.env.WAHA_SESSION_NAME
-};
+// Read the app's own config (.dev.vars in dev, real env elsewhere), not just
+// process.env: a tier that only saw process.env skipped itself and reported
+// green while proving nothing about the engine.
+const source = wahaSourceFrom();
 
 const configured = readWahaConfig(source);
 const skip = () => !configured;
