@@ -44,6 +44,25 @@ Login local simples (sem Google/OAuth). A sessão é uma linha na tabela
 - Senhas: PBKDF2-SHA256, 100k iterações, salt `deskcomm-seed-v1`
   (`src/server/auth.ts`), o mesmo esquema do seed.
 
+## Modelo de acesso
+
+O app é **single-tenant** e o acesso é global, por papel.
+
+- **As listagens devolvem a base inteira.** Não existe isolamento por linha:
+  quem tem sessão válida vê todos os contatos, conversas, pedidos, clientes e
+  tarefas do D1. Não há filtro por dono em nenhuma listagem.
+- **`assignedUserId` e `assigneeUserId` são metadados de atribuição**, não
+  autorização. Marcam a quem um registro foi atribuído para efeito de
+  distribuição de trabalho e são usados **apenas no escopo LGPD**
+  (`/api/me/data`, `/api/me/export`, `/api/me/erase`) para montar o recorte de
+  dados do titular.
+- **Autorização é sempre por papel** (`admin`, `manager`, `agent`), decidida no
+  servidor em `src/server/authz.ts`. Rótulo comercial ("vENDEDor", "atendente")
+  nunca é fronteira de segurança.
+
+Regra prática: se uma tela precisa esconder um registro, isso é ordenado por
+papel no servidor — nunca por `assignedUserId` no cliente.
+
 ## Passo a passo para rodar
 
 ```bash
