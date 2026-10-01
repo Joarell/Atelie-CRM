@@ -2021,10 +2021,10 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "lgpd-privacidade",
       "ref": "—",
-      "ocorrencias": 4,
+      "ocorrencias": 8,
       "primeiraVez": "2026-09-29T04:38:01.654Z",
-      "ultimaVez": "2026-09-30T01:50:41.277Z",
-      "gitRev": "da6ad4b"
+      "ultimaVez": "2026-10-01T19:47:37.766Z",
+      "gitRev": "501332a"
     },
     "VERIFY_FALHOU::contatos::AC-028": {
       "codigo": "VERIFY_FALHOU",
@@ -2084,19 +2084,19 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "updated-contacts",
       "ref": "—",
-      "ocorrencias": 3,
+      "ocorrencias": 7,
       "primeiraVez": "2026-09-29T04:44:30.894Z",
-      "ultimaVez": "2026-09-30T01:50:41.278Z",
-      "gitRev": "da6ad4b"
+      "ultimaVez": "2026-10-01T19:47:37.768Z",
+      "gitRev": "501332a"
     },
     "VERIFY_OBSOLETO::contatos::—": {
       "codigo": "VERIFY_OBSOLETO",
       "feature": "contatos",
       "ref": "—",
-      "ocorrencias": 2,
+      "ocorrencias": 6,
       "primeiraVez": "2026-09-30T00:42:24.634Z",
-      "ultimaVez": "2026-09-30T01:50:41.208Z",
-      "gitRev": "da6ad4b"
+      "ultimaVez": "2026-10-01T19:47:37.762Z",
+      "gitRev": "501332a"
     },
     "SPEC_SEM_US::stock::.spec/features/stock/spec.md": {
       "codigo": "SPEC_SEM_US",
@@ -2214,6 +2214,969 @@
       "primeiraVez": "2026-09-30T01:50:41.278Z",
       "ultimaVez": "2026-09-30T01:50:41.278Z",
       "gitRev": "da6ad4b"
+    },
+    "SPEC_SEM_US::security-audit-fixes::.spec/features/security-audit-fixes/spec.md": {
+      "codigo": "SPEC_SEM_US",
+      "feature": "security-audit-fixes",
+      "ref": ".spec/features/security-audit-fixes/spec.md",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:10:20.850Z",
+      "ultimaVez": "2026-10-01T12:10:20.850Z",
+      "gitRev": "89b3d2c"
+    },
+    "SECAO_AUSENTE::security-audit-fixes::.spec/features/security-audit-fixes/spec.md": {
+      "codigo": "SECAO_AUSENTE",
+      "feature": "security-audit-fixes",
+      "ref": ".spec/features/security-audit-fixes/spec.md",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:10:20.850Z",
+      "ultimaVez": "2026-10-01T12:10:20.850Z",
+      "gitRev": "89b3d2c"
+    },
+    "VERIFY_OBSOLETO::stock::—": {
+      "codigo": "VERIFY_OBSOLETO",
+      "feature": "stock",
+      "ref": "—",
+      "ocorrencias": 4,
+      "primeiraVez": "2026-10-01T12:10:20.850Z",
+      "ultimaVez": "2026-10-01T19:47:37.768Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-100": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-100",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-101": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-101",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-102": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-102",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-103": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-103",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-104": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-104",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-105": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-105",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-106": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-106",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-107": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-107",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-108": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-108",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-109": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-109",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-110": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-110",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-111": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-111",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-112": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-112",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-113": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-113",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-114": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-114",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-115": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-115",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-116": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-116",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-117": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-117",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-118": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-118",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-119": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-119",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-120": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-120",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-121": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-121",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-122": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-122",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-123": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-123",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-124": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-124",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-125": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-125",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.662Z",
+      "ultimaVez": "2026-10-01T12:14:57.662Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-126": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-126",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-127": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-127",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-128": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-128",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-129": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-129",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-130": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-130",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-131": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-131",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-132": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-132",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-133": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-133",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-134": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-134",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-135": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-135",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-136": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-136",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-137": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-137",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-138": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-138",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-139": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-139",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-140": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-140",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TASK::security-audit-fixes::AC-141": {
+      "codigo": "AC_SEM_TASK",
+      "feature": "security-audit-fixes",
+      "ref": "AC-141",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:14:57.663Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-100": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-100",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-101": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-101",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-102": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-102",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-103": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-103",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-104": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-104",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-105": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-105",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-106": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-106",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-107": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-107",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-108": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-108",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-109": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-109",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-110": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-110",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-111": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-111",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-112": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-112",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-113": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-113",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-114": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-114",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-115": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-115",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-116": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-116",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-117": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-117",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-118": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-118",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-119": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-119",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-120": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-120",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-121": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-121",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-122": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-122",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-123": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-123",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-124": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-124",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-125": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-125",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-126": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-126",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-127": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-127",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-128": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-128",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-129": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-129",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-130": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-130",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-131": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-131",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-132": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-132",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-133": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-133",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-134": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-134",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-135": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-135",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-136": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-136",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-137": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-137",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-138": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-138",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-139": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-139",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-140": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-140",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_TESTE::security-audit-fixes::AC-141": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "security-audit-fixes",
+      "ref": "AC-141",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:14:57.663Z",
+      "ultimaVez": "2026-10-01T12:16:09.391Z",
+      "gitRev": "89b3d2c"
+    },
+    "ARQUIVO_INEXISTENTE::security-audit-fixes::T-101": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "security-audit-fixes",
+      "ref": "T-101",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:16:09.390Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "ARQUIVO_INEXISTENTE::security-audit-fixes::T-102": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "security-audit-fixes",
+      "ref": "T-102",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:16:09.390Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "ARQUIVO_INEXISTENTE::security-audit-fixes::T-104": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "security-audit-fixes",
+      "ref": "T-104",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-01T12:16:09.390Z",
+      "ultimaVez": "2026-10-01T19:47:37.766Z",
+      "gitRev": "501332a"
+    },
+    "ARQUIVO_INEXISTENTE::security-audit-fixes::T-106": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "security-audit-fixes",
+      "ref": "T-106",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:16:09.390Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "ARQUIVO_INEXISTENTE::security-audit-fixes::T-109": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "security-audit-fixes",
+      "ref": "T-109",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:16:09.390Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "ARQUIVO_INEXISTENTE::security-audit-fixes::T-110": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "security-audit-fixes",
+      "ref": "T-110",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T12:16:09.390Z",
+      "ultimaVez": "2026-10-01T12:16:09.390Z",
+      "gitRev": "89b3d2c"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-108": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-108",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.766Z",
+      "ultimaVez": "2026-10-01T19:47:37.766Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-109": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-109",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.766Z",
+      "ultimaVez": "2026-10-01T19:47:37.766Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-110": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-110",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.766Z",
+      "ultimaVez": "2026-10-01T19:47:37.766Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-111": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-111",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.766Z",
+      "ultimaVez": "2026-10-01T19:47:37.766Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-112": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-112",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.766Z",
+      "ultimaVez": "2026-10-01T19:47:37.766Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-114": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-114",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.766Z",
+      "ultimaVez": "2026-10-01T19:47:37.766Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-120": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-120",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.767Z",
+      "ultimaVez": "2026-10-01T19:47:37.767Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-121": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-121",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.767Z",
+      "ultimaVez": "2026-10-01T19:47:37.767Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-122": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-122",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.767Z",
+      "ultimaVez": "2026-10-01T19:47:37.767Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-123": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-123",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.767Z",
+      "ultimaVez": "2026-10-01T19:47:37.767Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-131": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-131",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.768Z",
+      "ultimaVez": "2026-10-01T19:47:37.768Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-132": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-132",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.768Z",
+      "ultimaVez": "2026-10-01T19:47:37.768Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-133": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-133",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.768Z",
+      "ultimaVez": "2026-10-01T19:47:37.768Z",
+      "gitRev": "501332a"
+    },
+    "AC_SEM_PROVA::security-audit-fixes::AC-134": {
+      "codigo": "AC_SEM_PROVA",
+      "feature": "security-audit-fixes",
+      "ref": "AC-134",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-01T19:47:37.768Z",
+      "ultimaVez": "2026-10-01T19:47:37.768Z",
+      "gitRev": "501332a"
     }
   }
 }
