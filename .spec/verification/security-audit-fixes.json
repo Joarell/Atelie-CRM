@@ -1,0 +1,235 @@
+{
+  "feature": "security-audit-fixes",
+  "timestamp": "2026-10-01T19:51:38.422Z",
+  "gitRev": "501332a",
+  "command": "npx vitest run --reporter=tap",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 1525,
+  "results": {
+    "AC-100": {
+      "status": "pass",
+      "testName": "@spec:AC-100 viewer recebe 403 # time=4.59ms",
+      "method": "tap"
+    },
+    "AC-101": {
+      "status": "pass",
+      "testName": "@spec:AC-101 manager recebe 201 e a linha e gravada # time=32.81ms",
+      "method": "tap"
+    },
+    "AC-102": {
+      "status": "pass",
+      "testName": "@spec:AC-102 viewer recebe 403 ao listar # time=81.72ms",
+      "method": "tap"
+    },
+    "AC-103": {
+      "status": "pass",
+      "testName": "@spec:AC-103 alterar papel e negado a manager # time=3.50ms",
+      "method": "tap"
+    },
+    "AC-104": {
+      "status": "pass",
+      "testName": "@spec:AC-104 redefinir senha e negado a manager # time=1.27ms",
+      "method": "tap"
+    },
+    "AC-105": {
+      "status": "pass",
+      "testName": "@spec:AC-105 editar nome e email e permitido a manager # time=1.70ms",
+      "method": "tap"
+    },
+    "AC-106": {
+      "status": "pass",
+      "testName": "@spec:AC-106 excluir e negado a manager # time=1.01ms",
+      "method": "tap"
+    },
+    "AC-107": {
+      "status": "pass",
+      "testName": "@spec:AC-107 viewer recebe 403 e o registro nao muda # time=2.59ms",
+      "method": "tap"
+    },
+    "AC-108": {
+      "status": "pass",
+      "testName": "@spec:AC-108 nega com 403 e corpo de erro quando o papel nao serve # time=184.99ms",
+      "method": "tap"
+    },
+    "AC-109": {
+      "status": "pass",
+      "testName": "@spec:AC-109 descarta chave fora da allowlist # time=5.18ms",
+      "method": "tap"
+    },
+    "AC-110": {
+      "status": "pass",
+      "testName": "@spec:AC-110 buildInsert nao interpola coluna desconhecida (via entityToRow) # time=0.85ms",
+      "method": "tap"
+    },
+    "AC-111": {
+      "status": "pass",
+      "testName": "@spec:AC-111 buildUpdate nao interpola coluna desconhecida (via entityToRow) # time=2.25ms",
+      "method": "tap"
+    },
+    "AC-112": {
+      "status": "pass",
+      "testName": "@spec:AC-112 payload de subquery nao executa nem altera o schema # time=3.96ms",
+      "method": "tap"
+    },
+    "AC-113": {
+      "status": "pass",
+      "testName": "%s: allowlist === migrated columns [@spec:AC-113] # time=17.07ms",
+      "method": "tap"
+    },
+    "AC-114": {
+      "status": "pass",
+      "testName": "@spec:AC-114 escrita legitima preserva as colunas reais # time=3.99ms",
+      "method": "tap"
+    },
+    "AC-115": {
+      "status": "pass",
+      "testName": "@spec:AC-115 GET sem token responde 401 e nao devolve QR # time=154.10ms",
+      "method": "tap"
+    },
+    "AC-116": {
+      "status": "pass",
+      "testName": "@spec:AC-116 DELETE sem token responde 401 e nao derruba a sessao # time=3.85ms",
+      "method": "tap"
+    },
+    "AC-117": {
+      "status": "pass",
+      "testName": "@spec:AC-117 viewer nao le a sessao e agent nao a derruba # time=33.85ms",
+      "method": "tap"
+    },
+    "AC-118": {
+      "status": "pass",
+      "testName": "@spec:AC-118 admin recebe o estado da sessao # time=23.05ms",
+      "method": "tap"
+    },
+    "AC-119": {
+      "status": "pass",
+      "testName": "@spec:AC-119 /api/whatsapp/session exige sessao # time=66.88ms",
+      "method": "tap"
+    },
+    "AC-120": {
+      "status": "pass",
+      "testName": "@spec:AC-120 .gitignore exclui .env # time=23.51ms",
+      "method": "tap"
+    },
+    "AC-121": {
+      "status": "pass",
+      "testName": "@spec:AC-121 waha/.env nao esta rastreado pelo git # time=70.63ms",
+      "method": "tap"
+    },
+    "AC-122": {
+      "status": "pass",
+      "testName": "@spec:AC-122 compose usa variavel de ambiente sem segredo real como padrao # time=6.34ms",
+      "method": "tap"
+    },
+    "AC-123": {
+      "status": "pass",
+      "testName": "@spec:AC-123 .env.example nao contem segredo real # time=0.37ms",
+      "method": "tap"
+    },
+    "AC-124": {
+      "status": "pass",
+      "testName": "@spec:AC-124 users has mustChangePassword # time=2.63ms",
+      "method": "tap"
+    },
+    "AC-125": {
+      "status": "pass",
+      "testName": "@spec:AC-125 0021 flags seed-user-admin only # time=1.20ms",
+      "method": "tap"
+    },
+    "AC-126": {
+      "status": "pass",
+      "testName": "@spec:AC-126 login answers 200, creates the session and reports the flag # time=118.71ms",
+      "method": "tap"
+    },
+    "AC-127": {
+      "status": "pass",
+      "testName": "@spec:AC-127 devolve 403 fora da allowlist de troca # time=29.65ms",
+      "method": "tap"
+    },
+    "AC-128": {
+      "status": "pass",
+      "testName": "@spec:AC-128 the API is closed before the rotation # time=48.01ms",
+      "method": "tap"
+    },
+    "AC-129": {
+      "status": "pass",
+      "testName": "@spec:AC-129 admin123 is gone # time=0.61ms",
+      "method": "tap"
+    },
+    "AC-130": {
+      "status": "pass",
+      "testName": "@spec:AC-130 db:seed:remote runs the guard script # time=2.03ms",
+      "method": "tap"
+    },
+    "AC-131": {
+      "status": "pass",
+      "testName": "@spec:AC-131 escapes double quotes to &quot; # time=0.37ms",
+      "method": "tap"
+    },
+    "AC-132": {
+      "status": "pass",
+      "testName": "@spec:AC-132 quote in attribute does not create a DOM element # time=5.62ms",
+      "method": "tap"
+    },
+    "AC-133": {
+      "status": "pass",
+      "testName": "@spec:AC-133 escapeHtml still correct for text content # time=0.37ms",
+      "method": "tap"
+    },
+    "AC-134": {
+      "status": "pass",
+      "testName": "@spec:AC-134 leaves safe values untouched # time=0.58ms",
+      "method": "tap"
+    },
+    "AC-135": {
+      "status": "pass",
+      "testName": "@spec:AC-135 data.ts filters contacts exactly once # time=0.72ms",
+      "method": "tap"
+    },
+    "AC-136": {
+      "status": "pass",
+      "testName": "@spec:AC-136 data.ts recorte is identical to the export recorte # time=6.92ms",
+      "method": "tap"
+    },
+    "AC-137": {
+      "status": "pass",
+      "testName": "@spec:AC-137 README declares there is no per-row isolation # time=6.61ms",
+      "method": "tap"
+    },
+    "AC-138": {
+      "status": "pass",
+      "testName": "@spec:AC-138 README qualifies the assignment fields as metadata # time=3.26ms",
+      "method": "tap"
+    },
+    "AC-139": {
+      "status": "pass",
+      "testName": "@spec:AC-139 no non-LGPD route reads the assignment fields # time=11.64ms",
+      "method": "tap"
+    },
+    "AC-140": {
+      "status": "pass",
+      "testName": "@spec:AC-140 every id route in the code is on the reviewed list # time=7.50ms",
+      "method": "tap"
+    },
+    "AC-141": {
+      "status": "pass",
+      "testName": "@spec:AC-141 no id route is in PUBLIC_PATHS # time=2.77ms",
+      "method": "tap"
+    }
+  },
+  "principles": {
+    "P-004": {
+      "status": "pass",
+      "testName": "@principle:P-004 consent is granular per purpose # time=60.59ms"
+    },
+    "P-005": {
+      "status": "pass",
+      "testName": "@principle:P-005 retention windows are configurable # time=5.47ms"
+    },
+    "P-006": {
+      "status": "pass",
+      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=7.72ms"
+    }
+  }
+}
