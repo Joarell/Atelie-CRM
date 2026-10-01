@@ -2,6 +2,7 @@ import { defineMiddleware } from 'astro:middleware';
 import { userFromToken, userFromTokenString } from './server/auth';
 import { getDb } from './server/context';
 import type { Database } from './server/db';
+import type { User } from './domain/crm';
 import { json } from './server/http';
 import {
 	checkRateLimit,
@@ -11,16 +12,20 @@ import {
 	MAX_PASSWORD_CHANGE_ATTEMPTS
 } from './server/rateLimit';
 
-// `/api/whatsapp/session` is public on purpose: the pairing QR is the only way
-// to attach a WhatsApp number, so it must be reachable before anyone can log
-// in. Guarding it made the whole pairing flow unreachable.
 const PUBLIC_PATHS = new Set([
 	'/api/auth/login',
 	'/api/auth/me',
 	'/api/whatsapp/webhook',
 	'/api/whatsapp/health',
 	'/api/whatsapp/webhook-config',
-	'/api/whatsapp/session',
+]);
+
+// A user flagged for rotation is still on the seed credential, so the API stays
+// closed to it except for the routes that let it finish that rotation.
+const PASSWORD_CHANGE_ALLOWED = new Set([
+	'/api/auth/me',
+	'/api/auth/change-password',
+	'/api/auth/logout',
 ]);
 
 const CSP = "default-src 'self'; script-src 'self'; " +
@@ -94,28 +99,46 @@ async function handlePublicPath(
 	return applySecurityHeaders(rateLimitResponse(key, limit.max, retryAfter));
 }
 
+async function handleUnguardedPath(
+	context: Parameters<typeof onRequest>[0],
+	pathname: string,
+	next: () => Promise<Response>
+): Promise<Response | null> {
+	if (!pathname.startsWith('/api/')) {
+		return applySecurityHeaders(await next());
+	}
+	if (!PUBLIC_PATHS.has(pathname)) return null;
+	const limited = await handlePublicPath(context, pathname);
+	if (limited) return limited;
+	return applySecurityHeaders(await next());
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
 	const pathname = new URL(context.request.url).pathname;
 
-	if (!pathname.startsWith('/api/')) {
-		const response = await next();
-		return applySecurityHeaders(response);
-	}
-
-	if (PUBLIC_PATHS.has(pathname)) {
-		const limited = await handlePublicPath(context, pathname);
-		if (limited) return limited;
-		const response = await next();
-		return applySecurityHeaders(response);
-	}
+	const unguarded = await handleUnguardedPath(context, pathname, next);
+	if (unguarded) return unguarded;
 
 	const user = await resolveUser(getDb(), context.request, pathname);
 	if (!user) {
 		return applySecurityHeaders(json({ error: 'nao_autenticado' }, 401));
 	}
 
+	if (await blockedByPasswordChange(user, pathname)) {
+		return applySecurityHeaders(
+			json({ error: 'troca_de_senha_obrigatoria' }, 403)
+		);
+	}
+
 	(context.locals as unknown as Record<string, unknown>).user = user;
 
-	const response = await next();
-	return applySecurityHeaders(response);
+	return applySecurityHeaders(await next());
 });
+
+async function blockedByPasswordChange(
+	user: User,
+	pathname: string
+): Promise<boolean> {
+	if (PASSWORD_CHANGE_ALLOWED.has(pathname)) return false;
+	return Number(user.mustChangePassword ?? 0) === 1;
+}

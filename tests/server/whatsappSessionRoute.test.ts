@@ -3,6 +3,7 @@ import type { APIContext } from 'astro';
 import { DELETE, GET, POST } from '../../src/pages/api/whatsapp/session';
 import { WAHA_WEBHOOK_DEFAULT_EVENTS } from '../../src/domain/wahaWebhookConfig';
 import { USERS_TABLE, SESSIONS_TABLE, WAHA_SESSIONS_TABLE } from '../../src/server/tables';
+import type { Role } from '../../src/domain/crm';
 import { FakeD1 } from '../helpers/fakeD1';
 
 const state = vi.hoisted(() => ({
@@ -59,9 +60,19 @@ function authedDb(): FakeD1 {
   );
 }
 
-function context(method: string, token?: string): APIContext {
+function context(
+  method: string,
+  token?: string,
+  role: Role | null = 'admin'
+): APIContext {
   const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-  return { request: new Request(`http://localhost/api/whatsapp/session`, { method, headers }) } as unknown as APIContext;
+  const locals: Record<string, unknown> = role === null
+    ? {}
+    : { user: { id: 'u1', name: 'Admin', role } };
+  return {
+    request: new Request(`http://localhost/api/whatsapp/session`, { method, headers }),
+    locals
+  } as unknown as APIContext;
 }
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -111,11 +122,47 @@ describe('/api/whatsapp/session', () => {
     vi.unstubAllGlobals();
   });
 
-  it('serves the pairing/QR surface without any app session token', async () => {
+  it('@spec:AC-115 GET sem token responde 401 e nao devolve QR', async () => {
     const calls = stubWaha(versionBody);
-    expect((await GET(context('GET'))).status).toBe(200);
-    expect((await POST(context('POST'))).status).toBe(200);
-    expect((await DELETE(context('DELETE'))).status).toBe(200);
+    const response = await GET(context('GET', undefined, null));
+    expect(response.status).toBe(401);
+    const body = await response.text();
+    expect(body).not.toContain('base64');
+    expect(body).not.toContain('qr');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('@spec:AC-116 DELETE sem token responde 401 e nao derruba a sessao', async () => {
+    const calls = stubWaha(versionBody);
+    const response = await DELETE(context('DELETE', undefined, null));
+    expect(response.status).toBe(401);
+    expect(calls).toHaveLength(0);
+    expect(state.db.rows(WAHA_SESSIONS_TABLE)).toHaveLength(0);
+  });
+
+  it('@spec:AC-117 viewer nao le a sessao e agent nao a derruba', async () => {
+    const calls = stubWaha(versionBody);
+    expect((await GET(context('GET', 'tok', 'viewer'))).status).toBe(403);
+    expect((await DELETE(context('DELETE', 'tok', 'agent'))).status).toBe(403);
+    expect(calls).toHaveLength(0);
+    expect(state.db.rows(WAHA_SESSIONS_TABLE)).toHaveLength(0);
+  });
+
+  it('@spec:AC-118 admin recebe o estado da sessao', async () => {
+    stubWaha(versionBody);
+    const response = await GET(context('GET', 'tok', 'admin'));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      configured: true,
+      session: { name: 'default', status: 'WORKING' }
+    });
+  });
+
+  it('admin pode parear e derrubar a sessao', async () => {
+    const calls = stubWaha(versionBody);
+    expect((await GET(context('GET', 'tok', 'admin'))).status).toBe(200);
+    expect((await POST(context('POST', 'tok', 'admin'))).status).toBe(200);
+    expect((await DELETE(context('DELETE', 'tok', 'admin'))).status).toBe(200);
     // GET: version + session + QR-bearing refetch; POST: + start; DELETE: stop
     expect(calls).toHaveLength(7);
   });

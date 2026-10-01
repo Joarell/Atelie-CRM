@@ -4,6 +4,7 @@
 // session token as `?token=`. The middleware used to accept only the Bearer
 // header, which 401'd every real-time connection before the route's own
 // `resolveSseUser` could run — silent breakage of the whole push feature.
+import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FakeD1 } from '../helpers/fakeD1';
 import { hashPassword, newSession } from '../../src/server/auth';
@@ -60,6 +61,11 @@ async function dbWithSession(): Promise<FakeD1> {
 }
 
 const SSE = '/api/crm/events';
+const CHANGE_ALLOWED = [
+  '/api/auth/me',
+  '/api/auth/change-password',
+  '/api/auth/logout'
+];
 
 describe('middleware auth', () => {
   beforeEach(async () => {
@@ -97,6 +103,67 @@ describe('middleware auth', () => {
 
   it('leaves public paths alone', async () => {
     const res = await send(ctx('/api/auth/login'));
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('whatsapp session is not a public path', () => {
+  beforeEach(async () => {
+    state.db = await dbWithSession();
+  });
+
+  it('@spec:AC-119 /api/whatsapp/session exige sessao', async () => {
+    const res = await send(ctx('/api/whatsapp/session'));
+    expect(res.status).toBe(401);
+  });
+
+  it('@spec:AC-119 a rota nao esta mais em PUBLIC_PATHS', async () => {
+    const source = readFileSync(
+      new URL('../../src/middleware.ts', import.meta.url),
+      'utf8'
+    );
+    const publicBlock = source.slice(
+      source.indexOf('const PUBLIC_PATHS'),
+      source.indexOf('];', source.indexOf('const PUBLIC_PATHS'))
+    );
+    expect(publicBlock).not.toContain('/api/whatsapp/session');
+    expect(source).not.toContain('is public on purpose');
+    expect(source).not.toContain('reachable before anyone can log in');
+  });
+});
+
+describe('mandatory password change blocks the API', () => {
+  async function dbWithFlag(flag: number): Promise<FakeD1> {
+    const db = await dbWithSession();
+    const rows = db.rows(USERS_TABLE);
+    (rows[0] as Record<string, unknown>).mustChangePassword = flag;
+    return db;
+  }
+
+  it('@spec:AC-127 devolve 403 fora da allowlist de troca', async () => {
+    state.db = await dbWithFlag(1);
+    const res = await send(
+      ctx('/api/users', { headers: { Authorization: `Bearer ${TOKEN}` } })
+    );
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: 'troca_de_senha_obrigatoria' });
+  });
+
+  it('@spec:AC-127 a allowlist de troca segue respondendo', async () => {
+    state.db = await dbWithFlag(1);
+    for (const path of CHANGE_ALLOWED) {
+      const res = await send(
+        ctx(path, { headers: { Authorization: `Bearer ${TOKEN}` } })
+      );
+      expect(res.status).toBe(200);
+    }
+  });
+
+  it('@spec:AC-127 flag igual a zero nao bloqueia', async () => {
+    state.db = await dbWithFlag(0);
+    const res = await send(
+      ctx('/api/users', { headers: { Authorization: `Bearer ${TOKEN}` } })
+    );
     expect(res.status).toBe(200);
   });
 });

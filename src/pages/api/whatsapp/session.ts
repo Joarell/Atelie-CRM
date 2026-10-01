@@ -8,15 +8,19 @@ import {
 	webhookReadiness
 } from '../../../domain/wahaWebhookConfig';
 import { getDb } from '../../../server/context';
+import { requireRole } from '../../../server/authz';
 import { json } from '../../../server/http';
 import { readWahaConfig, WahaClient, WahaError } from '../../../server/waha';
 import { mirrorWahaSessionState } from '../../../server/wahaIngest';
+import type { Role } from '../../../domain/crm';
+
+const ADMINS: Role[] = ['admin'];
 
 // WhatsApp session management: status (with QR for pairing), start and stop of
-// the engine's `default` session. Deliberately public (no app session needed):
-// pairing must be reachable before anyone can log in, and the QR is the only
-// way to attach a WhatsApp number. Sending stays auth-guarded in /send; the
-// mirror (`waha_sessions`) keeps a durable last-state fact for the UI.
+// the engine's `default` session. Admin-only: the QR attaches a WhatsApp
+// number and stopping the session takes the whole channel down, so neither is
+// reachable by an anonymous caller or a low-privilege session. The mirror
+// (`waha_sessions`) keeps a durable last-state fact for the UI.
 
 // The app owns its webhook: when the engine has no session yet, starting it
 // here also creates it WITH `config.webhooks` (single registration, no second
@@ -43,6 +47,8 @@ const WAHA_NOT_CONFIGURED_BODY = {
 };
 
 export const GET: APIRoute = async (context) => {
+	const denied = await requireRole(context, ADMINS);
+	if (denied) return denied;
 	const db = getDb();
 	const config = readWahaConfig(env);
 	if (!config) return json(WAHA_NOT_CONFIGURED_BODY, 503);
@@ -60,6 +66,8 @@ export const GET: APIRoute = async (context) => {
 };
 
 export const POST: APIRoute = async (context) => {
+	const denied = await requireRole(context, ADMINS);
+	if (denied) return denied;
 	const db = getDb();
 	const config = readWahaConfig(env);
 	if (!config) return json({ error: 'waha_nao_configurado' }, 503);
@@ -82,6 +90,8 @@ export const POST: APIRoute = async (context) => {
 };
 
 export const DELETE: APIRoute = async (context) => {
+	const denied = await requireRole(context, ADMINS);
+	if (denied) return denied;
 	const db = getDb();
 	const config = readWahaConfig(env);
 	if (!config) return json({ error: 'waha_nao_configurado' }, 503);

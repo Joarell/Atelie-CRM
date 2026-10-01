@@ -13,6 +13,9 @@ export interface User {
 	passwordSalt?: string;
 	role: Role;
 	createdAt: string;
+	// Optional: absent on rows created before 0020. 1 = the session may only
+	// reach the routes that let the user rotate the credential.
+	mustChangePassword?: number;
 }
 
 export interface Session {
