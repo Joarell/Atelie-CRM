@@ -454,6 +454,54 @@ describe('/api/whatsapp/session', () => {
     ]);
   });
 
+  it('POST re-registra a webhook quando a do engine esta divergente', async () => {
+    // A sessao ja existe e responde 409 no start, entao o `webhooks` do POST e
+    // descartado pelo engine. Se o engine estiver com um hmac velho, apenas
+    // reabrir a sessao NAO conserta: e o PUT /api/whatsapp/webhook-config que
+    // re-sincroniza. O POST tambem tem de consertar, senao o banner manda o
+    // usuario para uma remediacao que nao funciona.
+    const calls = stubWaha((url, init) => {
+      if (url.endsWith('/api/server/version')) {
+        return jsonResponse({ version: '2026.7.2', engine: 'NOWEB', tier: 'CORE' });
+      }
+      if (url.endsWith('/start')) {
+        return jsonResponse({ message: 'Session is already running' }, 409);
+      }
+      return jsonResponse({
+        name: 'default',
+        status: 'WORKING',
+        config: {
+          webhooks: [
+            {
+              url: state.wahaHookUrl,
+              events: [...WAHA_WEBHOOK_DEFAULT_EVENTS],
+              hmac: { key: 'hmac-velho' }
+            }
+          ]
+        }
+      });
+    });
+    const response = await POST(context('POST', 'tok', 'admin'));
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { webhook: { registered: boolean } };
+    expect(body.webhook.registered).toBe(true);
+    const repair = calls.find(
+      (c) => c.init.method === 'PUT' && c.url.endsWith('/api/sessions/default')
+    );
+    expect(repair).toBeTruthy();
+    expect(JSON.parse(repair!.init.body as string)).toMatchObject({
+      config: { webhooks: [{ hmac: { key: state.wahaHookSecret } }] }
+    });
+  });
+
+  it('POST nao mexe na webhook quando ela ja esta em dia', async () => {
+    const calls = stubWaha(versionBody);
+    await POST(context('POST', 'tok', 'admin'));
+    expect(
+      calls.some((c) => c.init.method === 'PUT' && c.url.endsWith('/api/sessions/default'))
+    ).toBe(false);
+  });
+
   it('POST tolerates the already-running 409 and returns the live QR', async () => {
     const calls = stubWaha((url) => {
       if (url.endsWith('/api/server/version')) {

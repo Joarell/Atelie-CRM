@@ -18,7 +18,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import type { APIContext } from 'astro';
-import { readWahaConfig } from '../../src/server/waha';
+import { readWahaConfig, WahaClient } from '../../src/server/waha';
+import {
+  readWahaWebhookSettings,
+  wahaWebhookNeedsRegistration
+} from '../../src/domain/wahaWebhookConfig';
 import { FakeD1 } from '../helpers/fakeD1';
 
 function dotEnv(file: string): Record<string, string> {
@@ -120,5 +124,35 @@ describe.skipIf(skip())('WAHA session route online tier', () => {
     if (body.session.status === 'SCAN_QR_CODE') {
       expect(body.session.qr).toMatch(/^data:image\/png;base64,/);
     }
+  });
+});
+// Regression guard for the ingress banner: the engine ignores the `webhooks`
+// argument when the session already exists, so a session whose registration
+// drifted (rotated hmac, edited env) used to stay unregistered forever — every
+// inbound message failed HMAC verification and was dropped. Re-opening the
+// session must now heal it.
+describe.skipIf(skip())('WAHA webhook drift self-heals', () => {
+  beforeEach(() => {
+    state.db = FakeD1.empty();
+  });
+
+  it('POST re-registers when the engine holds a stale hmac', async () => {
+    const settings = readWahaWebhookSettings(appEnv);
+    if (!settings || !configured) return;
+    const client = new WahaClient(configured);
+
+    await client.updateSession(configured.session, [
+      { url: settings.url, events: settings.events, hmac: { key: 'stale-hmac' } }
+    ]);
+    const drifted = await client.getSession(configured.session);
+    expect(wahaWebhookNeedsRegistration(drifted?.webhooks ?? [], settings)).toBe(true);
+
+    const res = await POST(ctx('POST', 'admin'));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { webhook: { registered: boolean } };
+    expect(body.webhook.registered).toBe(true);
+
+    const healed = await client.getSession(configured.session);
+    expect(wahaWebhookNeedsRegistration(healed?.webhooks ?? [], settings)).toBe(false);
   });
 });
