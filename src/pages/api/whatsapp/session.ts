@@ -5,7 +5,8 @@ import type { WahaEngineWebhook } from '../../../domain/wahaWebhookConfig';
 import {
 	readWahaWebhookSettings,
 	sessionWebhookFor,
-	webhookReadiness
+	webhookReadiness,
+	wahaWebhookNeedsRegistration
 } from '../../../domain/wahaWebhookConfig';
 import { getDb } from '../../../server/context';
 import { requireRole } from '../../../server/authz';
@@ -74,11 +75,12 @@ export const POST: APIRoute = async (context) => {
 
 	const client = new WahaClient(config);
 	try {
-		const session = await startWithFreshQr(
+		const started = await startWithFreshQr(
 			client,
 			config.session,
 			wahaWebhooksFromEnv(env)
 		);
+		const session = await syncWebhook(client, config.session, started);
 		await mirrorWahaSessionState(db, session.name, session.status);
 		return json({
 			session,
@@ -88,6 +90,27 @@ export const POST: APIRoute = async (context) => {
 		return json({ error: safeWahaError(error) }, 502);
 	}
 };
+
+// The engine ignores the `webhooks` argument when the session already exists
+// (start answers 409 and the app falls back to reading it), so re-opening a
+// drifted session never re-registered the delivery path. Only acts when the
+// engine REPORTED a webhook that diverges: an update restarts the engine, so
+// ambiguous evidence (no webhook echoed) must not trigger one. A session with
+// no webhook at all stays the operator's `PUT /api/whatsapp/webhook-config`.
+async function syncWebhook(
+	client: WahaClient,
+	name: string,
+	session: WahaSessionSnapshot
+): Promise<WahaSessionSnapshot> {
+	const settings = readWahaWebhookSettings(env);
+	if (!settings) return session;
+	const current = session.webhooks ?? [];
+	if (current.length === 0) return session;
+	if (!wahaWebhookNeedsRegistration(current, settings)) return session;
+	const webhook = sessionWebhookFor(settings);
+	await client.updateSession(name, [webhook]);
+	return { ...session, webhooks: [webhook] };
+}
 
 export const DELETE: APIRoute = async (context) => {
 	const denied = await requireRole(context, ADMINS);
