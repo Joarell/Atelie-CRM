@@ -28,5 +28,8 @@ WAHA_SESSION_NAME="default"
 #     para falhar fechado na ausência de assinatura.
 WHATSAPP_HOOK_URL="http://host.containers.internal:4322/api/whatsapp/webhook"
 WHATSAPP_HOOK_EVENTS=""
+# Um segredo de uso unico por ambiente: `openssl rand -hex 32`.
+# Vazio DESLIGA a verificacao de assinatura; um segredo curto (<32) tambem e
+# recusado e o receiver falha fechado. Copie este arquivo e troque o valor.
 WAHA_HMAC_SECRET=""
 WAHA_WEBHOOK_REQUIRE_SIGNATURE=""

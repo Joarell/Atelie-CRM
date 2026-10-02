@@ -187,7 +187,8 @@ describe('app interaction (real main.ts + real API routes)', () => {
       if (!document.querySelector('.toast')) throw new Error('no toast');
     });
     expect(sessionStorage.getItem('login_return_path')).toBeNull();
-    expect(localStorage.getItem('crm_token')).toBeTruthy();
+    expect(localStorage.getItem('crm_user')).toBeTruthy();
+    expect(localStorage.getItem('crm_token')).toBeNull();
     expect(window.location.hash).toBe('#/');
 
     window.dispatchEvent(new Event('hashchange'));
@@ -198,9 +199,13 @@ describe('app interaction (real main.ts + real API routes)', () => {
     const row = state.db.rows(AUTH_AUDIT_TABLE)
       .find((r) => r.action === 'login_ok');
     expect(row).toBeTruthy();
+    // A sessao existe no servidor e o token nao e legivel pelo storage.
     const sessions = state.db.rows(SESSIONS_TABLE);
     expect(sessions).toHaveLength(1);
-    expect(sessions[0].token).toBe(localStorage.getItem('crm_token'));
+    expect(localStorage.getItem('crm_token')).toBeNull();
+    expect(
+      JSON.parse(localStorage.getItem('crm_user') as string)
+    ).not.toHaveProperty('passwordHash');
   });
 });
 

@@ -11,7 +11,7 @@ import {
 	type OrderYearSeries
 } from '../../../domain/inboxChart';
 import { formatBRL } from '../../../domain/format';
-import { escapeAttr } from '../../dom';
+import { escapeAtrib as escapeAttr } from '../../../domain/format';
 
 // The open chat contact's orders bucketed by week/month/year, the
 // granularity picked in a `.period-menu` of three buttons. Same stacked

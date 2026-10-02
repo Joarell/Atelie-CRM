@@ -4,6 +4,9 @@ export const INGREDIENTS_SHAPE: TableShape = {
 	columns: [
 		'id', 'minStock', 'name', 'packagePrice', 'packageSize', 'stock', 'unit'
 	],
+	numberFields: [
+		'minStock', 'packagePrice', 'packageSize', 'stock'
+	],
 	jsonFields: [],
 	boolFields: [],
 };
@@ -11,6 +14,9 @@ export const COMPONENTS_TABLE = 'components';
 export const COMPONENTS_SHAPE: TableShape = {
 	columns: [
 		'id', 'items', 'name', 'prepTime', 'type', 'yieldDesc'
+	],
+	numberFields: [
+		'prepTime'
 	],
 	jsonFields: ['items'],
 	boolFields: [],
@@ -20,6 +26,9 @@ export const PRODUCTS_SHAPE: TableShape = {
 	columns: [
 		'category', 'fixedExpenses', 'id', 'items', 'labor', 'markupPercent', 'name',
 		'prepTime', 'variablePercent', 'yieldUnits'
+	],
+	numberFields: [
+		'markupPercent', 'prepTime', 'variablePercent', 'yieldUnits'
 	],
 	jsonFields: ['labor', 'fixedExpenses', 'items'],
 	boolFields: [],
@@ -45,6 +54,9 @@ export const STOCK_MOVEMENTS_TABLE = 'stock_movements';
 export const STOCK_MOVEMENTS_SHAPE: TableShape = {
 	columns: [
 		'date', 'id', 'ingredientId', 'ingredientName', 'note', 'qty', 'type'
+	],
+	numberFields: [
+		'qty'
 	],
 	jsonFields: [],
 	boolFields: [],
@@ -87,6 +99,9 @@ export const PIPELINES_SHAPE: TableShape = {
 	columns: [
 		'id', 'isDefault', 'name'
 	],
+	numberFields: [
+		'isDefault'
+	],
 	jsonFields: [],
 	boolFields: [],
 };
@@ -94,6 +109,9 @@ export const STAGES_TABLE = 'pipeline_stages';
 export const STAGES_SHAPE: TableShape = {
 	columns: [
 		'id', 'name', 'pipelineId', 'position'
+	],
+	numberFields: [
+		'position'
 	],
 	jsonFields: [],
 	boolFields: [],
@@ -103,6 +121,9 @@ export const DEALS_SHAPE: TableShape = {
 	columns: [
 		'assignedUserId', 'contactId', 'createdAt', 'id', 'lostReason',
 		'nextActionAt', 'pipelineId', 'stageId', 'status', 'title', 'valueCents'
+	],
+	numberFields: [
+		'valueCents'
 	],
 	jsonFields: [],
 	boolFields: [],
@@ -128,6 +149,9 @@ export const CALENDAR_EVENTS_SHAPE: TableShape = {
 	columns: [
 		'contactId', 'createdAt', 'createdBy', 'endsAt', 'eventType', 'id',
 		'remindBeforeMin', 'startsAt', 'title'
+	],
+	numberFields: [
+		'remindBeforeMin'
 	],
 	jsonFields: [],
 	boolFields: [],
@@ -173,6 +197,9 @@ export const CATALOG_PRODUCTS_SHAPE: TableShape = {
 	columns: [
 		'ativo', 'createdAt', 'currency', 'description', 'id', 'name', 'priceCents',
 		'updatedAt'
+	],
+	numberFields: [
+		'ativo', 'priceCents'
 	],
 	jsonFields: [],
 	boolFields: ['ativo'],

@@ -26,9 +26,31 @@ export interface WahaWebhookAuth {
 	signatureVerified: boolean;
 }
 
+// O segredo tem que ter forca de verdade. "Nao vazio" acceptava o texto de
+// instrucao `gere-um-segredo-por-ambiente-openssl-rand-hex-32` como se fosse
+// uma chave, e um segredo curto e adivinhavel passava do mesmo jeito — o
+// unico criterio de validade era `text()`. Placeholders conhecidos e chaves
+// curtas sao recusados, e um segredo recusado DEIXA A VERIFICACAO DESLIGADA
+// (fail-closed, nunca fail-open).
+const HMAC_MIN_BYTES = 32;
+const PLACEHOLDER_SECRETS = new Set([
+	'gere-um-segredo-por-ambiente-openssl-rand-hex-32',
+	'dev_plaintext_change_me',
+	'INVALID_CHANGE_ME',
+	'change-me',
+	'secret',
+]);
+
+function usableSecret(value: string | null): string | null {
+	if (!value) return null;
+	if (PLACEHOLDER_SECRETS.has(value.trim().toLowerCase())) return null;
+	if (value.length < HMAC_MIN_BYTES) return null;
+	return value;
+}
+
 export function readWahaWebhookConfig(source: unknown): WahaWebhookConfig {
 	const record = source as Record<string, unknown> | null | undefined;
-	const secret = text(record?.WAHA_HMAC_SECRET);
+	const secret = usableSecret(text(record?.WAHA_HMAC_SECRET));
 	const flag = record?.WAHA_WEBHOOK_REQUIRE_SIGNATURE ?? '';
 	const requireSignature = String(flag) === 'true';
 	return { hmacSecret: secret, requireSignature };

@@ -3,6 +3,7 @@ import type { APIContext } from 'astro';
 import { FakeD1 } from '../helpers/fakeD1';
 import { createCollectionRoutes, createItemRoutes } from '../../src/server/routeFactory';
 import { ORDERS_SHAPE } from '../../src/server/tables';
+import type { Role, User } from '../../src/domain/crm';
 
 const state = vi.hoisted(() => ({ db: null as unknown as FakeD1 }));
 vi.mock('cloudflare:workers', () => ({
@@ -25,23 +26,42 @@ const order = {
   createdAt: '2026-09-17T10:00:00Z'
 };
 
-function endpoint(params: { id?: string } = {}): APIContext {
-  return { request: new Request('http://localhost/api/orders'), params } as unknown as APIContext;
+// As rotas agora exigem sessao: o gate por papel vive na fabrica, entao um
+// contexto sem `locals.user` tem de responder 401 (antes a fabrica nao olhava
+// papel nenhum e qualquer sessao — ou nenhuma — passava).
+function locals(role: Role = 'admin'): { user: User } {
+  return { user: { id: 'u1', role } as User };
 }
 
-function postRequest(body: unknown): APIContext {
+function endpoint(
+  params: { id?: string } = {},
+  role: Role = 'admin'
+): APIContext {
+  return {
+    request: new Request('http://localhost/api/orders'),
+    params,
+    locals: locals(role)
+  } as unknown as APIContext;
+}
+
+function postRequest(body: unknown, role: Role = 'admin'): APIContext {
   return {
     request: new Request('http://localhost/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     }),
-    params: {}
+    params: {},
+    locals: locals(role)
   } as unknown as APIContext;
 }
 
-function itemContext(request: Request, id: string): APIContext {
-  return { request, params: { id } } as unknown as APIContext;
+function itemContext(
+  request: Request,
+  id: string,
+  role: Role = 'admin'
+): APIContext {
+  return { request, params: { id }, locals: locals(role) } as unknown as APIContext;
 }
 
 describe('createCollectionRoutes', () => {

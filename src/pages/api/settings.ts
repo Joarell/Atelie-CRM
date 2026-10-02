@@ -10,19 +10,51 @@ import { json } from '../../server/http';
 const SETTINGS_ID = 'global';
 const SETTINGS_MANAGERS: Role[] = ['admin', 'manager'];
 
+// Allowlist de colunas. `settings` e' a unica tabela sem `shape.columns`,
+// entao o merge aceitaria qualquer chave — inclusive nomes de coluna que a
+// tabela nao tem, que viravam `INSERT OR REPLACE` para uma coluna
+// inexistente. Aqui o patch e' filtrado e convertido para numero antes do
+// merge.
+const SETTINGS_FIELDS = [
+	'salary',
+	'daysPerMonth',
+	'hoursPerDay',
+	'rent',
+	'energy',
+	'water',
+	'internet',
+	'office',
+	'mei',
+	'variablePercent',
+	'defaultMarkupPercent',
+] as const satisfies readonly (keyof Settings)[];
+
+function sanitizeSettingsPatch(raw: unknown): Partial<Settings> {
+	if (!raw || typeof raw !== 'object') return {};
+	const source = raw as Record<string, unknown>;
+	const patch: Record<string, unknown> = {};
+	for (const key of SETTINGS_FIELDS) {
+		const value = source[key];
+		if (value === undefined || value === null) continue;
+		const n = typeof value === 'number' ? value : Number(value);
+		if (!Number.isFinite(n)) continue;
+		patch[key] = n;
+	}
+	return patch as Partial<Settings>;
+}
+
+// GET e' somente leitura: a linha nasce em migrations/0022. Antes, um GET em
+// banco sem configuracao fazia INSERT — estado mudando em resposta a um read.
 export const GET: APIRoute = async () => {
-	const db = getDb();
-	const existing = await readSettings(db);
-	if (existing) return json(existing);
-	await writeSettings(db, DEFAULT_SETTINGS);
-	return json(DEFAULT_SETTINGS);
+	const existing = await readSettings(getDb());
+	return json(existing ?? DEFAULT_SETTINGS);
 };
 
 export const PUT: APIRoute = async (context) => {
 	const denied = await requireRole(context, SETTINGS_MANAGERS);
 	if (denied) return denied;
 	const db = getDb();
-	const patch: Partial<Settings> = await context.request.json();
+	const patch = sanitizeSettingsPatch(await context.request.json());
 	const current = (await readSettings(db)) ?? DEFAULT_SETTINGS;
 	const merged = { ...current, ...patch };
 	await writeSettings(db, merged);

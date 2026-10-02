@@ -34,13 +34,13 @@ describe('/api/settings GET', () => {
     state.db = FakeD1.empty();
   });
 
-  it('seeds and returns the defaults when no row exists', async () => {
+  // GET e' somente leitura: devolve o fallback em memoria e nao escreve nada.
+  // A linha nasce em migrations/0022_settings_default.sql.
+  it('returns the defaults without writing when no row exists', async () => {
     const response = await GET(getContext());
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(DEFAULT_SETTINGS);
-    const rows = state.db.rows('settings');
-    expect(rows).toHaveLength(1);
-    expect(rows[0].id).toBe('global');
+    expect(state.db.rows('settings')).toHaveLength(0);
   });
 
   it('returns the stored settings when a row exists', async () => {
@@ -71,6 +71,21 @@ describe('/api/settings PUT', () => {
     const response = await PUT(putContext({ salary: 2500, rent: 1200 }));
     expect(await response.json()).toMatchObject({ salary: 2500, rent: 1200 });
     expect(state.db.rows('settings')).toHaveLength(1);
+  });
+
+  // `settings` nao tem shape.columns, entao o merge aceitaria qualquer chave —
+  // inclusive colunas que a tabela nao tem. A allowlist filtra o patch.
+  it('ignores unknown columns and non-numeric values', async () => {
+    const response = await PUT(
+      putContext({ salary: 2500, businessName: 'x', rent: 'abc' })
+    );
+    expect(response.status).toBe(200);
+    const saved = (await response.json()) as Record<string, unknown>;
+    expect(saved.salary).toBe(2500);
+    expect(saved.businessName).toBeUndefined();
+    expect(saved.rent).toBe(DEFAULT_SETTINGS.rent);
+    expect(Object.keys(state.db.rows('settings')[0]).sort())
+      .toEqual(['id', ...Object.keys(DEFAULT_SETTINGS)].sort());
   });
 
   it('@spec:AC-107 viewer recebe 403 e o registro nao muda', async () => {

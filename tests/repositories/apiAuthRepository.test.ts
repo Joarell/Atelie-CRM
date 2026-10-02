@@ -43,17 +43,20 @@ describe('ApiAuthRepository', () => {
     expect(auth.currentUser()).toBeNull();
   });
 
-  it('login() stores the token and user', async () => {
+  // O token da sessao vive em cookie HttpOnly: nenhum script da origem consegue
+  // ler, e `login()` nao devolve mais token para o cliente guardar.
+  it('login() caches the user and never stores a token', async () => {
     stubFetch((url, init) => {
       expect(url).toBe('/api/auth/login');
       expect(init?.method).toBe('POST');
-      return jsonResponse({ token: TOKEN, user: admin });
+      return jsonResponse({ user: admin });
     });
     const auth = new ApiAuthRepository();
     const user = await auth.login('admin@deskcomm.local', 'admin123');
     expect(user.id).toBe('u1');
-    expect(auth.token()).toBe(TOKEN);
+    expect(auth.token()).toBeNull();
     expect(auth.isAuthenticated()).toBe(true);
+    expect(localStorage.getItem('crm_token')).toBeNull();
     expect(JSON.parse(localStorage.getItem('crm_user') as string).email).toBe('admin@deskcomm.local');
   });
 
@@ -64,18 +67,21 @@ describe('ApiAuthRepository', () => {
     expect(auth.isAuthenticated()).toBe(false);
   });
 
-  it('load() without a token keeps the session empty', async () => {
+  // O cookie e' enviado pelo browser automaticamente, entao `load()` sempre
+  // consulta /me; quem responde 401 e' treated como sessao vazia.
+  it('load() without a stored user ends with the session empty', async () => {
+    stubFetch(() => jsonResponse({ error: 'nao_autenticado' }, 401));
     const auth = new ApiAuthRepository();
     await auth.load();
     expect(auth.currentUser()).toBeNull();
   });
 
-  it('load() refreshes the user from /api/auth/me with a Bearer header', async () => {
-    localStorage.setItem('crm_token', TOKEN);
+  it('load() refreshes the user from /api/auth/me without a Bearer header', async () => {
+    localStorage.setItem('crm_user', JSON.stringify(admin));
     stubFetch((url, init) => {
       expect(url).toBe('/api/auth/me');
-      const headers = init?.headers as Record<string, string>;
-      expect(headers?.Authorization).toBe(`Bearer ${TOKEN}`);
+      const headers = (init?.headers ?? {}) as Record<string, string>;
+      expect(headers.Authorization).toBeUndefined();
       return jsonResponse(admin);
     });
     const auth = new ApiAuthRepository();
@@ -84,7 +90,6 @@ describe('ApiAuthRepository', () => {
   });
 
   it('load() clears the session when /me rejects', async () => {
-    localStorage.setItem('crm_token', TOKEN);
     localStorage.setItem('crm_user', JSON.stringify(admin));
     stubFetch(() => jsonResponse({ error: 'sessao_invalida' }, 404));
     const auth = new ApiAuthRepository();

@@ -191,8 +191,9 @@ function textField(name: string, label: string, value: string): string {
 
 function numberField(name: string, label: string, value: number): string {
 	return `<div class="field"><label class="field-label">${label}</label>
-		<input class="input" type="number" step="0.01" min="0" name="${name}"
-		value="${value}" required></div>`;
+		<input class="input" type="number" step="0.01" min="0" ` +
+		`name="${escapeAtrib(name)}" value="${escapeAtrib(String(value))}" ` +
+		`required></div>`;
 }
 
 async function handleSubmit(

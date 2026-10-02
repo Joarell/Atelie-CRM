@@ -94,11 +94,11 @@ function attachWhatsAppEventListeners(eventSource: EventSource): void {
 	};
 }
 
-// EventSource cannot set an Authorization header, so the session token
-// (localStorage) travels as a query param — the only channel it owns.
-function sseEventUrl(token: string | null): string {
-	const authQuery = token ? `&token=${encodeURIComponent(token)}` : '';
-	return `/api/crm/events?since=${Date.now()}${authQuery}`;
+// The session cookie is HttpOnly, so EventSource authenticates the stream the
+// same way any other request does — no token in the URL (which would leak into
+// access logs, Referer headers and browser history).
+function sseEventUrl(): string {
+	return `/api/crm/events?since=${Date.now()}`;
 }
 
 // Start an SSE connection to /api/crm/events and update the session status
@@ -112,7 +112,7 @@ function startSSE(ctx: AppContext): () => void {
 		eventSource = null;
 	}
 
-	eventSource = new EventSource(sseEventUrl(ctx.auth.token?.() ?? null));
+	eventSource = new EventSource(sseEventUrl());
 
 	attachWhatsAppEventListeners(eventSource);
 
@@ -305,7 +305,10 @@ function pairingHint(status: string | undefined): string {
 }
 
 function qrHtml(qr: string): string {
-	const safe = escapeHtml(qr);
+	// `src` e' contexto de atributo: aspas nao podem passar. escapeHtml
+	// (textContent->innerHTML) escapa & < > mas NAO " nem ', entao o helper
+	// errado aqui permitia fechar o atributo e injetar markup.
+	const safe = escapeAtrib(qr);
 	const tag = qr.startsWith('data:')
 		? `<img src="${safe}" alt="QR do WhatsApp" class="waha-qr">`
 		: `<code class="waha-qr-text">${safe.slice(0, 1200)}</code>`;

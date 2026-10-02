@@ -5,3 +5,7 @@ dist/
 .dev.vars
 /onp-spec-driven/
 .env
+
+# Referencia de outro produto (Next.js/Supabase). Nao e parte do atelie-erp:
+# versionado aqui trazia 4807 arquivos e superficie de segredo sem revisao.
+DeskcommCRM-RecipeCosting/

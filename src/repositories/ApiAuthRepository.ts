@@ -1,23 +1,21 @@
 import type { User } from '../domain/crm';
 
-const TOKEN_KEY = 'crm_token';
 const USER_KEY = 'crm_user';
 
-// Thin client for the /api/auth/* + /api/users endpoints. The Bearer
-// token lives in localStorage (simple local auth, per the agreed scope);
-// a `currentUser` cache plus a small listener set lets views re-render
-// when the session changes.
+// Thin client for the /api/auth/* + /api/users endpoints. The session
+// token lives in an HttpOnly cookie set by the server, so no script on this
+// origin can read it — an HTML injection cannot escalate into session
+// theft. A `currentUser` cache plus a small listener set lets views
+// re-render when the session changes; the cache holds only non-sensitive
+// profile fields.
 export class ApiAuthRepository {
 	private user: User | null = null;
 	private listeners: Array<() => void> = [];
 
-	constructor(
-		private readonly tokenKey = TOKEN_KEY,
-		private readonly userKey = USER_KEY
-	) {}
+	constructor(private readonly userKey = USER_KEY) {}
 
 	token(): string | null {
-		return localStorage.getItem(this.tokenKey);
+		return null;
 	}
 
 	currentUser(): User | null {
@@ -25,15 +23,12 @@ export class ApiAuthRepository {
 	}
 
 	isAuthenticated(): boolean {
-		return Boolean(this.user) && Boolean(this.token());
+		return Boolean(this.user);
 	}
 
 	async load(): Promise<void> {
 		this.user = readStoredUser(this.userKey);
-		if (!this.token()) return;
-		const response = await fetch('/api/auth/me', {
-			headers: { Authorization: `Bearer ${this.token()}` }
-		});
+		const response = await fetch('/api/auth/me');
 		if (!response.ok) {
 			this.clear();
 			return;
@@ -51,9 +46,7 @@ export class ApiAuthRepository {
 			body: JSON.stringify({ email, password })
 		});
 		if (!response.ok) throw new Error(await messageFrom(response));
-		const data = (await response.json()) as { token: string; user: User };
-		const { token, user } = data;
-		localStorage.setItem(this.tokenKey, token);
+		const { user } = (await response.json()) as { user: User };
 		this.user = user;
 		writeStoredUser(this.userKey, user);
 		this.notify();
@@ -66,28 +59,18 @@ export class ApiAuthRepository {
 	): Promise<void> {
 		const response = await fetch('/api/auth/change-password', {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${this.token()}`
-			},
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ currentPassword, newPassword })
 		});
 		if (!response.ok) throw new Error(await messageFrom(response));
 	}
 
 	async logout(): Promise<void> {
-		const token = this.token();
 		this.clear();
-		if (token) {
-			await fetch('/api/auth/logout', {
-				method: 'POST',
-				headers: { Authorization: `Bearer ${token}` }
-			});
-		}
+		await fetch('/api/auth/logout', { method: 'POST' });
 	}
 
 	private clear(): void {
-		localStorage.removeItem(this.tokenKey);
 		localStorage.removeItem(this.userKey);
 		this.user = null;
 		this.notify();

@@ -62,6 +62,7 @@ export function formValues(form: HTMLFormElement): Record<string, string> {
 	return values;
 }
 
-export function escapeAttr(text: string): string {
-	return String(text).replace(/"/g, '&quot;');
-}
+//havia dois helpers de atributo divergentes (`escapeAtrib` em domain/format e
+// este aqui so com aspas duplas), e o consumidor do `src/` acabava escolhendo o
+// errado. Agora existe um so, reexportado do modulo que escapa `& < > " '`.
+export { escapeAtrib as escapeAttr } from '../domain/format';

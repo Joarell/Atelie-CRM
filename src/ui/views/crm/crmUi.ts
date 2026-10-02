@@ -66,7 +66,8 @@ export function numberField(
 	value = ''
 ): string {
 	const attrsA = ` class="input" type="number" step="${step}" min="0"`;
-	const attrsB = ` name="${name}" value="${value}" required`;
+	const valueAttr = escapeAtrib(String(value));
+	const attrsB = ` name="${name}" value="${valueAttr}" required`;
 	return field(label, `<input${attrsA}${attrsB}>`);
 }
 
@@ -126,7 +127,8 @@ export function rowButton(
 ): string {
 	const cls = danger ? ' btn-danger' : '';
 	return (
-		`<button class="btn btn-ghost btn-sm${cls}" data-${dataset}="${value}">` +
+		`<button class="btn btn-ghost btn-sm${cls}" ` +
+		`data-${dataset}="${escapeAtrib(value)}">` +
 		label +
 		'</button>'
 	);

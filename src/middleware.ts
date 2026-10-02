@@ -1,5 +1,5 @@
 import { defineMiddleware } from 'astro:middleware';
-import { userFromToken, userFromTokenString } from './server/auth';
+import { userFromToken } from './server/auth';
 import { getDb } from './server/context';
 import type { Database } from './server/db';
 import type { User } from './domain/crm';
@@ -67,23 +67,15 @@ const LIMITED_PATHS: Record<string, { suffix: string; max: number }> = {
 // deploy and is per-colo, so an attacker spreading requests across PoPs got a
 // fresh budget from each one. A shared table is what actually makes the login
 // throttle mean anything.
-// The SSE endpoint is the one route a browser can only reach with the token in
-// the query string: an EventSource cannot set an Authorization header, so the
-// client puts `?token=` in the URL (see sseEventUrl in the CRM views). Every
-// other route stays Bearer-only — a token in a URL lands in access logs,
-// Referer headers and browser history.
-const SSE_PATH = '/api/crm/events';
-
+// The session travels in an HttpOnly cookie, so an EventSource authenticates
+// without a token in the URL (a token in a URL lands in access logs, Referer
+// headers and browser history). `userFromToken` reads the cookie first and
+// still accepts Bearer for curl/headless callers.
 async function resolveUser(
 	db: Database,
-	request: Request,
-	pathname: string
+	request: Request
 ) {
-	const fromHeader = await userFromToken(db, request);
-	if (fromHeader) return fromHeader;
-	if (pathname !== SSE_PATH) return null;
-	const queryToken = new URL(request.url).searchParams.get('token');
-	return userFromTokenString(db, queryToken);
+	return userFromToken(db, request);
 }
 
 async function handlePublicPath(
@@ -119,7 +111,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	const unguarded = await handleUnguardedPath(context, pathname, next);
 	if (unguarded) return unguarded;
 
-	const user = await resolveUser(getDb(), context.request, pathname);
+	const user = await resolveUser(getDb(), context.request);
 	if (!user) {
 		return applySecurityHeaders(json({ error: 'nao_autenticado' }, 401));
 	}

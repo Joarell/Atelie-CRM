@@ -16,15 +16,15 @@ import {
 } from './tables';
 
 // Login/session helpers for the ported DeskcommCRM module. Passwords are
-// PBKDF2-SHA256 (100k iterations). The seeded admin is hashed with the fixed
-// salt "deskcomm-seed-v1"; every password written after that gets its own
-// random salt stored in users.passwordSalt (migrations/0019). verifyPassword
-// falls back to the seed salt for rows that predate 0019. Sessions are plain
-// rows in D1 with an expiry timestamp.
+// PBKDF2-SHA256 (100k iterations) and every stored hash carries its own random
+// salt in users.passwordSalt. There is no fixed salt and no fallback: a row
+// without a salt simply cannot verify, so no legacy credential stays replayable
+// through a salt published in the source. Sessions are plain rows in D1 with an
+// expiry timestamp.
 const ITERATIONS = 100_000;
 const KEY_BITS = 256;
-const SALT = 'deskcomm-seed-v1';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const COOKIE_NAME = 'crm_session';
 
 export type PasswordDigest = { hash: string; salt: string };
 
@@ -48,9 +48,9 @@ export async function hashPassword(
 export async function verifyPassword(
 	password: string,
 	storedHash: string,
-	salt: string = SALT
+	salt: string | null | undefined
 ): Promise<boolean> {
-	if (!storedHash) return false;
+	if (!storedHash || !salt) return false;
 	return (await deriveHex(password, salt)) === storedHash;
 }
 
@@ -68,12 +68,42 @@ export async function createSessionRow(
 	return session;
 }
 
+function cookieAttributes(maxAge: number): string {
+	return `Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`;
+}
+
+export async function setSessionCookie(
+	headers: Headers,
+	token: string
+): Promise<void> {
+	const maxAge = Math.floor(SESSION_TTL_MS / 1000);
+	headers.append('Set-Cookie',
+		`${COOKIE_NAME}=${token}; ${cookieAttributes(maxAge)}`
+	);
+}
+
+export async function clearSessionCookie(headers: Headers): Promise<void> {
+	headers.append('Set-Cookie', `${COOKIE_NAME}=; ${cookieAttributes(0)}`);
+}
+
+export function getSessionFromCookie(request: Request): string | null {
+	const cookie = request.headers.get('cookie');
+	if (!cookie) return null;
+	const match = cookie.match(new RegExp(`(?:^|; )${COOKIE_NAME}=([^;]+)`));
+	return match ? match[1] : null;
+}
+
 // Resolves a Bearer token into the logged-in user (or null when the
 // session is missing/expired). Reads never mutate, so no audit here.
 export async function userFromToken(
 	db: Database,
 	request: Request
 ): Promise<User | null> {
+	// Try cookie first (for SSE and browser), then Bearer header
+	const cookieToken = getSessionFromCookie(request);
+	if (cookieToken) {
+		return userFromTokenString(db, cookieToken);
+	}
 	return userFromTokenString(db, bearerToken(request));
 }
 
@@ -111,7 +141,7 @@ export async function deleteSession(
 	db: Database,
 	request: Request
 ): Promise<void> {
-	const token = bearerToken(request);
+	const token = bearerToken(request) || getSessionFromCookie(request);
 	if (token) await deleteEntity(db, SESSIONS_TABLE, token, 'token');
 }
 

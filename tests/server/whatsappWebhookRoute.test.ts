@@ -3,9 +3,15 @@ import type { APIContext } from 'astro';
 import { POST } from '../../src/pages/api/whatsapp/webhook';
 import { FakeD1 } from '../helpers/fakeD1';
 
+// >= HMAC_MIN_BYTES (32): `readWahaWebhookConfig` recusa segredo curto e
+// placeholders, entao 's3cret' nao representa mais um segredo valido.
 const state = vi.hoisted(() => ({
+  SECRET: 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90',
   db: null as unknown as FakeD1,
-  hmacSecret: 's3cret' as string | undefined,
+  hmacSecret:
+    'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90' as
+    | string
+    | undefined,
   requireSignature: 'true' as string | undefined
 }));
 
@@ -50,7 +56,7 @@ function context(body: string, signature?: string): APIContext {
 describe('/api/whatsapp/webhook', () => {
   beforeEach(() => {
     state.db = FakeD1.empty();
-    state.hmacSecret = 's3cret';
+    state.hmacSecret = state.SECRET;
     state.requireSignature = 'true';
   });
 
@@ -76,7 +82,7 @@ describe('/api/whatsapp/webhook', () => {
   });
 
   it('accepts a valid signature and ingests the message', async () => {
-    const signature = await sign(BODY, 's3cret');
+    const signature = await sign(BODY, state.SECRET);
     const response = await POST(context(BODY, signature));
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ accepted: true, hmacVerified: true });
@@ -93,7 +99,7 @@ describe('/api/whatsapp/webhook', () => {
 
   it('returns 400 (never 5xx) for a signed but invalid body', async () => {
     const badBody = '{nope';
-    const signature = await sign(badBody, 's3cret');
+    const signature = await sign(badBody, state.SECRET);
     const response = await POST(context(badBody, signature));
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({ accepted: false, reason: 'invalid_json' });

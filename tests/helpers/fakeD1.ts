@@ -4,6 +4,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 
 type Row = Record<string, unknown>;
+type Condition = [string, string, unknown];
 
 /** The columns one table has, which are NOT NULL, and their SQL defaults. */
 export interface TableSchema {
@@ -111,6 +112,42 @@ function splitIdentifiers(list: string): string[] {
   return list.split(',').map((s) => s.trim());
 }
 
+function project(row: Row, columns: string[]): Row {
+  const out: Row = {};
+  for (const column of columns) out[column] = row[column];
+  return out;
+}
+
+function sortRows(rows: Row[], column: string, dir: string): Row[] {
+  const factor = dir === 'DESC' ? -1 : 1;
+  return [...rows].sort((a, b) =>
+    factor * String(a[column]).localeCompare(String(b[column]))
+  );
+}
+
+// A null literal marks a `?` placeholder, which consumes the next bound value.
+// Literal patterns never consume one, so the caller's index only advances on
+// the two parameterized shapes.
+function matchPart(part: string): [string, string, string | null] | null {
+  const text = part.trim();
+  const likeLiteral =
+    /^(\w+)\s+(NOT\s+LIKE|LIKE)\s+'([^']*)'$/.exec(text);
+  if (likeLiteral) {
+    return [likeLiteral[1], normOp(likeLiteral[2]), likeLiteral[3]];
+  }
+  const likeParam = /^(\w+)\s+(NOT\s+LIKE|LIKE)\s*\?$/.exec(text);
+  if (likeParam) return [likeParam[1], normOp(likeParam[2]), null];
+  const literal = /^(\w+)\s*(=|!=|>|<|>=|<=)\s*'([^']*)'$/.exec(text);
+  if (literal) return [literal[1], literal[2], literal[3]];
+  const param = /^(\w+)\s*(=|!=|>|<|>=|<=)\s*\?$/.exec(text);
+  if (param) return [param[1], param[2], null];
+  return null;
+}
+
+function normOp(op: string): string {
+  return op.replace(/\s+/g, ' ');
+}
+
 export class FakeD1 {
   constructor(private tables = new Map<string, Row[]>()) {}
 
@@ -204,93 +241,80 @@ export class FakeD1 {
   }
 
   private executeSelect(sql: string, values: unknown[]): Row[] | null {
+    return this.selectAll(sql)
+      ?? this.selectOne(sql, values)
+      ?? this.selectColsWhere(sql, values)
+      ?? this.selectCols(sql)
+      ?? this.selectWhereOrdered(sql, values)
+      ?? this.selectWhereSimple(sql, values);
+  }
+
+  private matching(table: string, conditions: Condition[]): Row[] {
+    return this.rows(table).filter((r) =>
+      conditions.every(([col, op, val]) =>
+        matchesCondition(r[col], op, val)
+      )
+    );
+  }
+
+  private selectAll(sql: string): Row[] | null {
     const all = SELECT_ALL_RE.exec(sql);
-    if (all) return [...this.rows(all[1])];
+    return all ? [...this.rows(all[1])] : null;
+  }
+
+  private selectOne(sql: string, values: unknown[]): Row[] | null {
     const one = SELECT_ONE_RE.exec(sql);
-    if (one) {
-      const [, table, column] = one;
-      return this.rows(table).filter((r) => r[column] === String(values[0]));
-    }
-    const colsWhere = SELECT_COLS_WHERE_RE.exec(sql);
-    if (colsWhere) {
-      const [, columns, table, whereClause] = colsWhere;
-      const colList = splitIdentifiers(columns);
-      const conditions = this.parseWhereClause(whereClause, values);
-      return this.rows(table)
-        .filter((r) => conditions.every(([col, op, val]) =>
-          matchesCondition(r[col], op, val)
-        ))
-        .map((r) => {
-          const projected: Row = {};
-          for (const c of colList) projected[c] = r[c];
-          return projected;
-        });
-    }
-    const cols = SELECT_COLS_RE.exec(sql);
-    if (cols) {
-      const [, columns, table] = cols;
-      const colList = splitIdentifiers(columns);
-      return this.rows(table).map((r) => {
-        const projected: Row = {};
-        for (const c of colList) projected[c] = r[c];
-        return projected;
-      });
-    }
-    const whereMatch = SELECT_WHERE_RE.exec(sql);
-    if (whereMatch) {
-      const [, table, whereClause, orderBy, orderDir, limit, offset] = whereMatch;
-      let rows = this.rows(table);
-      const conditions = this.parseWhereClause(whereClause, values.slice(0, -2));
-      rows = rows.filter((r) => conditions.every(([col, op, val]) =>
-        matchesCondition(r[col], op, val)
-      ));
-      if (orderDir === 'DESC') {
-        rows.sort((a, b) => String(b[orderBy]).localeCompare(String(a[orderBy])));
-      } else {
-        rows.sort((a, b) => String(a[orderBy]).localeCompare(String(b[orderBy])));
-      }
-      const lim = Number(values[values.length - 2]);
-      const off = Number(values[values.length - 1]);
-      return rows.slice(off, off + lim);
-    }
-    const simpleWhere = SELECT_WHERE_SIMPLE_RE.exec(sql);
-    if (simpleWhere) {
-      const [, table, whereClause] = simpleWhere;
-      let rows = this.rows(table);
-      const conditions = this.parseWhereClause(whereClause, values);
-      return rows.filter((r) => conditions.every(([col, op, val]) =>
-        matchesCondition(r[col], op, val)
-      ));
-    }
-    return null;
+    if (!one) return null;
+    const [, table, column] = one;
+    return this.rows(table).filter((r) => r[column] === String(values[0]));
+  }
+
+  private selectColsWhere(sql: string, values: unknown[]): Row[] | null {
+    const match = SELECT_COLS_WHERE_RE.exec(sql);
+    if (!match) return null;
+    const [, columns, table, whereClause] = match;
+    const conditions = this.parseWhereClause(whereClause, values);
+    const colList = splitIdentifiers(columns);
+    return this.matching(table, conditions).map((r) => project(r, colList));
+  }
+
+  private selectCols(sql: string): Row[] | null {
+    const match = SELECT_COLS_RE.exec(sql);
+    if (!match) return null;
+    const [, columns, table] = match;
+    const colList = splitIdentifiers(columns);
+    return this.rows(table).map((r) => project(r, colList));
+  }
+
+  private selectWhereOrdered(sql: string, values: unknown[]): Row[] | null {
+    const match = SELECT_WHERE_RE.exec(sql);
+    if (!match) return null;
+    const [, table, whereClause, orderBy, orderDir] = match;
+    const conditions = this.parseWhereClause(whereClause, values.slice(0, -2));
+    const rows = sortRows(this.matching(table, conditions), orderBy, orderDir);
+    const limit = Number(values[values.length - 2]);
+    const offset = Number(values[values.length - 1]);
+    return rows.slice(offset, offset + limit);
+  }
+
+  private selectWhereSimple(sql: string, values: unknown[]): Row[] | null {
+    const match = SELECT_WHERE_SIMPLE_RE.exec(sql);
+    if (!match) return null;
+    const [, table, whereClause] = match;
+    return this.matching(table, this.parseWhereClause(whereClause, values));
   }
 
   private parseWhereClause(
     clause: string, values: unknown[]
-  ): Array<[string, string, unknown]> {
-    const conditions: Array<[string, string, unknown]> = [];
-    const parts = clause.split(' AND ');
+  ): Condition[] {
+    const conditions: Condition[] = [];
     let valueIndex = 0;
-    for (const part of parts) {
-      const likeLiteral = part.trim().match(/^(\w+)\s+(NOT\s+LIKE|LIKE)\s+'([^']*)'$/);
-      if (likeLiteral) {
-        conditions.push([likeLiteral[1], likeLiteral[2].replace(/\s+/g, ' '), likeLiteral[3]]);
-        continue;
-      }
-      const likeParam = part.trim().match(/^(\w+)\s+(NOT\s+LIKE|LIKE)\s*\?$/);
-      if (likeParam) {
-        conditions.push([likeParam[1], likeParam[2].replace(/\s+/g, ' '), values[valueIndex++]]);
-        continue;
-      }
-      const literalMatch = part.trim().match(/^(\w+)\s*(=|!=|>|<|>=|<=)\s*'([^']*)'$/);
-      if (literalMatch) {
-        conditions.push([literalMatch[1], literalMatch[2], literalMatch[3]]);
-        continue;
-      }
-      const match = part.trim().match(/^(\w+)\s*(=|!=|>|<|>=|<=)\s*\?$/);
-      if (match) {
-        conditions.push([match[1], match[2], values[valueIndex++]]);
-      }
+    for (const part of clause.split(' AND ')) {
+      const matched = matchPart(part);
+      if (!matched) continue;
+      const [column, op, literal] = matched;
+      const value = literal === null ? values[valueIndex++] : literal;
+      conditions.push([column, op, value]);
     }
     return conditions;
   }

@@ -1,2 +1,0 @@
-# Instrumento da bancada; não é dependência do produto.
-wasmtime==48.0.0

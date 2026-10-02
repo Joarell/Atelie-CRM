@@ -30,7 +30,7 @@ function draw(root: HTMLElement, ctx: AppContext): void {
 	const rows = sortByName(ctx.users.getAll());
 	root.innerHTML = `
 		${sessionBar(ctx, me)}
-		${pageHead()}
+		${pageHead(me?.role ?? null)}
 		${tableHtml(ctx, rows)}`;
 	wireEvents(root, ctx);
 }
@@ -39,11 +39,19 @@ function sortByName(users: User[]): User[] {
 	return users.slice().sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function pageHead(): string {
-	const btn =
-		'<button class="btn btn-primary" id="new-user">' +
+const USER_MANAGERS: Role[] = ['admin', 'manager'];
+
+function pageHead(role: Role | null): string {
+	return section('Equipe', 'Usuários e papéis do sistema', newUserBtn(role));
+}
+
+// POST /api/users exige `['admin','manager']` (users/index.ts). Renderizar
+// o botao para um `viewer` produzia um clique que so voltava 403 — a UI
+// dizia que a acao existia quando o servidor nao aceitava.
+function newUserBtn(role: Role | null): string {
+	if (!role || !USER_MANAGERS.includes(role)) return '';
+	return '<button class="btn btn-primary" id="new-user">' +
 		'+ Novo usuário</button>';
-	return section('Equipe', 'Usuários e papéis do sistema', btn);
 }
 
 function tableHtml(ctx: AppContext, rows: User[]): string {
@@ -96,11 +104,14 @@ function columns(): TableColumn<User>[] {
 	];
 }
 
+// DELETE /api/users/:id exige `['admin']` (users/[id].ts:50). A UI liberava
+// o botao para `manager`, que clicava e levava 403. Aqui a tela espelha o
+// endpoint.
 function actionButtons(ctx: AppContext, user: User): string {
 	const me = ctx.auth.currentUser();
 	const others = ctx.users.getAll().filter((u) => u.id !== me?.id);
 	const canRemove =
-		(me?.role === 'admin' || me?.role === 'manager') &&
+		me?.role === 'admin' &&
 		(me?.id !== user.id || others.length === 0);
 	return `${editBtn(user.id)}\n    ${deleteBtn(user.id, canRemove)}`;
 }
@@ -136,7 +147,7 @@ function wireEvents(root: HTMLElement, ctx: AppContext): void {
 	qsIf('#logout', root)?.addEventListener('click', () => handleLogout(ctx));
 	qsIf('#change-password', root)?.addEventListener('click', () =>
 		openChangePassword(ctx));
-	qs('#new-user', root).addEventListener('click', () => openUserForm(ctx));
+	qsIf('#new-user', root)?.addEventListener('click', () => openUserForm(ctx));
 	bindData(root, 'edit', (id) => openUserForm(ctx, ctx.users.getById(id)));
 	bindData(root, 'delete', (id) => handleDelete(ctx, id));
 }

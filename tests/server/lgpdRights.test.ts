@@ -115,13 +115,27 @@ describe('lgpd rights', () => {
     expect(state.db.rows(SESSIONS_TABLE)).toHaveLength(0);
   });
 
-  it('@spec:AC-135 data.ts filters contacts exactly once', () => {
-    const source = readFileSync(
+  it('@spec:AC-135 contacts are filtered exactly once, in the shared helper', () => {
+    // O recorte mora em src/domain/lgpdScope.ts, usado pelas duas rotas: um
+    // filtro por arquivo e' o que mantinha data e export divergentes. A rota
+    // nao pode reintroduzir um recorte local.
+    const route = readFileSync(
       new URL('../../src/pages/api/me/data.ts', import.meta.url),
       'utf8'
     );
-    const contactFilters = source.match(/all\.contacts\.filter/g) ?? [];
-    expect(contactFilters).toHaveLength(1);
+    const exporter = readFileSync(
+      new URL('../../src/pages/api/me/export.ts', import.meta.url),
+      'utf8'
+    );
+    const helper = readFileSync(
+      new URL('../../src/domain/lgpdScope.ts', import.meta.url),
+      'utf8'
+    );
+    expect(helper.match(/all\.contacts\.filter/g) ?? []).toHaveLength(1);
+    expect(route).not.toMatch(/\.contacts\.filter/);
+    expect(exporter).not.toMatch(/\.contacts\.filter/);
+    expect(route).toContain('buildLgpdPayload');
+    expect(exporter).toContain('buildLgpdPayload');
   });
 
   it('@spec:AC-136 data.ts recorte is identical to the export recorte', async () => {

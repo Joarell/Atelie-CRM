@@ -7,6 +7,7 @@ import {
   AUTH_AUDIT_TABLE
 } from '../../src/server/tables';
 import {
+  hashPassword,
   verifyPassword,
   deleteSessionsForUser,
   revokeOtherSessions,
@@ -21,13 +22,15 @@ import { PUT as putUser, DELETE as deleteUser } from '../../src/pages/api/users/
 import { POST as postUser } from '../../src/pages/api/users/index';
 import type { User, Session } from '../../src/domain/crm';
 
-const SEED_ADMIN_HASH = '022d504d3b3433f2cde7ac9185a4e1d340e67ed70a943dbc4ef14bf8c3174a00';
+const ADMIN_PASSWORD = 'admin123';
+const ADMIN_DIGEST = await hashPassword(ADMIN_PASSWORD);
 
 const adminUser: User = {
   id: 'seed-user-admin',
   name: 'Administrador',
   email: 'admin@deskcomm.local',
-  passwordHash: SEED_ADMIN_HASH,
+  passwordHash: ADMIN_DIGEST.hash,
+  passwordSalt: ADMIN_DIGEST.salt,
   role: 'admin',
   createdAt: '2026-01-01T00:00:00Z'
 };
@@ -36,10 +39,20 @@ const otherUser: User = {
   id: 'user-2',
   name: 'Outro',
   email: 'outro@deskcomm.local',
-  passwordHash: SEED_ADMIN_HASH,
+  passwordHash: ADMIN_DIGEST.hash,
+  passwordSalt: ADMIN_DIGEST.salt,
   role: 'agent',
   createdAt: '2026-01-01T00:00:00Z'
 };
+
+// A sessao nao volta no corpo da resposta: `login` devolve o token num cookie
+// HttpOnly, entao os testes leem o cookie para casar com a linha em sessions.
+function sessionTokenFrom(response: Response): string {
+  const cookie = response.headers.get('set-cookie') ?? '';
+  const match = cookie.match(/crm_session=([^;]+)/);
+  if (!match) throw new Error(`sem cookie de sessao em: ${cookie}`);
+  return match[1];
+}
 
 const state = vi.hoisted(() => ({ db: null as unknown as FakeD1 }));
 vi.mock('cloudflare:workers', () => ({
@@ -157,7 +170,7 @@ describe('session hygiene helpers (src/server/auth.ts)', () => {
     const saved = await updateUserPassword(
       db, 'seed-user-admin', 'nova-senha-123'
     );
-    expect(saved?.passwordHash).not.toBe(SEED_ADMIN_HASH);
+    expect(saved?.passwordHash).not.toBe(adminUser.passwordHash);
     const ok = await verifyPassword(
       'nova-senha-123', saved!.passwordHash, saved!.passwordSalt
     );
@@ -182,12 +195,14 @@ describe('POST /api/auth/login', () => {
       jsonBody({ email: 'admin@deskcomm.local', password: 'admin123' })
     ));
     expect(response.status).toBe(200);
-    const body = await response.json() as { token: string; user: User };
+    const body = await response.json() as { user: User };
     expect(body.user).not.toHaveProperty('passwordHash');
+    expect(body.user).not.toHaveProperty('passwordSalt');
+    expect(body).not.toHaveProperty('token');
     const tokens = state.db.rows(SESSIONS_TABLE).map((r) => r.token);
     expect(tokens).not.toContain('stale');
     expect(tokens).toContain('alive');
-    expect(tokens).toContain(body.token);
+    expect(tokens).toContain(sessionTokenFrom(response));
     expect(tokens).toHaveLength(2);
   });
 
@@ -253,7 +268,7 @@ describe('POST /api/auth/change-password', () => {
 
   it('requires a valid session', async () => {
     const ctx = apiContext('/api/auth/change-password', jsonBody({
-      currentPassword: 'admin123', newPassword: 'nova-senha-123'
+      currentPassword: ADMIN_PASSWORD, newPassword: 'nova-senha-123'
     }));
     const response = await changePasswordPost(ctx);
     expect(response.status).toBe(404);
@@ -285,7 +300,7 @@ describe('POST /api/auth/change-password', () => {
     );
     expect(next).toBe(true);
     const stale = await verifyPassword(
-      'admin123', user.passwordHash, user.passwordSalt
+      ADMIN_PASSWORD, user.passwordHash, user.passwordSalt
     );
     expect(stale).toBe(false);
     const tokens = state.db.rows(SESSIONS_TABLE).map((r) => r.token);

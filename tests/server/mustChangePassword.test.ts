@@ -71,6 +71,15 @@ function adminRow(): Record<string, unknown> {
   return state.db.rows(USERS_TABLE)[0];
 }
 
+// O token da sessao volta num cookie HttpOnly, nao no corpo: um cliente nao
+// pode mais ler o proprio token, e nenhum teste deve fingir que consegue.
+function sessionTokenFrom(response: Response): string {
+  const cookie = response.headers.get('set-cookie') ?? '';
+  const match = cookie.match(/crm_session=([^;]+)/);
+  if (!match) throw new Error(`sem cookie de sessao em: ${cookie}`);
+  return match[1];
+}
+
 describe('AC-124 the column and its migration are wired', () => {
   const schema = schemaFromMigrations([M0020]);
 
@@ -95,11 +104,23 @@ describe('AC-124 the column and its migration are wired', () => {
 });
 
 describe('AC-125 the seed admin is born flagged', () => {
-  it('@spec:AC-125 0021 flags seed-user-admin only', () => {
+  // A linha `seed-user-admin` nao existe mais: 0004 nao semeia usuario algum e o
+  // primeiro admin nasce por `admin:bootstrap`, que ja grava a flag ligada.
+  it('@spec:AC-125 0021 writes nothing', () => {
     const sql = readFileSync(M0021, 'utf8');
-    expect(sql).toMatch(/UPDATE\s+users/);
-    expect(sql).toMatch(/SET\s+mustChangePassword\s*=\s*1/);
-    expect(sql).toContain(`WHERE id = '${ADMIN_ID}'`);
+    expect(sql).not.toMatch(/UPDATE\s+users/);
+    expect(sql).not.toContain(`WHERE id = '${ADMIN_ID}'`);
+  });
+
+  it('@spec:AC-125 0004 no longer creates the admin row', () => {
+    const sql = readFileSync('migrations/0004_crm_seed.sql', 'utf8');
+    expect(sql).not.toMatch(/INSERT OR IGNORE INTO users\b/i);
+  });
+
+  it('@spec:AC-125 admin:bootstrap exists and is wired', () => {
+    expect(PKG.scripts['admin:bootstrap']).toBeTruthy();
+    const script = readFileSync('scripts/bootstrap-admin.ts', 'utf8');
+    expect(script).toContain('mustChangePassword');
   });
 
   it.each(['db:seed:local', 'db:seed:remote'])(
@@ -125,12 +146,12 @@ describe('AC-126 login with the seed password demands a rotation', () => {
     }));
     expect(response.status).toBe(200);
     const body = await response.json() as {
-      token: string;
       user: { mustChangePassword: boolean };
     };
+    expect(body).not.toHaveProperty('token');
     expect(body.user.mustChangePassword).toBe(true);
     expect(state.db.rows(SESSIONS_TABLE).map((r) => r.token))
-      .toContain(body.token);
+      .toContain(sessionTokenFrom(response));
   });
 
   it('@spec:AC-126 a user without the flag reports false', async () => {
@@ -156,8 +177,7 @@ describe('AC-128 the rotation clears the flag', () => {
       email: 'admin@deskcomm.local',
       password: 'admin123'
     }));
-    const body = await response.json() as { token: string };
-    return body.token;
+    return sessionTokenFrom(response);
   }
 
   async function apiGet(token: string, path: string): Promise<number> {
@@ -199,8 +219,7 @@ describe('AC-128 the rotation clears the flag', () => {
       email: 'admin@deskcomm.local',
       password: 'senha-nova-123'
     }));
-    const body = await refreshed.json() as { token: string };
-    expect(await apiGet(body.token, '/api/users')).toBe(200);
+    expect(await apiGet(sessionTokenFrom(refreshed), '/api/users')).toBe(200);
   });
 });
 

@@ -1,4 +1,5 @@
 import { icon } from './icons';
+import { escapeHtml } from '../domain/format';
 
 export interface ModalOptions {
 	title: string;
@@ -28,7 +29,7 @@ function buildBackdrop(options: ModalOptions): HTMLElement {
 	backdrop.innerHTML = `
 		<div class="modal" role="dialog" aria-modal="true">
 			<div class="modal-head">
-				<h3>${options.title}</h3>
+				<h3>${escapeHtml(options.title)}</h3>
 				<button class="btn btn-ghost btn-icon" data-close-modal ` +
 		`aria-label="Fechar">${icon('close')}</button>
 			</div>

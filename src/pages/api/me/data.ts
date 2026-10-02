@@ -14,24 +14,10 @@ import type {
 } from '../../../domain/crm';
 import type { Customer, Order } from '../../../domain/types';
 
-interface LgpdData {
-	contacts: Contact[];
-	conversations: Conversation[];
-	messages: Message[];
-	deals: Deal[];
-	tasks: Task[];
-	customers: Customer[];
-	orders: Order[];
-	consents: ConsentRecord[];
-}
-
-interface UserRows {
-	contacts: Contact[];
-	conversations: Conversation[];
-	deals: Deal[];
-	tasks: Task[];
-	consents: ConsentRecord[];
-}
+import {
+	buildLgpdPayload,
+	type LgpdData
+} from '../../../domain/lgpdScope';
 
 async function loadLgpdData(db: Database): Promise<LgpdData> {
 	return {
@@ -44,40 +30,7 @@ async function loadLgpdData(db: Database): Promise<LgpdData> {
 		tasks: await listEntities<Task>(db, TASKS_TABLE, {}),
 		customers: await listEntities<Customer>(db, CUSTOMERS_TABLE, {}),
 		orders: await listEntities<Order>(db, ORDERS_TABLE, {}),
-		consents: await listEntities<ConsentRecord>(db, CONSENT_TABLE, {}),
-	};
-}
-
-function selectUserRows(user: User, all: LgpdData): UserRows {
-	const myContacts = all.contacts.filter(c => c.assignedUserId === user.id);
-	const userContactIds = new Set(myContacts.map(c => c.id));
-	return {
-		contacts: myContacts,
-		conversations: all.conversations.filter(
-			c => userContactIds.has(c.contactId)
-		),
-		deals: all.deals.filter(d => d.assignedUserId === user.id),
-		tasks: all.tasks.filter(t => t.assigneeUserId === user.id),
-		consents: all.consents.filter(
-			c => c.subjectId === user.id && c.subjectType === 'user'
-		),
-	};
-}
-
-function buildDataAccess(user: User, all: LgpdData) {
-	const mine = selectUserRows(user, all);
-	return {
-		profile: publicUser(user),
-		contacts: mine.contacts,
-		conversations: mine.conversations,
-		messages: all.messages,
-		deals: mine.deals,
-		tasks: mine.tasks,
-		customers: all.customers,
-		orders: all.orders,
-		consents: mine.consents,
-		exportedAt: new Date().toISOString(),
-		formatVersion: '1.0',
+		consents: await listEntities<ConsentRecord>(db, CONSENT_TABLE, {})
 	};
 }
 
@@ -87,10 +40,11 @@ export const GET: APIRoute = async (context) => {
 
 	const db = getDb();
 	const all = await loadLgpdData(db);
+	const now = () => new Date().toISOString();
 
 	await recordAudit(db, newAuditEntry(
 		user.id, 'data_access_request', 'user_profile', clientIp(context.request)
 	));
 
-	return json(buildDataAccess(user, all));
+	return json(buildLgpdPayload(user, all, publicUser(user), now));
 };

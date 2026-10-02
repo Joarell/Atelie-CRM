@@ -1,6 +1,16 @@
 # Auditoria de segurança — atelie-erp
 
-Relatório gerado: **`relatorio-auditoria-seguranca.pdf`** (A4, 31 páginas, pt-BR).
+Relatório gerado: **`relatorio-auditoria-seguranca.pdf`** (A4, 20 páginas, pt-BR).
+
+Esta é a **reauditoria (2ª rodada)**: o conteúdo reflete o código *depois* da
+rodada de correções. Achados marcados como **verificação positiva** registram
+cobertura de auditoria (controle verificado), não falha.
+
+> **Invariante:** nenhum valor de segredo real pode aparecer em nenhum arquivo
+> versionado. `tests/spec-v2/c-settings-secrets.test.ts` (AC-334/AC-335) falha se
+> isso acontecer — foi exatamente esse teste que reprovou a rodada anterior,
+> porque o próprio arquivo de dados do relatório carregava a chave. Cite sempre
+> `arquivo:linha` com o valor redigido.
 
 ## Como regerar
 
@@ -41,5 +51,6 @@ Não edite o PDF diretamente.
 3. `reportlab` gera uma camada transparente por página (cabeçalho, rodapé e
    `Página X de Y`) e `pypdf` mescla essa camada em cada página.
 
-Os 23 achados estão em `ACHADOS`; os 19 pontos fortes em `PONTOS_FORTES`; as
-14 recomendações em `RECOMENDACOES`; os 12 textos de issue em `ISSUES`.
+Os 19 achados estão em `ACHADOS` (1 crítica, 2 altas, 5 médias, 3 baixas,
+8 informativas/verificações positivas); os 21 pontos fortes em `PONTOS_FORTES`;
+as 10 recomendações em `RECOMENDACOES`; os 6 textos de issue em `ISSUES`.

@@ -2,12 +2,20 @@
 """
 Base de dados da auditoria de seguranca do atelie-erp.
 
+REAUDITORIA (2a rodada): reflete o estado do codigo DEPOIS da remediacao.
 Cada achado e' um dict verificado no codigo real (arquivo:linha + trecho).
 NAO edite este arquivo para "corrigir" severidade sem reverificar o codigo.
+
+INVARIANTE DESTA RODADA (achado C4-01): NENHUM valor de segredo real pode
+aparecer neste arquivo. Ele e' texto versionado e o teste
+`tests/spec-v2/c-settings-secrets.test.ts` (AC-335) falha se um segredo real
+for encontrado em qualquer arquivo rastreado do git. Segredos sao citados
+sempre por arquivo:linha, com o valor redigido.
 """
 
 PROJETO = "atelie-erp"
 DATA_AUDITORIA = "02 de outubro de 2026"
+RODADA = "Reauditoria pos-remediacao (2a rodada)"
 
 # ---------------------------------------------------------------- severidades
 SEV = {
@@ -30,1531 +38,1400 @@ CATEGORIAS = [
 ACHADOS = [
     # ------------------------------------------------------------- CATEGORIA 1
     dict(
-        id="C1-01", cat="cat1", sev="alta",
-        titulo="Exportação LGPD devolve mensagens, clientes e pedidos de TODO o sistema",
+        id="C1-01", cat="cat1", sev="informativa",
+        titulo="Verificação positiva: o recorte LGPD filtra mensagens, clientes e pedidos, e o SSE é escopado por conversa",
         arquivos=[
-            ("src/pages/api/me/data.ts", "73", "messages: all.messages,"),
-            ("src/pages/api/me/data.ts", "76-77",
-             "customers: all.customers,\n\t\torders: all.orders,"),
-            ("src/pages/api/me/export.ts", "68", "messages: all.messages,"),
-            ("src/pages/api/me/export.ts", "71-72",
-             "customers: all.customers,\n\t\torders: all.orders,"),
-        ],
-        porque=(
-            "O recorte LGPD filtra contatos, conversas, negócios, tarefas e consents por "
-            "`assignedUserId`/`assigneeUserId` (selectUserRows), mas os campos `messages`, "
-            "`customers` e `orders` são devolvidos SEM nenhum filtro — vêm de `all.*`, que é "
-            "a base inteira carregada por `loadLgpdData`. O módulo existe justamente para "
-            "devolver apenas os dados do titular, então a rota entrega mais do que promete: "
-            "qualquer sessão autenticada, de qualquer papel, recebe a lista completa de "
-            "clientes (nome/telefone/e-mail) e de pedidos do D1. É um vazamento de dados "
-            "pessoais entre usuários, exposto por uma rota de privacidade."
-        ),
-        cond="Qualquer usuário autenticado (inclusive `viewer`) chama GET /api/me/export ou GET /api/me/data. Não exige feature flag.",
-        correcao=(
-            "Filtrar `messages` pelo conjunto de conversas do titular e derivar "
-            "`customers`/`orders` dos contatos filtrados, ou remover esses três campos do "
-            "recorte. Adicionar teste que falhe se um usuário sem atribuição receber "
-            "qualquer linha de customers/orders/messages."
-        ),
-    ),
-    dict(
-        id="C1-02", cat="cat1", sev="media",
-        titulo="SSE faz broadcast de todas as mensagens e do contato (telefone/nome) para qualquer sessão",
-        arquivos=[
-            ("src/pages/api/crm/events.ts", "31-38",
-             "`SELECT m.*, c.name as contact_name, c.phone as contact_phone\n"
-             " FROM messages m\n"
-             " LEFT JOIN contacts c ON m.conversationId = c.id\n"
-             " WHERE m.createdAt > ?\n"
-             " ORDER BY m.createdAt ASC`"),
-            ("src/pages/api/crm/events.ts", "172", "'Access-Control-Allow-Origin': '*'"),
-            ("src/pages/api/crm/events.ts", "137",
-             "const queryToken = url.searchParams.get('token');"),
-        ],
-        porque=(
-            "O stream de eventos não tem recorte: ele emite `m.*` (todas as mensagens do "
-            "sistema) junto com `contact_name`/`contact_phone` de todos os contatos, para "
-            "qualquer sessão autenticada. Some-se a isso `Access-Control-Allow-Origin: *` e "
-            "ao token transportado por query string (`?token=`), que é o único jeito de o "
-            "EventSource autenticar. O token em URL vaza para log de acesso, header "
-            "Referer e histórico do navegador — exatamente o risco que o comentário do "
-            "próprio middleware reconhece ao justificar a exceção."
-        ),
-        cond="Sessão autenticada + EventSource aberto. ACAO:* significa que qualquer origem que consiga o token lê o stream.",
-        correcao=(
-            "Trocar a exceção de token-em-URL por um cookie `HttpOnly; Secure; SameSite=Strict` "
-            "de sessão (o EventSource envia cookies), removendo o `?token=` e o ACAO:*."
-        ),
-    ),
-    dict(
-        id="C1-03", cat="cat1", sev="baixa",
-        titulo="Mecanismo de isolamento é a ausência de isolamento: listEntities devolve a tabela inteira",
-        arquivos=[
+            ("src/domain/lgpdScope.ts", "69-92",
+             "export function scopeForUser(user: User, all: LgpdData): LgpdScope {\n"
+             "\tconst contacts = all.contacts.filter((c) => c.assignedUserId === user.id);\n"
+             "\tconst contactIds = new Set(contacts.map((c) => c.id));\n"
+             "\tconst conversations = all.conversations.filter((c) =>\n"
+             "\t\tcontactIds.has(c.contactId)\n"
+             "\t);\n"
+             "\tconst conversationIds = new Set(conversations.map((c) => c.id));\n"
+             "\tconst customers = customersForContacts(contacts, all.customers);\n"
+             "\tconst customerIds = new Set(customers.map((c) => c.id));\n"
+             "\treturn {\n"
+             "\t\tcontacts,\n"
+             "\t\tconversations,\n"
+             "\t\tmessages: all.messages.filter((m) =>\n"
+             "\t\t\tconversationIds.has(m.conversationId)\n"
+             "\t\t),\n"
+             "\t\tdeals: all.deals.filter((d) => d.assignedUserId === user.id),\n"
+             "\t\ttasks: all.tasks.filter((t) => t.assigneeUserId === user.id),\n"
+             "\t\tcustomers,\n"
+             "\t\torders: all.orders.filter((o) => customerIds.has(o.customerId)),\n"
+             "\t\tconsents: all.consents.filter(\n"
+             "\t\t\t(c) => c.subjectId === user.id && c.subjectType === 'user'\n"
+             "\t\t),\n"
+             "\t};\n"
+             "}"),
+            ("src/pages/api/crm/events.ts", "27-38",
+             "async function visibleConversationIds(\n"
+             "\tdb: Database, user: User\n"
+             "): Promise<string[] | null> {\n"
+             "\tif (SEES_ALL.includes(user.role)) return null;\n"
+             "\tconst assigned = await db\n"
+             "\t\t.prepare(\n"
+             "\t\t\t`SELECT c.id FROM conversations c\n"
+             "\t\t\t JOIN contacts ct ON ct.id = c.contactId\n"
+             "\t\t\t WHERE ct.assignedUserId = ? OR c.assignedUserId = ?`\n"
+             "\t\t)\n"
+             "\t\t.bind(user.id, user.id)\n"
+             "\t\t.all<{ id: string }>();\n"
+             "\treturn (assigned.results ?? []).map((row) => row.id);\n"
+             "}"),
+            ("src/pages/api/crm/events.ts", "186",
+             "const since = url.searchParams.get('since');"),
             ("src/server/crud.ts", "16",
              "const stmt = db.prepare(`SELECT * FROM ${table}`);"),
-            ("migrations/0003_crm.sql", "2",
-             "-- Single-tenant: no organization_id; lightweight sessions in D1; money in"),
+            ("README.md", "Modelo de acesso",
+             "**As listagens devolvem a base inteira.** Não existe isolamento por linha:\n"
+             "quem tem sessão válida vê todos os contatos, conversas, pedidos, clientes e\n"
+             "tarefas do D1. Não há filtro por dono em nenhuma listagem."),
         ],
         porque=(
-            "Não existe RLS (o projeto não usa Supabase), nem middleware de tenant, nem "
-            "coluna owner/org — o schema declara single-tenant e todas as listagens são um "
-            "`SELECT *` sem filtro. Isto é uma DECISÃO DE PROJETO documentada no README "
-            "(\"As listagens devolvem a base inteira\"), não um descuido. O risco é que essa "
-            "premissa é silenciosa: qualquer rota nova herdada de createCollectionRoutes "
-            "nasce global, e `assignedUserId`/`assigneeUserId` parecem fronteira de "
-            "segurança mas são só metadado de atribuição."
+            "O vazamento de PII da rodada anterior está fechado. `scopeForUser` deriva o "
+            "recorte em cascata: contatos por atribuição → conversas por contato → "
+            "mensagens por conversa, e clientes por identidade de contato → pedidos por "
+            "cliente. `GET /api/me/data`, `/api/me/export` e `/api/me/erase` consomem esse "
+            "recorte, então um `viewer` sem atribuição não recebe mais linhas de "
+            "terceiros. O SSE segue a mesma disciplina: `visibleConversationIds` devolve "
+            "`null` (tudo) só para manager/admin e, nos demais papéis, o conjunto de "
+            "conversas atribuídas — com o filtro aplicado na consulta, não depois. O "
+            "stream também deixou de transportar o token por query string: o único "
+            "parâmetro lido na URL é `since`.\n\n"
+            "A listagem global (`SELECT *` sem filtro) permanece, e isso é DECISÃO DE "
+            "PROJETO documentada no README, não descuido: o app é single-tenant e o "
+            "controle é por papel. Fica registrado como invariante, não como garantia de "
+            "isolamento."
         ),
-        cond="Qualquer sessão válida vê a base inteira. Aceito por desenho; registrado para que não seja tratado como garantia.",
+        cond=(
+            "Qualquer sessão válida lê a base inteira nas listagens — aceito por desenho "
+            "documentado. Já o recorte LGPD e o stream SSE só vazam se alguém remover o "
+            "filtro do módulo ou da consulta."
+        ),
         correcao=(
-            "Manter, mas registrar a decisão como invariante: documente que qualquer rota "
-            "nova precisa de um gate explícito de papel, e considere um teste que falhe se "
-            "um `viewer` conseguir escrever."
+            "Manter. Registrar como teste de invariante: (a) `scopeForUser` nunca devolve "
+            "linha sem atribuição — testável com um usuário sem atribuição; (b) uma rota "
+            "nova não pode assumir que `listEntities` é restrita; (c) se um dia existir "
+            "multi-tenant, `listEntities` é o ponto de entrada obrigatório do filtro."
         ),
+    ),
+    dict(
+        id="C1-02", cat="cat1", sev="informativa",
+        titulo="Verificação positiva: sessão em cookie HttpOnly; nenhum token legível por script",
+        arquivos=[
+            ("src/server/auth.ts", "70",
+             "function cookieAttributes(maxAge: number): string {\n"
+             "\treturn `Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`;\n"
+             "}"),
+            ("src/repositories/ApiAuthRepository.ts", "6-10",
+             "// Thin client for the /api/auth/* + /api/users endpoints. The session\n"
+             "// token lives in an HttpOnly cookie set by the server, so no script on this\n"
+             "// origin can read it — an HTML injection cannot escalate into session\n"
+             "// theft. A `currentUser` cache plus a small listener set lets views\n"
+             "// re-render when the session changes; the cache holds only non-sensitive\n"
+             "// profile fields."),
+        ],
+        porque=(
+            "O modelo de ameaça da rodada anterior era: script injetado no origin lê o "
+            "token e vira sessão válida. Isso não é mais possível — o token vive em cookie "
+            "`HttpOnly; Secure; SameSite=Strict`, e o cliente guarda apenas o perfil "
+            "não-sensível do usuário. Como consequência, qualquer regressão de escaping na "
+            "categoria 5 deixa de ser um elevador direto para sequestro de sessão: o pior "
+            "caso passa a ser execução no contexto da origem."
+        ),
+        cond="Não explorável isoladamente; é a garantia que limita o impacto de C5-01.",
+        correcao="Nenhuma. Preservar e cobrir com teste que falhe se o cookie perder HttpOnly.",
     ),
 
     # ------------------------------------------------------------- CATEGORIA 2
     dict(
-        id="C2-01", cat="cat2", sev="critica",
-        titulo="Escalada de privilégio: `manager` cria conta `admin` em POST /api/users (o PUT equivalente exige admin)",
+        id="C2-01", cat="cat2", sev="informativa",
+        titulo="Verificação positiva: POST /api/users deriva os papéis permitidos do corpo (manager não fabrica admin)",
         arquivos=[
-            ("src/pages/api/users/index.ts", "13",
-             "const USER_MANAGERS: Role[] = ['admin', 'manager'];"),
-            ("src/pages/api/users/index.ts", "31",
-             "const denied = await requireRole(context, USER_MANAGERS);"),
-            ("src/pages/api/users/index.ts", "12",
-             "const ROLES: Role[] = ['viewer', 'agent', 'manager', 'admin'];"),
-            ("src/pages/api/users/index.ts", "39-41",
-             "if (!ROLES.includes(body.role as Role)) {\n"
-             "\t\treturn json({ error: 'papel_invalido' }, 400);\n\t}"),
+            ("src/pages/api/users/index.ts", "31-33",
+             "export const POST: APIRoute = async (context) => {\n"
+             "\tconst body = await readUserBody(context.request);\n"
+             "\tconst denied = await requireRole(context, allowedRoles(body));\n"
+             "\tif (denied) return denied;"),
+            ("src/pages/api/users/index.ts", "51-58",
+             "// Um `manager` cria e senha os demais usuarios, mas nao pode fabricar outro\n"
+             "// `admin` — escalada de privilegio. O campo `password` nao entra na conta:\n"
+             "// todo POST precisa de uma senha, e trata-lo como restrito barrava o proprio\n"
+             "// `manager` que a regra existe para permitir.\n"
+             "function allowedRoles(body: UserBody): Role[] {\n"
+             "\treturn body.role === 'admin' ? ADMINS : USER_MANAGERS;\n"
+             "}"),
             ("src/pages/api/users/[id].ts", "62-65",
              "function allowedRoles(body: PutBody): Role[] {\n"
              "\tconst adminOnly = ADMIN_ONLY_FIELDS.some(f => body[f] !== undefined);\n"
-             "\treturn adminOnly ? ADMINS : USER_MANAGERS;\n}"),
+             "\treturn adminOnly ? ADMINS : USER_MANAGERS;\n"
+             "}"),
         ],
         porque=(
-            "A rota de criação aceita `['admin','manager']` e valida o papel pedido apenas "
-            "contra a lista de papéis válidos — que inclui `admin`. Um `manager` (papel "
-            "intermediário, não-administrador) envia POST com `role:'admin'` e uma senha "
-            "escolhida por ele, criando um administrador full. O próprio projeto já "
-            "corrigiu isso na rota irmã: `PUT /api/users/[id]` usa `allowedRoles()`, que "
-            "exige `['admin']` quando o corpo traz `role` ou `password`. O POST ficou de "
-            "fora dessa regra — a validação existe no código e simplesmente não foi "
-            "aplicada aqui. A UI não é a fronteira: `CrmEquipeView` oferece os quatro "
-            "papéis no select (roleOptions(), linhas 237-242) e não limita a escolha por "
-            "papel do operador."
+            "A escalada de privilégio da rodada anterior está fechada. O gate vem ANTES de "
+            "qualquer validação de conteúdo, e o conjunto de papéis aceitos é derivado do "
+            "próprio corpo: pedir `role: 'admin'` exige `ADMINS`. Os dois verbos ficam "
+            "paritários — POST e PUT chamam funções de AllowedRoles equivalentes, então não "
+            "existe mais a assimetria em que a rota brother validava papel corretamente e o "
+            "outro não."
         ),
-        cond="Qualquer sessão com papel `manager`. Sem feature flag: o gate real é só a lista USER_MANAGERS.",
-        correcao=(
-            "Reusar `allowedRoles(body)` no POST (ou exigir `ADMINS` quando `body.role` "
-            "for `admin`), e adicionar teste que falhe para POST com role=admin por manager."
-        ),
+        cond="Sessão `manager` + POST com `role:'admin'` → 403. Ilegível a `viewer`/`agent`.",
+        correcao="Nenhuma. Teste existente já cobre manager→admin nos dois verbos.",
     ),
     dict(
-        id="C2-02", cat="cat2", sev="alta",
-        titulo="Papel `viewer` (“Visualização”) tem poder de escrita e exclusão em todas as entidades",
+        id="C2-02", cat="cat2", sev="informativa",
+        titulo="Verificação positiva: matriz de papéis por operação aplicada na fábrica de rotas (ROLE_RANK deixou de ser código morto)",
         arquivos=[
-            ("src/server/routeFactory.ts", "39-57",
-             "export function createCollectionRoutes(table: string, shape: TableShape) {\n"
-             "\tconst GET: APIRoute = async () => { /* ... */ };\n"
-             "\tconst POST: APIRoute = async (context) => { /* ... */ };"),
-            ("src/server/routeFactory.ts", "59-80",
-             "export function createItemRoutes(table: string, shape: TableShape) {\n"
-             "\tconst PUT: APIRoute = async (context) => { /* ... */ };\n"
-             "\tconst DELETE: APIRoute = async (context) => { /* ... */ };"),
-            ("src/ui/views/crm/CrmEquipeView.ts", "12", "viewer: 'Visualização',"),
-            ("src/domain/crm.ts", "5",
-             "export type Role = 'viewer' | 'agent' | 'manager' | 'admin';"),
+            ("src/server/routeFactory.ts", "19-34",
+             "// Matriz por operacao, declarada como PAPEIS MINIMOS: leitura = viewer+,\n"
+             "// escrita = agent+, exclusao = manager+. Um `admin` passa em todas sem cada\n"
+             "// rota repetir a lista, e `ROLE_RANK` deixa de ser codigo morto.\n"
+             "type RoleConfig = {\n"
+             "\tlist?: Role;\n"
+             "\tcreate?: Role;\n"
+             "\tupdate?: Role;\n"
+             "\tdelete?: Role;\n"
+             "};\n"
+             "\n"
+             "const DEFAULT_ROLES: Required<RoleConfig> = {\n"
+             "\tlist: 'viewer',\n"
+             "\tcreate: 'agent',\n"
+             "\tupdate: 'agent',\n"
+             "\tdelete: 'manager',\n"
+             "};"),
+            ("src/server/routeFactory.ts", "56-60",
+             "async function checkRole(\n"
+             "\tcontext: APIContext, minimum: Role\n"
+             "): Promise<Response | null> {\n"
+             "\treturn requireRank(context, minimum);\n"
+             "}"),
+            ("src/server/authz.ts", "25-30",
+             "export function hasRank(\n"
+             "\tuser: User | null,\n"
+             "\tminimum: Role\n"
+             "): boolean {\n"
+             "\treturn user !== null && ROLE_RANK[user.role] >= ROLE_RANK[minimum];\n"
+             "}"),
+            ("src/server/authz.ts", "43-50",
+             "export function requireRank(\n"
+             "\tcontext: APIContext,\n"
+             "\tminimum: Role\n"
+             "): Promise<Response | null> {\n"
+             "\treturn requireRole(context, ALL_ROLES.filter(\n"
+             "\t\t(role) => ROLE_RANK[role] >= ROLE_RANK[minimum]\n"
+             "\t));\n"
+             "}"),
         ],
         porque=(
-            "As fábricas que geram TODAS as rotas de entidade (contatos, conversas, "
-            "mensagens, negócios, tarefas, pipelines, etapas, etiquetas, agenda, catálogo, "
-            "atividades, notas, clientes, pedidos, produtos, ingredientes, componentes, "
-            "movimentos de estoque) não chamam `requireRole`. Verificado por busca: "
-            "`requireRole` aparece apenas em users/index.ts, users/[id].ts, settings.ts e "
-            "whatsapp/session.ts. Logo o único controle é o middleware, que exige uma sessão "
-            "válida — e um papel chamado “Visualização” pode `DELETE /api/crm/contacts/<id>`, "
-            "`POST /api/crm/pipelines` e apagar pedidos. O rótulo comercial diz o que o "
-            "papel não cumpre."
+            "O gate de papel deixou de ser uma lista escrita à mão em cada rota. A fábrica "
+            "declara pisos por operação — leitura `viewer+`, escrita `agent+`, exclusão "
+            "`manager+` — e um `admin` passa em todas sem repetição. `requireRank` faz a "
+            "comparação por `ROLE_RANK`, então a hierarquia de papéis, antes declarada e "
+            "sem consumidor, agora decide de fato. O efeito colateral relevante: escrever "
+            "não é mais synonym de `viewer`, e apagar não é mais synonym de `agent`."
         ),
-        cond="Qualquer sessão válida, de qualquer papel. Não há feature flag: a ausência de gate é total nas rotas geradas.",
-        correcao=(
-            "Dar a createCollectionRoutes/createItemRoutes uma lista de papéis permitidos por "
-            "operação (leitura: todos; escrita: agent+; exclusão: manager+) e validar com "
-            "`requireRole` antes de tocar o D1."
-        ),
+        cond="Toda rota gerada por createCollectionRoutes/createItemRoutes herda os pisos; rota que declarar RoleConfig próprio sobrescreve.",
+        correcao="Nenhuma. Teste que falhe se uma rota nova for criada sem RoleConfig explícito quando o piso padrão mudar.",
     ),
     dict(
-        id="C2-03", cat="cat2", sev="media",
-        titulo="Gate de papel do frontend mais permissivo que o endpoint em excluir usuário",
+        id="C2-03", cat="cat2", sev="informativa",
+        titulo="Verificação positiva: a UI da Equipe espelha os gates do servidor",
         arquivos=[
-            ("src/ui/views/crm/CrmEquipeView.ts", "102-104",
-             "const canRemove =\n"
-             "\t\t(me?.role === 'admin' || me?.role === 'manager') &&\n"
-             "\t\t(me?.id !== user.id || others.length === 0);"),
-            ("src/pages/api/users/[id].ts", "50",
-             "const denied = await requireRole(context, ADMINS);"),
-            ("src/pages/api/users/[id].ts", "17", "const ADMINS: Role[] = ['admin'];"),
+            ("src/ui/views/crm/CrmEquipeView.ts", "42-52",
+             "const USER_MANAGERS: Role[] = ['admin', 'manager'];\n"
+             "\n"
+             "function pageHead(role: Role | null): string {\n"
+             "\treturn section('Equipe', 'Usuários e papéis do sistema', newUserBtn(role));\n"
+             "}\n"
+             "\n"
+             "// POST /api/users exige `['admin','manager']` (users/index.ts). Renderizar\n"
+             "// o botao para um `viewer` produzia um clique que so voltava 403 — a UI\n"
+             "// dizia que a acao existia quando o servidor nao aceitava.\n"
+             "function newUserBtn(role: Role | null): string {\n"
+             "\tif (!role || !USER_MANAGERS.includes(role)) return '';"),
         ],
         porque=(
-            "A tela de Equipe mostra o botão Excluir para `manager`, mas o endpoint exige "
-            "`['admin']`. O servidor está certo e a UI mente sobre a capacidade — o "
-            "operador clica e leva 403. É o espelho do C2-01: aqui o frontend é mais "
-            "permissivo, lá o frontend é permissivo e o backend também. Nos dois casos a "
-            "verdade está no servidor, mas a inconsistência mostra que o gate de papel não "
-            "é uma fonte única."
+            "A divergência UI↔servidor — botão renderizado para papel que o endpoint "
+            "recusa, e opção `admin` oferecida a quem não pode conceder — está fechada: a "
+            "decisão de renderizar acontece com o mesmo conjunto de papéis que o endpoint "
+            "exige. A UI deixou de ser um oráculo de permissão; ela reflete o servidor, que "
+            "continua sendo a fronteira."
         ),
-        cond="Qualquer sessão `manager` na tela /equipe.",
-        correcao="Derivar a lista de papéis de uma constante compartilhada (ex.: um `can(user, action)` no servidor consumido pela UI), em vez de repetir literais nos dois lados.",
+        cond="Qualquer sessão; o efeito é UX (o botão não aparece), não autorização.",
+        correcao="Nenhuma. Preservar o comentário que amarra a UI ao endpoint, para a próxima tela não quebrar o espelho.",
     ),
     dict(
-        id="C2-04", cat="cat2", sev="media",
-        titulo="Botão “+ Novo usuário” é renderizado sem nenhum gate de papel",
+        id="C2-04", cat="cat2", sev="informativa",
+        titulo="Verificação positiva: escrita no WhatsApp exige papel agent+ e posse da conversa",
         arquivos=[
-            ("src/ui/views/crm/CrmEquipeView.ts", "42-47",
-             "function pageHead(): string {\n"
-             "\tconst btn =\n"
-             "\t\t'<button class=\"btn btn-primary\" id=\"new-user\">' +\n"
-             "\t\t'+ Novo usuário</button>';\n"
-             "\treturn section('Equipe', 'Usuários e papéis do sistema', btn);\n}"),
-            ("src/ui/views/crm/CrmEquipeView.ts", "139",
-             "qs('#new-user', root).addEventListener('click', () => openUserForm(ctx));"),
+            ("src/pages/api/whatsapp/send.ts", "28-33",
+             "// Sem este gate, um `viewer` dono da propria conversa escrevia no WhatsApp:\n"
+             "// a posse sozinha nao distingue leitura de escrita. A rota se auto-autentica\n"
+             "// por token, entao o gate usa o usuario ja resolvido em vez de locals.user.\n"
+             "if (!hasRole(user, ['agent', 'manager', 'admin'])) {\n"
+             "\treturn json({ error: 'papel_insuficiente' }, 403);\n"
+             "}"),
+            ("src/pages/api/whatsapp/send.ts", "50-51",
+             "const elevated = user.role === 'manager' || user.role === 'admin';\n"
+             "if (conversation.assignedUserId === user.id || elevated) return null;"),
         ],
         porque=(
-            "`pageHead()` não recebe o contexto nem o usuário, e monta o botão sempre. "
-            "Um `viewer` vê e clica em “+ Novo usuário”; só o 403 do servidor impede a "
-            "criação. Nenhuma UI de papel está escondendo a ação privilegiada — a "
-            "autorização é inteiramente tardia e invisível para o operador."
+            "Duas deficiências sobrepostas foram fechadas: posse sem papel (viewer donando "
+            "a própria conversa disparava mensagem para o cliente) e papel sem posse "
+            "(agent disparava para qualquer conversa). A rota combina as duas, e usa o "
+            "usuário já resolvido pelo token — coerente com ela ser `PUBLIC_PATHS` e não "
+            "ter `locals.user`."
         ),
-        cond="Qualquer sessão autenticada na rota /equipe.",
-        correcao="Condicionar o botão ao papel do usuário atual e desabilitar o submit quando o POST voltar 403.",
+        cond="Ilegível sem sessão. Escrita exige papel agent+ e conversa atribuída (ou manager/admin).",
+        correcao="Nenhuma.",
     ),
     dict(
-        id="C2-05", cat="cat2", sev="baixa",
-        titulo="`ROLE_RANK` existe mas nunca é usada — a hierarquia de papéis não é aplicada",
+        id="C2-05", cat="cat2", sev="informativa",
+        titulo="Verificação positiva: /api/settings é leitura pura na escrita, com allowlist de colunas e papel",
         arquivos=[
-            ("src/domain/crm.ts", "166-171",
-             "export const ROLE_RANK: Record<Role, number> = {\n"
-             "\tviewer: 0,\n\tagent: 1,\n\tmanager: 2,\n\tadmin: 3\n};"),
+            ("src/pages/api/settings.ts", "46-51",
+             "// GET e' somente leitura: a linha nasce em migrations/0022. Antes, um GET em\n"
+             "// banco sem configuracao fazia INSERT — estado mudando em resposta a um read.\n"
+             "export const GET: APIRoute = async () => {\n"
+             "\tconst existing = await readSettings(getDb());\n"
+             "\treturn json(existing ?? DEFAULT_SETTINGS);\n"
+             "};"),
+            ("src/pages/api/settings.ts", "53-62",
+             "export const PUT: APIRoute = async (context) => {\n"
+             "\tconst denied = await requireRole(context, SETTINGS_MANAGERS);\n"
+             "\tif (denied) return denied;\n"
+             "\tconst db = getDb();\n"
+             "\tconst patch = sanitizeSettingsPatch(await context.request.json());\n"
+             "\tconst current = (await readSettings(db)) ?? DEFAULT_SETTINGS;\n"
+             "\tconst merged = { ...current, ...patch };\n"
+             "\tawait writeSettings(db, merged);\n"
+             "\treturn json(merged);\n"
+             "};"),
+            ("src/server/mapping.ts", "52-58",
+             "function keepAllowed(\n"
+             "\tentity: Record<string, unknown>,\n"
+             "\tcolumns: string[] | undefined\n"
+             "): Record<string, unknown> {\n"
+             "\tif (!columns) return { ...entity };\n"
+             "\tconst allowed = new Set(columns);\n"
+             "\tconst out: Record<string, unknown> = {};"),
         ],
         porque=(
-            "Busca em `src/` e `tests/` retorna apenas a definição: nenhum consumidor. O "
-            "rank foi feito para decisões de autorização do tipo “manager ⊇ agent”, mas os "
-            "gates comparam listas explícitas (`['admin','manager']`), então a hierarquia é "
-            "código morto. Isso enfraquece o argumento de que “o papel é a fronteira de "
-            "segurança”: o modelo de papéis é informal e só vale o que cada lista escrita "
-            "à mão disser."
+            "A rota que permitia escrita em GET, e gravação de coluna arbitrária no PUT, "
+            "está fechada: o GET não toca mais no banco, o PUT exige `admin/manager` e o "
+            "patch passa por `sanitizeSettingsPatch` antes do merge. A allowlist de "
+            "colunas (`keepAllowed`, via `shape.columns`) permanece como segunda barreira "
+            "contra chave forasteira no corpo — vale notar que ela é o que mantém o "
+            "contrabando de coluna por JSON fechado no resto do app também."
         ),
-        cond="N/A — código morto.",
-        correcao="Usar `ROLE_RANK[user.role] >= ROLE_RANK[required]` em `requireRole`, ou remover ROLE_RANK e a menção a hierarquia.",
+        cond="PUT exige sessão admin/manager; chave fora do shape é descartada no merge.",
+        correcao="Nenhuma.",
     ),
 
     # ------------------------------------------------------------- CATEGORIA 3
     dict(
         id="C3-01", cat="cat3", sev="alta",
-        titulo="createItemRoutes faz PUT/DELETE por id sem checar posse nem papel (24 rotas [id])",
+        titulo="IDOR em 15 das 19 rotas de item: agent+ altera registro de terceiro que não tem coluna de dono",
         arquivos=[
-            ("src/server/routeFactory.ts", "60-72",
-             "const PUT: APIRoute = async (context) => {\n"
-             "\t\tconst patch = (await context.request.json()) as { id?: string; } & Record<string, unknown>;\n"
+            ("src/server/routeFactory.ts", "62-69",
+             "// Entidades que têm dono - mapeamento de tabela para campo de dono\n"
+             "const OWNER_FIELDS: Record<string, string> = {\n"
+             "\tcontacts: 'assignedUserId',\n"
+             "\tconversations: 'assignedUserId',\n"
+             "\tdeals: 'assignedUserId',\n"
+             "\ttasks: 'assigneeUserId',\n"
+             "\t// Adicionar mais conforme necessário\n"
+             "};"),
+            ("src/server/routeFactory.ts", "81-82",
+             "\tconst ownerField = OWNER_FIELDS[table];\n"
+             "\tif (!ownerField) return null; // Sem campo de dono, permite"),
+            ("src/server/routeFactory.ts", "168-186",
+             "function updateHandler(\n"
+             "\ttable: string,\n"
+             "\tshape: TableShape,\n"
+             "\tminimum: Role\n"
+             "): APIRoute {\n"
+             "\treturn async (context) => {\n"
+             "\t\tconst blocked = await guardItemWrite(context, table, shape, minimum);\n"
+             "\t\tif (blocked) return blocked;\n"
+             "\t\tconst patch = (await context.request.json()) as {\n"
+             "\t\t\tid?: string;\n"
+             "\t\t} & Record<string, unknown>;\n"
+             "\t\tconst invalid = refuseInvalid(shape, patch);\n"
+             "\t\tif (invalid) return invalid;\n"
              "\t\tconst saved = await updateEntity(\n"
              "\t\t\tgetDb(), table, shape, context.params.id!, patch\n"
              "\t\t);\n"
-             "\t\treturn saved ? json(saved) : notFound();\n\t};"),
-            ("src/server/routeFactory.ts", "74-77",
-             "const DELETE: APIRoute = async (context) => {\n"
-             "\t\tawait deleteEntity(getDb(), table, context.params.id!);\n"
-             "\t\treturn json({ ok: true });\n\t};"),
-            ("src/pages/api/crm/contacts/[id].ts", "3",
-             "export const { PUT, DELETE } = createItemRoutes(CONTACTS_TABLE, CONTACTS_SHAPE);"),
-            ("src/pages/api/orders/[id].ts", "3",
-             "export const { PUT, DELETE } = createItemRoutes(ORDERS_TABLE, ORDERS_SHAPE);"),
+             "\t\treturn saved ? json(saved) : notFound();\n"
+             "\t};\n"
+             "}"),
         ],
         porque=(
-            "O `id` vem de `context.params` e vai direto para o UPDATE/DELETE, sem nenhuma "
-            "comparação de `assignedUserId`/`assigneeUserId` nem gate de papel. Todos os "
-            "handlers `[id].ts` são um alias de duas linhas para essa fábrica — foram "
-            "percorridos todos: contatos, conversas, mensagens, negócios, tarefas, "
-            "pipelines, etapas, respostas-rápidas, agenda, catálogo, atividades, notas, "
-            "etiquetas, tipos de agenda, clientes, pedidos, produtos, ingredientes, "
-            "componentes, usuários. Efeito concreto: um `viewer` apaga qualquer contato, "
-            "qualquer pedido ou qualquer negócio pelo id. Também não há checagem de "
-            "propriedade para registros que TEM dono declarado (`contacts.assignedUserId`, "
-            "`tasks.assigneeUserId`, `deals.assignedUserId`)."
+            "`OWNER_FIELDS` cobre quatro tabelas (contacts, conversations, deals, tasks) "
+            "dezenove expostas por `createItemRoutes`. Para as outras quinze, "
+            "`checkOwnership` retorna `null` na primeira linha — o gate de posse é "
+            "literalmente ausente, não apenas frouxo. Somado ao piso `update: agent` "
+            "introduzido em C2-02, o efeito é: qualquer `agent` autenticado faz PUT em "
+            "qualquer registro de qualquer tabela sem dono, por knowing do id.\n\n"
+            "O caso mais direto é `messages`. A rota é `createItemRoutes(MESSAGES_TABLE, "
+            "MESSAGES_SHAPE)` — sem RoleConfig, sem dono — e `MESSAGES_SHAPE` inclui "
+            "`text`, `fromMe`, `createdBy`, `direction`, `conversationId`, `externalId`, "
+            "`remoteJid`, `waStatus`. Ou seja: um `agent` reescreve o texto de uma "
+            "mensagem já entregue, marca `fromMe: true`, e forja `createdBy`. Isso não é "
+            "só acesso indevido a registro alheio; é reescrita de histórico de "
+            "conversação e de autoria.\n\n"
+            "Para contexto, as quatro tabelas com dono estão bem guardadas: manager/admin "
+            "passam (`:92`), e divergência de dono retorna 403 (`:95-97`). O problema é a "
+            "cobertura, não o mecanismo — que está correto onde se aplica."
         ),
-        cond="Qualquer sessão válida + conhecimento do id (os ids são devolvidos pelas listagens, que não filtram).",
+        cond=(
+            "Sessão `agent` (o papel mais comum do time de vendas) + PUT em `/api/**/[id]` "
+            "de tabela sem coluna de dono: 200 e a alteração persiste. `viewer` é barrado "
+            "por C2-02 — a explorabilidade depende de `agent`, não de escalate."
+        ),
         correcao=(
-            "Antes do write, resolver o registro e exigir (a) papel mínimo para a operação e "
-            "(b) quando a tabela tiver coluna de dono, `registro.<dono> === user.id || "
-            "user.role em ('manager','admin')`. Centralizar na fábrica para não depender de "
-            "cada rota."
+            "Duas frentes. (1) Subir o piso de `update` para `manager` em tabelas "
+            "sensíveis sem dono — `messages`, `orders`, `calendar-events`, "
+            "`conversation-notes`, `catalog-products` — enquanto o modelo de posse não "
+            "existe. (2) Modelar dono onde faz sentido: acrescentar `assignedUserId` às "
+            "tabelas de trabalho do CRM (activities, notes, products) com migration e "
+            "registrar em `OWNER_FIELDS`, e tratar `messages` por posse da conversa "
+            "(`conversationId` → `conversations.assignedUserId`) em vez de coluna própria. "
+            "Em qualquer das duas, escrever teste que falhe: agent+writ de terceiro = 403."
         ),
     ),
     dict(
-        id="C3-02", cat="cat3", sev="alta",
-        titulo="IDOR no envio de WhatsApp: qualquer usuário envia mensagem em qualquer conversa",
+        id="C3-02", cat="cat3", sev="media",
+        titulo="checkOwnership falha aberto quando o registro não tem dono — e as migrations criam exatamente esse caso",
         arquivos=[
-            ("src/pages/api/whatsapp/send.ts", "26-31",
-             "const message = await sendWahaText(db, client, {\n"
-             "\t\t\tconversationId: parsed.value.conversationId,\n"
-             "\t\t\ttext: parsed.value.text,\n"
-             "\t\t\tuserId: user.id,\n"
-             "\t\t\treplyTo: parsed.value.replyTo\n"
-             "\t\t});"),
-            ("src/server/wahaSend.ts", "62-79",
-             "async function loadWahaConversation(\n"
-             "\tdb: Database, conversationId: string\n"
-             "): Promise<Conversation> {\n"
-             "\tconst conversation = await getEntity<Conversation>(\n"
-             "\t\tdb, CONVERSATIONS_TABLE, CONVERSATIONS_SHAPE, conversationId\n"
-             "\t);\n"
-             "\tif (!conversation) { throw new WahaSendError('conversation_not_found', ...); }\n"
-             "\tif (conversation.channel !== 'whatsapp') { throw new WahaSendError('wrong_channel', ...); }\n"
-             "\treturn conversation;\n}"),
-            ("src/pages/api/whatsapp/send.ts", "15-16",
-             "const user = await userFromToken(db, context.request);\n\tif (!user) return json({ error: 'sessao_invalida' }, 401);"),
+            ("src/server/routeFactory.ts", "84-89",
+             "\tconst entity = await getEntity(db, table, shape, id);\n"
+             "\tif (!entity) return notFound();\n"
+             "\n"
+             "\tconst ownerId = (entity as Record<string, unknown>)[ownerField] as\n"
+             "\t\tstring | undefined;\n"
+             "\tif (!ownerId) return null; // Sem dono definido, permite"),
+            ("migrations/0018_add_assigned_user_to_contact_deal.sql", "12",
+             "ALTER TABLE contacts ADD COLUMN assignedUserId TEXT NOT NULL DEFAULT '';"),
+            ("migrations/0018_add_assigned_user_to_contact_deal.sql", "15",
+             "ALTER TABLE deals ADD COLUMN assignedUserId TEXT NOT NULL DEFAULT '';"),
+            ("migrations/0003_crm.sql", "66",
+             "  assigneeUserId TEXT NOT NULL DEFAULT '',   -- tasks"),
+            ("migrations/0003_crm.sql", "99",
+             "  assignedUserId TEXT NOT NULL DEFAULT '',   -- conversations"),
         ],
         porque=(
-            "`conversationId` vem do corpo e é resolvido por id. `loadWahaConversation` "
-            "valida apenas existência e `channel === 'whatsapp'` — nunca compara "
-            "`conversation.assignedUserId` com o chamador (confirmado: a string "
-            "`assignedUserId` não aparece no arquivo). A rota também não tem "
-            "`requireRole` (só sessão). Combinado com o C1-02/C1-03 (listagens devolvem a "
-            "base inteira), qualquer `viewer` pode listar as conversas e então disparar "
-            "WhatsApp para qualquer cliente do negócio — um canal comercial externo, com "
-            "custo e repercussão."
+            "Mesmo nas quatro tabelas com dono, a checagem cede quando o campo está "
+            "vazio: `if (!ownerId) return null`. O comentário assume que \"sem dono "
+            "definido\" é um estado legítimo, mas o schema garante o oposto — `DEFAULT "
+            "''` em contacts, deals, tasks e conversations significa que todo registro "
+            "criado sem atribuição explícita nasce sem dono. Um registro desses é "
+            "gravação livre para qualquer `agent`: a proteção existe no código e não "
+            "dispara no dado.\n\n"
+            "O efeito é inverso ao esperado: quanto mais antigo o registro (criado antes "
+            "de a atribuição ser obrigatória, ou por um caminho que não a preenche), "
+            "menos protegido ele está. A condição é fácil de alcançar — basta um contato "
+            "importado."
         ),
-        cond="Sessão autenticada de qualquer papel. Sem feature flag.",
+        cond="Registro com `assignedUserId`/`assigneeUserId` vazio + PUT por `agent` ≠ dono → 200. O silêncio da checagem não é logado.",
         correcao=(
-            "Exigir `assignedUserId === user.id || role em ('manager','admin')` em "
-            "`loadWahaConversation` e aplicar `requireRole(['agent','manager','admin'])` na rota."
+            "Falhar fechado é a opção simples e alinhada ao resto do app: `if (!ownerId) "
+            "retornar 403 nao_autorizado` para papéis abaixo de manager. Se a intenção for "
+            "tratar \"sem dono\" como posse da empresa (legítimo em CRM comassignação "
+            "opcional), então o caminho certo é tornar a atribuição obrigatória no "
+            "schema (`NOT NULL` sem default, com backfill) — e não deixar o default "
+            "vazio decidir a segurança. Registrar a decisão como invariante, com teste que "
+            "falhe para linha sem dono."
         ),
     ),
     dict(
         id="C3-03", cat="cat3", sev="media",
-        titulo="GET /api/settings escreve no banco e faz merge cego do patch",
+        titulo="PUT aceita campos de autoria e atribuição no corpo: agente se autoatribui e falsifica autoria",
         arquivos=[
-            ("src/pages/api/settings.ts", "13-19",
-             "export const GET: APIRoute = async () => {\n"
-             "\tconst db = getDb();\n"
-             "\tconst existing = await readSettings(db);\n"
-             "\tif (existing) return json(existing);\n"
-             "\tawait writeSettings(db, DEFAULT_SETTINGS);\n"
-             "\treturn json(DEFAULT_SETTINGS);\n};"),
-            ("src/pages/api/settings.ts", "25-28",
-             "const patch: Partial<Settings> = await context.request.json();\n"
-             "\tconst current = (await readSettings(db)) ?? DEFAULT_SETTINGS;\n"
-             "\tconst merged = { ...current, ...patch };\n"
-             "\tawait writeSettings(db, merged);"),
-            ("src/server/mapping.ts", "9-10",
-             "// Omitting `columns` stays permissive; only `settings` does that, because\n"
-             "\t// its route has no shape of its own."),
+            ("src/server/routeFactory.ts", "176-183",
+             "\t\tconst patch = (await context.request.json()) as {\n"
+             "\t\t\tid?: string;\n"
+             "\t\t} & Record<string, unknown>;\n"
+             "\t\tconst invalid = refuseInvalid(shape, patch);\n"
+             "\t\tif (invalid) return invalid;\n"
+             "\t\tconst saved = await updateEntity(\n"
+             "\t\t\tgetDb(), table, shape, context.params.id!, patch\n"
+             "\t\t);"),
+            ("src/server/crud.ts", "57-65",
+             "\tconst existing = await getEntity<T>(db, table, shape, id);\n"
+             "\tif (!existing) return null;\n"
+             "\tconst merged = { ...existing, ...patch } as T;\n"
+             "\tconst row = entityToRow(\n"
+             "\t\tmerged as unknown as Record<string, unknown>,\n"
+             "\t\tshape\n"
+             "\t);\n"
+             "\tconst { sql, values } = buildUpdate(table, id, row, shape.columns);\n"
+             "\tawait db.prepare(sql).bind(...values).run();"),
+            ("src/server/tables.ts", "169-175",
+             "export const MESSAGES_SHAPE: TableShape = {\n"
+             "\tcolumns: [\n"
+             "\t\t'ack', 'conversationId', 'createdAt', 'createdBy', 'deliveredAt', 'direction',\n"
+             "\t\t'editedAt', 'externalId', 'fromMe', 'id', 'mediaMime', 'mediaUrl',\n"
+             "\t\t'messageType', 'readAt', 'remoteJid', 'revokedAt', 'text', 'waStatus',\n"
+             "\t\t'waTimestamp'\n"
+             "\t],\n"
+             "\tjsonFields: [],\n"
+             "\tboolFields: ['fromMe'],"),
         ],
         porque=(
-            "Duas coisas numa rota só de leitura: o GET grava (INSERT OR REPLACE) quando a "
-            "configuração ainda não existe — estado que muda em resposta a um GET, sem "
-            "gate de papel nenhum (o GET não tem requireRole). E o PUT faz merge de "
-            "qualquer chave do corpo sobre o registro, porque `settings` é a única tabela "
-            "sem `columns` no shape: `keepAllowed` retorna `{ ...entity }` quando não há "
-            "allowlist. O PUT tem gate de manager/admin, mas o objeto gravado aceita "
-            "colunas arbitrárias — o atacante escolhe o que sobrescrever dentro da linha."
+            "O patch do PUT é repassado ao merge sem allowlist própria — a única "
+            "restrição é a coluna existir no `shape`. Como os shapes incluem justamente os "
+            "campos de autoria e atribuição, três jogadas ficam disponíveis para um "
+            "`agent` numa tabela sem dono: (a) `assignedUserId` no próprio corpo, "
+            "autoatribuindo o registro; (b) `createdBy`/`authorUserId` em qualquer "
+            "tabela, falsitando autoria; (c) em `messages`, `text` + `fromMe` + "
+            "`direction`, reescrevendo a mensagem como se fosse própria.\n\n"
+            "O ponto importante é que (a) e (b) continuam disponíveis mesmo nas tabelas COM "
+            "dono (C3-01 fecha só a cobertura): o gate de posse compara o dono persistido "
+            "com o usuário, mas nada impede o mesmo PUT de trocar o dono junto. Um agente "
+            "pode tomar um contato de outro, em uma requisição só, sem nenhum 403."
         ),
-        cond="Leitura por qualquer sessão; escrita por `manager`/`admin`.",
-        correcao="Mover a criação do registro default para uma migration/seed; dar a `settings` uma lista explícita de colunas; validar o patch contra um schema.",
-    ),
-    dict(
-        id="C3-04", cat="cat3", sev="baixa",
-        titulo="Cobertura de auth verificada item a item — 5 rotas públicas se auto-autenticam",
-        arquivos=[
-            ("src/middleware.ts", "15-21",
-             "const PUBLIC_PATHS = new Set([\n"
-             "\t'/api/auth/login',\n\t'/api/auth/me',\n\t'/api/whatsapp/webhook',\n"
-             "\t'/api/whatsapp/health',\n\t'/api/whatsapp/webhook-config',\n]);"),
-            ("src/pages/api/whatsapp/health.ts", "15-16",
-             "const user = await userFromToken(getDb(), context.request);\n"
-             "\tif (!user) return json({ error: 'sessao_invalida' }, 401);"),
-            ("src/pages/api/whatsapp/webhook-config.ts", "26-27",
-             "const user = await userFromToken(getDb(), context.request);\n"
-             "\tif (!user) return json({ error: 'sessao_invalida' }, 401);"),
-        ],
-        porque=(
-            "Rotas fora de PUBLIC_PATHS recebem `locals.user` do middleware e não precisam "
-            "se autenticar. As 5 de PUBLIC_PATHS pulam essa resolução, então cada uma tem "
-            "que validar o token por conta própria — e todas as quatro que precisam, "
-            "fazem. `webhook` (POST) não usa sessão: é autenticado por HMAC. Este achado "
-            "registra a verificação positivamente, e o ponto de atenção é o inverso: como o "
-            "middleware não roda a checagem de `mustChangePassword` nessas rotas, elas "
-            "dependem da própria rota — uma rota nova adicionada a PUBLIC_PATHS sem "
-            "`userFromToken` ficaria aberta sem erro de compilação."
+        cond=(
+            "Sessão `agent` + PUT com `assignedUserId`/`assigneeUserId`/`createdBy` no "
+            "corpo. Em tabela sem dono: 200 sempre. Em tabela com dono: 200 se a posse "
+            "atual permitir (inclusive linha sem dono, por C3-02)."
         ),
-        cond="N/A — verificação positiva.",
-        correcao="Converter a lista em negativa: em vez de PUBLIC_PATHS, exigir sessão por padrão (já é o caso) e teste que falhe se uma rota pública não chamar userFromToken.",
+        correcao=(
+            "Derivar `assignedUserId`/`assigneeUserId` do `locals.user.id` no servidor "
+            "(ignorar o valor do corpo), e remover `createdBy`/`authorUserId`/`fromMe` "
+            "da superfície de escrita — `createdBy` deve ser preenchido na criação, nunca "
+            "editado; `fromMe` só muda por caminho de sistema (ingest de webhook). Para o "
+            "PUT, a forma mais barata de garantir isso é uma lista de campos "
+            "imutáveis por tabela, checada antes do merge, com teste que falhe se um PUT "
+            "conseguir mudar `createdBy`."
+        ),
     ),
 
     # ------------------------------------------------------------- CATEGORIA 4
     dict(
-        id="C4-01", cat="cat4", sev="alta",
-        titulo="Credencial de administrador padrão documentada no repositório, com salt fixo publicado no código",
+        id="C4-01", cat="cat4", sev="critica",
+        titulo="Segredo real da WAHA dentro de arquivo de texto versionado (docs/security-audit/dados_auditoria.py)",
         arquivos=[
-            ("migrations/0004_crm_seed.sql", "5-9",
-             "-- Admin user — senha padrão \"admin123\" (PBKDF2-SHA256, 100k iterações, sal\n"
-             "-- \"deskcomm-seed-v1\"). Troque na primeira sessão pela tela de Equipe.\n"
-             "INSERT OR IGNORE INTO users (id, name, email, passwordHash, role, createdAt) VALUES\n"
-             "  ('seed-user-admin', 'Administrador', 'admin@deskcomm.local',\n"
-             "   '022d504d3b3433f2cde7ac9185a4e1d340e67ed70a943dbc4ef14bf8c3174a00', 'admin', '2026-01-01T00:00:00.000Z');"),
-            ("src/server/auth.ts", "26", "const SALT = 'deskcomm-seed-v1';"),
-            ("src/server/auth.ts", "48-52",
-             "export async function verifyPassword(\n"
-             "\tpassword: string,\n\tstoredHash: string,\n\tsalt: string = SALT\n"
-             "): Promise<boolean> {"),
+            ("docs/security-audit/dados_auditoria.py", "433, 1354, 1358 (blob e5cd231)",
+             "O arquivo de dados do relatório — texto plano, RASTREADO pelo git —\n"
+             "continha o valor da WAHA_API_KEY em três lugares (achado C4-02 da rodada\n"
+             "anterior e evidência de .dev.vars). Valor redigido; recuperável em\n"
+             "qualquer clone com `git show e5cd231:docs/security-audit/dados_auditoria.py`."),
+            (".dev.vars", "9",
+             "WAHA_API_KEY=\"<valor real redigido nesta auditoria>\"   # untracked, .gitignore:5"),
+            ("tests/spec-v2/c-settings-secrets.test.ts", "232-259",
+             "it('@spec:AC-335 no tracked file carries the real WAHA key', () => {\n"
+             "  ...\n"
+             "  const leaked = [...content.matchAll(KEY_ASSIGNMENT)]\n"
+             "    .map((match) => match[1])\n"
+             "    .filter(looksLikeRealKey);\n"
+             "  expect([file, leaked]).toEqual([file, []]);\n"
+             "});"),
         ],
         porque=(
-            "O seed grava um admin com senha `admin123` e sal FIXO `deskcomm-seed-v1` — e "
-            "esse mesmo sal está no código-fonte, num default de função. `verifyPassword` "
-            "cai de volta nesse sal padrão quando a linha não tem `passwordSalt`, então o "
-            "credencial é reproduzível por qualquer pessoa com o repositório. A mitigação "
-            "existe e é boa: `mustChangePassword=1` (0020/0021) + middleware respondendo 403 "
-            "`troca_de_senha_obrigatoria` fora da allowlist. O que não existe é "
-            "validação de startup que rejeite o credencial de seed: o login retorna "
-            "200 e um token de sessão válido — só a API fica fechada."
+            "O guardião do próprio repositório reagiu: `npm test` falha em "
+            "`c-settings-secrets.test.ts` (AC-335), apontando `docs/security-audit/dados_auditoria.py` "
+            "como arquivo rastreado que carrega a chave real. O relatório de auditoria "
+            "vazava a credencial que ele deveria auditar — o arquivo de achados citava o "
+            "segredo em claro para provar a existência dele. Isso é pior que tê-lo só em "
+            "`.dev.vars`: `.dev.vars` é ignorado por design (AC-334 passa), enquanto um "
+            "arquivo de documentação está no histórico do git.\n\n"
+            "A chave aparece em: esta árvore de trabalho, todos os clones, qualquer "
+            "backup do repositório, e o histórico — onde não basta apagar o arquivo, "
+            "porque o conteúdo anterior permanece recuperável."
         ),
-        cond="Explorável quando `npm run db:seed:remote` roda em ambiente novo sem o operador trocar a senha. O comentário de 0019 deixa o hash exposto de propósito para o UPDATE idempotente.",
+        cond=(
+            "Qualquer pessoa ou processo com leitura do repositório (ou de um clone dele) "
+            "obtém a credencial da API WAHA. Não é explorável por requisição HTTP — é "
+            "exposição por leitura de repositório."
+        ),
         correcao=(
-            "Não semear senha: gerar o admin no primeiro boot com senha aleatória exibida "
-            "uma vez, ou exigir `ADMIN_INITIAL_PASSWORD` no env. Adicionar asserção de "
-            "startup que aborta se `users.passwordHash` do seed ainda estiver lá."
+            "Rotacionar a WAHA_API_KEY primeiro — é o que tira o valor do histórico; só "
+            "depois purga. Depois: (a) reescrever este arquivo citando apenas "
+            "`arquivo:linha` com valor redigido (feito nesta rodada); (b) nunca colar "
+            "segredo em texto versionado, nem para provar um achado — `git grep` do prefixo "
+            "no histórico basta como evidência; (c) reescrever o histórico "
+            "(`git filter-repo`) ou, no mínimo, registrar que a chave antiga está morta. "
+            "O teste AC-335 já é a trava: ele falhou exatamente como deveria."
         ),
     ),
     dict(
-        id="C4-02", cat="cat4", sev="media",
-        titulo="Chave WAHA real (64 hex) presente no arquivo de trabalho `.dev.vars`",
+        id="C4-02", cat="cat4", sev="alta",
+        titulo="Credencial real da WAHA presente na árvore de trabalho (.dev.vars)",
         arquivos=[
-            (".dev.vars", "9",
-             "WAHA_API_KEY=\"7ff62014c4d63e715d9efeffc400964dff94299ed806165134b2744dff2ec818\""),
+            (".dev.vars", "9", "WAHA_API_KEY=\"<valor real redigido nesta auditoria>\""),
             (".gitignore", "5", ".dev.vars"),
         ],
         porque=(
-            "O arquivo contém uma credencial de formato real, não o placeholder "
-            "`dev_plaintext_change_me` do `.dev.vars.example`. Verificado: `.dev.vars` NÃO é "
-            "rastreado por git (`git ls-files --error-unmatch` → erro) e NÃO aparece em "
-            "nenhum commit (`git log --all -S'7ff62014c4d63e71'` vazio). O controle de "
-            "versionamento está correto; o risco é operacional — a chave de desenvolvimento "
-            "fica em texto plano na árvore de trabalho e em qualquer backup/cópia da pasta."
+            "`.dev.vars` guarda a `WAHA_API_KEY` real em texto plano na máquina de "
+            "desenvolvimento. O arquivo está corretamente ignorado e não rastreado "
+            "(AC-334 passa), então não é um vazamento de repositório — mas é um segredo "
+            "reproduzível em qualquer backup da máquina, snapshot de disco, ou sessão de "
+            "shell que leia o arquivo. O relatório antigo tratava este item como achado de "
+            "exposição; hoje o enquadramento correto é: material de segredo presente, "
+            "contenção por filesystem em vez de por gestão de segredo. A severidade só cai "
+            "depois da rotação de C4-01, porque a mesma chave também está no histórico do "
+            "git."
         ),
-        cond="Qualquer pessoa/leitor com acesso ao disco ou a um backup do diretório. Não é exposto por git.",
-        correcao="Mover a chave de desenvolvimento para `wrangler secret put`/gerenciador de senhas e rodar o WAHA de dev com um `.env` fora do repositório.",
+        cond="Leitura do arquivo por processo/usuário na mesma máquina. Sem exposição de rede: o arquivo não é servido.",
+        correcao=(
+            "Rotacionar junto com C4-01 e mover a credencial para um cofre ou `wrangler "
+            "secret put`, mantendo em `.dev.vars` apenas o ponteiro não-sensível. Se o "
+            "arquivo precisa existir localmente, documentar a CONTENTS_DENY por diretório "
+            "(600) e a proibição de anexá-lo a ticket/bug report."
+        ),
     ),
     dict(
         id="C4-03", cat="cat4", sev="media",
-        titulo="App Next.js/Supabase inteiro vendorizado dentro do mesmo repositório git (4807 arquivos)",
+        titulo="Histórico do git carrega hash de credencial WAHA (waha/.env em commits antigos)",
         arquivos=[
-            ("DeskcommCRM-RecipeCosting/.env.example", "1",
-             "(arquivo de 25.097 bytes versionado)"),
-            ("DeskcommCRM-RecipeCosting/.env.hostgator.example", "1",
-             "(arquivo de 17.002 bytes versionado)"),
-            ("DeskcommCRM-RecipeCosting/docker-compose.prod.yml", "1",
-             "(compose de produção de outra aplicação, versionado)"),
+            ("waha/.env", "12",
+             "WAHA_API_KEY_SHA512=sha512:<hash redigido>   # em commits antigos; arquivo hoje não rastreado"),
+            (".gitignore", "7", ".env"),
         ],
         porque=(
-            "O repositório do atelie-erp carrega uma cópia completa de um segundo produto "
-            "(DeskcommCRM: Next.js + Supabase + Sentry), com 4807 arquivos rastreados "
-            "(verificado): `.env.example`, `.env.hostgator.example`, "
-            "`supabase/migrations/`, `Dockerfile*`, `docker-compose.prod.yml` e o histórico "
-            "de CHANGELOG/HANDOFF. Os JWTs encontrados são fixtures públicos do Supabase "
-            "(chave de dev documentada) e placeholders (`chave-de-mentira`), não "
-            "credenciais reais — mas isso é sorte, não controle: o diretório é superfície "
-            "de segredo e de ataque sem nenhuma revisão, e qualquer scanner de "
-            "segredo/DAST passa a produzir ruído de um produto que nem está no escopo deste "
-            "deploy."
+            "Nove commits tocaram `waha/.env`, entre eles `882b050`, `59d917b` (\"T-103 "
+            "feature: segredo da WAHA fora do controle de versao\"), `563bbf2`, "
+            "`34829fe`, `46f03b2`, `588a256`, `0ce4f2d`, `8aab53d`, `484c891` e "
+            "`90dfd83`. O conteúdo versionado é o hash SHA-512 da chave — não a chave em "
+            "si, mas um derivado que permite verificação offline de candidatos e confirma "
+            "qual credencial era a válida na época. O arquivo não está mais rastreado e "
+            "`.gitignore` cobre `.env`, então a exposição atual é só histórica; mas "
+            "histórico é o armazenamento que ninguém limpa sozinho."
         ),
-        cond="Qualquer pessoa com acesso ao repositório recebe também o histórico desse segundo app.",
+        cond="Qualquer pessoa com um clone do repositório (inclusive shallow=false) lê o hash; brute-force de chave candidata é verificável offline sem rede.",
         correcao=(
-            "Remover `DeskcommCRM-RecipeCosting/` do repositório do atelie-erp (git rm -r "
-            "--cached e adicionar ao .gitignore), ou movê-lo para um repositório próprio e "
-            "consumi-lo como submódulo/subtree explícito."
+            "Rotacionar a credencial (o hash só é inofensivo depois que o segredo que ele "
+            "resume está morto) e reescrever o histórico removendo `waha/.env` de todos os "
+            "commits (`git filter-repo --path waha/.env --invert-paths`), com force-push "
+            "coordenado. Se reescrever histórico for inviável, registrar explicitamente "
+            "que o hash está comprometido e que a rotação é obrigatória — sem isso, o "
+            "achado se repete a cada clone."
         ),
     ),
     dict(
-        id="C4-04", cat="cat4", sev="baixa",
-        titulo="Placeholder de `WAHA_HMAC_SECRET` é aceito como segredo válido",
+        id="C4-04", cat="cat4", sev="media",
+        titulo="Webhook WAHA nasce com verificação de assinatura desligada: o template entrega segredo e flag vazios",
         arquivos=[
-            (".dev.vars", "31",
-             "WAHA_HMAC_SECRET=\"gere-um-segredo-por-ambiente-openssl-rand-hex-32\""),
-            ("src/server/wahaWebhook.ts", "29-35",
+            (".dev.vars.example", "33-35",
+             "# Um segredo de uso unico por ambiente: `openssl rand -hex 32`.\n"
+             "# Vazio DESLIGA a verificacao de assinatura; um segredo curto (<32) tambem e\n"
+             "# recusado e o receiver falha fechado. Copie este arquivo e troque o valor.\n"
+             "WAHA_HMAC_SECRET=\"\"\n"
+             "WAHA_WEBHOOK_REQUIRE_SIGNATURE=\"\""),
+            ("src/server/wahaWebhook.ts", "51-57",
              "export function readWahaWebhookConfig(source: unknown): WahaWebhookConfig {\n"
              "\tconst record = source as Record<string, unknown> | null | undefined;\n"
-             "\tconst secret = text(record?.WAHA_HMAC_SECRET);\n"
+             "\tconst secret = usableSecret(text(record?.WAHA_HMAC_SECRET));\n"
              "\tconst flag = record?.WAHA_WEBHOOK_REQUIRE_SIGNATURE ?? '';\n"
              "\tconst requireSignature = String(flag) === 'true';\n"
-             "\treturn { hmacSecret: secret, requireSignature };\n}"),
+             "\treturn { hmacSecret: secret, requireSignature };\n"
+             "}"),
         ],
         porque=(
-            "`text()` só checa string não-vazia, então o texto de instrução "
-            "`gere-um-segredo-...` passa a valer como segredo. Neste ambiente específico "
-            "o efeito é fail-closed (bom): com `WAHA_WEBHOOK_REQUIRE_SIGNATURE=\"true\"` e "
-            "segredo presente, todo payload sem assinatura válida é recusado com 401. O "
-            "padrão é que frágil: \"não vazio\" é o único critério de validade, e se "
-            "alguém trocar o placeholder por um segredo fraco (ou colar a mesma string em "
-            "vários ambientes) nada reclama — e o `.dev.vars.example` deixa o campo vazio, "
-            "o que DESLIGA a verificação."
+            "A leitura de configuração agora é correta — placeholder e segredo curto são "
+            "recusados —, mas o valor default do arquivo de exemplo continua sendo \"sem "
+            "segredo e sem exigência\". Quem copia `.dev.vars.example` para `.dev.vars` e "
+            "não preenche esses dois campos (o caminho natural, já que o resto do arquivo "
+            "vem preenchido) sobe o receiver com a assinatura desligada, e o comentário do "
+            "próprio template diz isso. O ponto é o default: a proteção depende de o "
+            "operador fazer a parte difícil, e o estado inicial é o inseguro."
         ),
-        cond="Requer um valor não-vazio e errado. Com o valor atual o efeito é negação de serviço, não entrada forjada.",
-        correcao="Rejeitar valores conhecidos de placeholder e segredos com menos de 32 bytes, como `readWahaConfig` já faz para a API key (`WAHA_DEV_PLACEHOLDER_KEY`).",
+        cond="Configuração não editada → qualquer POST em /api/whatsapp/webhook é aceito e ingerido no CRM, sem autenticação.",
+        correcao=(
+            "Trocar o default por seguro: `WAHA_WEBHOOK_REQUIRE_SIGNATURE=\"true\"` no "
+            "template, com `WAHA_HMAC_SECRET` claramente marcado como obrigatório, e "
+            "fazer o receiver recusar o startup (não o request) quando o modo estrito não "
+            "tiver segredo — hoje a recusa acontece por request, então a falha é silenciosa "
+            "e o sintoma é \"a verificação simplesmente não existe\". Se o modo aberto for "
+            "necessário em desenvolvimento, que seja explícito (`WAHA_WEBHOOK_REQUIRE_SIGNATURE=\"false\"` "
+            "comentado como só-dev)."
+        ),
+    ),
+    dict(
+        id="C4-05", cat="cat4", sev="media",
+        titulo="fail-open na exigência de assinatura: modo estrito sem segredo utilizável aceita payload sem header",
+        arquivos=[
+            ("src/server/wahaWebhook.ts", "33-34",
+             "// curtas sao recusados, e um segredo recusado DEIXA A VERIFICACAO DESLIGADA\n"
+             "// (fail-closed, nunca fail-open)."),
+            ("src/server/wahaWebhook.ts", "69-86",
+             "export async function authenticateWahaWebhook(\n"
+             "\trequest: Request,\n"
+             "\tconfig: WahaWebhookConfig\n"
+             "): Promise<WahaWebhookAuth> {\n"
+             "\tconst signature = wahaWebhookSignature(request);\n"
+             "\tif (signature) {\n"
+             "\t\tif (!config.hmacSecret) return signedDenied();\n"
+             "\t\tconst rawBody = await request.clone().text();\n"
+             "\t\tconst ok = await verifyWahaHmac(rawBody, signature, config.hmacSecret);\n"
+             "\t\treturn ok\n"
+             "\t\t\t? { ok: true, reason: 'ok', signatureVerified: true }\n"
+             "\t\t\t: signedDenied();\n"
+             "\t}\n"
+             "\tif (config.requireSignature && config.hmacSecret) {\n"
+             "\t\treturn { ok: false, reason: 'missing_signature', signatureVerified: false };\n"
+             "\t}\n"
+             "\treturn { ok: true, reason: 'ok', signatureVerified: false };\n"
+             "}"),
+            ("src/server/wahaWebhook.ts", "44-49",
+             "function usableSecret(value: string | null): string | null {\n"
+             "\tif (!value) return null;\n"
+             "\tif (PLACEHOLDER_SECRETS.has(value.trim().toLowerCase())) return null;\n"
+             "\tif (value.length < HMAC_MIN_BYTES) return null;\n"
+             "\treturn value;\n"
+             "}"),
+        ],
+        porque=(
+            "O comentário das linhas 33-34 afirma fail-closed, e o código faz o oposto no "
+            "caminho que importa. O ponto de recusa sem assinatura exige as DUAS condições: "
+            "`config.requireSignature && config.hmacSecret`. Se o operador liga o modo "
+            "estrito mas o segredo é recusado por `usableSecret` (placeholder, curto, ou "
+            "vazio), `hmacSecret` é `null`, a conjunção falha e a execução cai no "
+            "`return { ok: true }` final. Ou seja: a configuração que o operador entende "
+            "como \"mais segura\" resulta em nenhuma verificação.\n\n"
+            "O caminho de assinatura presente está correto (`:75` nega sem segredo, `:77`"
+            " compara em tempo constante) — o defeito é exclusivamente a combinação "
+            "require+secret, que transforma erro de configuração em autenticação desligada "
+            "em vez de erro visível. Agrava C4-04: o template já entrega o modo estrito "
+            "desligado, então o operador que liga a flag e esquece o segredo cai "
+            "silenciosamente no modo aberto."
+        ),
+        cond=(
+            "`WAHA_WEBHOOK_REQUIRE_SIGNATURE=true` + segredo ausente/placeholder/curto + "
+            "POST sem header `x-webhook-hmac` → aceito, arquivado e ingerido no CRM."
+        ),
+        correcao=(
+            "Inverter a lógica para que a recusa dependa só da flag: "
+            "`if (config.requireSignature && !signature) return { ok: false, reason: "
+            "'missing_signature' }` — assim modo estrito sem segredo utilizável recusa "
+            "todo request (fail-closed), que é o comportamento prometido pelo comentário. "
+            "Complementar com erro explícito no startup e com a troca do teste existente "
+            "em `tests/server/wahaWebhook.test.ts:102` (hoje afirma que `requireSignature: "
+            "true` com `hmacSecret: null` aceita) — esse teste é a prova viva do "
+            "fail-open e precisa mudar junto."
+        ),
+    ),
+    dict(
+        id="C4-06", cat="cat4", sev="baixa",
+        titulo="npm audit não bloqueia a CI (continue-on-error: true)",
+        arquivos=[
+            (".github/workflows/ci.yml", "142-144",
+             "      - name: Run npm audit\n"
+             "        run: npm audit --audit-level=high\n"
+             "        continue-on-error: true"),
+        ],
+        porque=(
+            "O job de auditoria roda e o resultado é ignorado: `continue-on-error: true` "
+            "faz o GitHub Actions marcar o step como sucesso mesmo com vulnerabilidade "
+            "high/critical, então a verificação não tem efeito de gate. Não é uma "
+            "vulnerabilidade por si só — é um controle que não controla, o que é pior que "
+            "não tê-lo, porque o relatório de CI mostra o job como verde."
+        ),
+        cond="Qualquer vulnerabilidade high/critical em dependência: a CI segue verde.",
+        correcao=(
+            "Remover `continue-on-error` para `npm audit --audit-level=high`, ou trocar "
+            "por `continue-on-error: true` com upload de artifact do relatório e uma "
+            "condição de falha separada no nível critical. Como dependência é superfície "
+            "de alto retorno para esta categoria, o passo só é útil se mandar em gate."
+        ),
+    ),
+    dict(
+        id="C4-07", cat="cat4", sev="baixa",
+        titulo="Nenhuma validação de configuração no startup: assertNoSeedCredential não é chamada pelo Worker",
+        arquivos=[
+            ("src/server/seedCredential.ts", "36-43",
+             "// Fail-closed: refuses to continue while a replayable admin credential exists.\n"
+             "export async function assertNoSeedCredential(db: Database): Promise<void> {\n"
+             "\tconst users = await listEntities<{ email: string; passwordHash: string }>(\n"
+             "\t\tdb, USERS_TABLE, USERS_SHAPE\n"
+             "\t);\n"
+             "\tconst offender = users.find((user) => isLegacySeedHash(user.passwordHash));\n"
+             "\tif (offender) throw new SeedCredentialError(offender.email);\n"
+             "}"),
+            ("src/worker.ts", "12-25",
+             "export default {\n"
+             "\tasync fetch(request: Request, env: Env, ctx: ExecutionContext) {\n"
+             "\t\tconst state = new FetchState(request);\n"
+             "\t\tconst asset = await cf(state, env, ctx);\n"
+             "\t\tif (asset) return asset;\n"
+             "\t\treturn finalize(state, await astro(state));\n"
+             "\t},\n"
+             "\tasync scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext) {\n"
+             "\t\tawait runRetention(env.DB, env);\n"
+             "\t}\n"
+             "};"),
+        ],
+        porque=(
+            "Existe uma função que falha fechado enquanto há credencial de seed "
+            "reproduzível, com mensagem de erro explícita — e ela só é chamada de dentro "
+            "do próprio script de bootstrap e dos testes (`grep` de consumidores: "
+            "`bootstrap-admin.ts:59,87` e `tests/spec-v2/c-settings-secrets.test.ts:135-141`; "
+            "nenhuma em `src/server` nem em `worker.ts`). O entrypoint do Worker sobe sem "
+            "verificar nada. O mesmo vale para a configuração do webhook: um segredo "
+            "ausente ou inválido não produz erro de boot, apenas degradação silenciosa em "
+            "runtime (C4-04, C4-05).\n\n"
+            "A fechamento do achado de senha de seed do relatório antigo é real — o seed "
+            "não grava mais hash reproduzível, `bootstrap-admin.ts:26-32` sorteia a senha "
+            "com `crypto.getRandomValues`, e o middleware bloqueia a API enquanto "
+            "`mustChangePassword=1` — mas o fail-closed que protects o estado legado não "
+            "está ligado ao processo que decide subir."
+        ),
+        cond="Deploy com credencial de seed legada ou com webhook em modo aberto: o Worker sobe normalmente e o problema só aparece em um request.",
+        correcao=(
+            "Chamar `assertNoSeedCredential(env.DB)` no boot do Worker (uma vez, com cache "
+            "por isolate ou marcado no bundle) e falhar o deploy quando ela lançar. "
+            "Adicionar, na mesma função, a validação de configuração do WAHA (chave "
+            "presente, `WAHA_HMAC_SECRET` válido se `REQUIRE_SIGNATURE=true`). "
+            "Alternativa mais leve: um `npm run preflight` obrigatório no pipeline, com "
+            "checagem que rode contra o D1 remoto — desde que o pipeline não seja "
+            "opcional."
+        ),
     ),
 
     # ------------------------------------------------------------- CATEGORIA 5
     dict(
-        id="C5-01", cat="cat5", sev="alta",
-        titulo="openModal interpola `title` sem escape; dois callers passam nome vindo do banco",
-        arquivos=[
-            ("src/ui/Modal.ts", "28-31",
-             "backdrop.innerHTML = `\n"
-             "\t<div class=\"modal\" role=\"dialog\" aria-modal=\"true\">\n"
-             "\t\t<div class=\"modal-head\">\n"
-             "\t\t\t<h3>${options.title}</h3>"),
-            ("src/ui/views/crm/CrmContatosView.ts", "302",
-             "openModal({ title: `Histórico de ${contact?.name ?? 'contato'}`, bodyHtml });"),
-            ("src/ui/views/StockView.ts", "169-170",
-             "const title = `Movimentar: ${ingredient.name}`;\n"
-             "\tconst modal = openModal({ title, bodyHtml: formHtml(ingredient) });"),
-        ],
-        porque=(
-            "`options.title` cai direto no innerHTML do backdrop. Os dois callers que "
-            "passam dado do banco — o nome do contato e o nome do ingrediente — não "
-            "escapam nada. Como qualquer sessão autenticada (mesmo `viewer`) escreve "
-            "qualquer `name` via `POST/PUT /api/ingredients/:id` e "
-            "`POST/PUT /api/crm/contacts/:id` (nenhum dos dois exige papel), o nome "
-            "atacante fica armazenado e é renderizado em HTML para todo usuário que abrir "
-            "aquele formulário — injeção de HTML armazenada. `CrmEquipeView` mostra o "
-            "contraste: a linha 65-66 escapa `me.name`/`me.email` antes de usar."
-        ),
-        cond="Requer CSP relaxada para virar XSS de script: `script-src 'self'` (middleware.ts:31-34) bloqueia handlers inline. A injeção de HTML/atributo funciona sempre.",
-        correcao="Escapar `options.title` dentro de Modal.ts (`<h3>${escapeHtml(options.title)}</h3>`), e escapar `ingredient.name`/`contact.name` nos callers.",
-    ),
-    dict(
-        id="C5-02", cat="cat5", sev="alta",
-        titulo="DashboardView renderiza `i.name` (ingrediente) cru no innerHTML",
-        arquivos=[
-            ("src/ui/views/DashboardView.ts", "86-88",
-             "function lowStockRow(i: Ingredient): string {\n"
-             "\treturn `<div class=\"calc-row\"><span>${i.name}</span>\n"
-             "\t\t<span class=\"num soft\">${i.stock} / ${i.minStock} ${i.unit}</span></div>`;\n}"),
-        ],
-        porque=(
-            "O painel do Ateliê lista os ingredientes em estoque baixo interpolando o nome "
-            "sem escape algum — nem local, nem direto. `i.name` e `i.unit` são graváveis "
-            "por qualquer sessão autenticada via `/api/ingredients/:id`, sem gate de papel. "
-            "O vetor é o mesmo do C5-01 e o impacto é maior, porque o Dashboard é a "
-            "primeira tela que qualquer usuário vê ao entrar."
-        ),
-        cond="Qualquer sessão válida planta o payload; a vítima precisa abrir o Dashboard do Ateliê.",
-        correcao="`escapeHtml(i.name)` e `escapeHtml(i.unit)` — o mesmo padrão já usado em `CustomersView` e `CrmInboxView`.",
-    ),
-    dict(
-        id="C5-03", cat="cat5", sev="media",
-        titulo="LoginView renderiza `me.name` e `me.email` crus (injeção cross-user via PUT /api/users)",
-        arquivos=[
-            ("src/ui/views/LoginView.ts", "44-45",
-             "`\\n    <p class=\"soft\">Sessão ativa de <strong>${me.name}</strong>` +\n"
-             "`\\n      (${me.email}).</p>` +"),
-            ("src/pages/api/users/[id].ts", "18",
-             "const USER_MANAGERS: Role[] = ['admin', 'manager'];"),
-            ("src/pages/api/users/[id].ts", "88-94",
-             "function editablePatch(body: PutBody): Partial<User> {\n"
-             "\tconst patch: Partial<User> = {};\n"
-             "\tif (body.name !== undefined) patch.name = body.name;\n"
-             "\tif (body.email !== undefined) patch.email = body.email;\n"
-             "\tif (body.role !== undefined) patch.role = body.role as User['role'];\n"
-             "\treturn patch;\n}"),
-        ],
-        porque=(
-            "O `me` é o próprio usuário logado, o que sugeriria self-XSS inofensivo. Não é: "
-            "`editablePatch` permite que `manager`/`admin` reescreva o `name` e o `email` de "
-            "**qualquer** usuário via `PUT /api/users/[id]` (só `role`/`password` exigem "
-            "admin). Um manager planta o payload no registro de um colega; quando esse "
-            "colega entra e a LoginView renderiza o perfil, o HTML é injetado. A "
-            "CrmEquipeView (65-66) escapa o mesmo dado — a LoginView é a cópia esquecida."
-        ),
-        cond="Requer um `manager`/`admin`-planted payload e a vítima entrando por LoginView.",
-        correcao="`escapeHtml(me.name)` / `escapeHtml(me.email)`, ou deletar LoginView se CrmEquipeView é a tela de sessão canônica.",
-    ),
-    dict(
-        id="C5-04", cat="cat5", sev="media",
-        titulo="`escapeHtml` não escapa aspas e é usado dentro de atributos → quebra de atributo",
+        id="C5-01", cat="cat5", sev="baixa",
+        titulo="escapeHtml não escapa aspas: helper disponível para o contexto errado (latente, sem sink hoje)",
         arquivos=[
             ("src/domain/format.ts", "33-37",
              "export function escapeHtml(text: string): string {\n"
              "\tconst div = document.createElement('div');\n"
              "\tdiv.textContent = text ?? '';\n"
-             "\treturn div.innerHTML;\n}"),
-            ("src/ui/views/crm/CrmEtiquetasView.ts", "91",
-             "`<span class=\"chip chip-${escapeHtml(tag.color)}\">` +"),
-            ("src/ui/views/ProductsView.ts", "508-510",
-             "return `<div class=\"field\"><label class=\"field-label\">${label}</label>\n"
-             "\t\t\t<input class=\"input\" name=\"${name}\" value=\"${\n"
-             "\t\t\t\tescapeHtml(value)\n"
-             "\t\t\t}\" required></div>`;"),
-            ("src/ui/views/crm/CrmWhatsAppView.ts", "308-310",
-             "const safe = escapeHtml(qr);\n"
-             "\tconst tag = qr.startsWith('data:')\n"
-             "\t\t? `<img src=\"${safe}\" alt=\"QR do WhatsApp\" class=\"waha-qr\">`"),
+             "\treturn div.innerHTML;\n"
+             "}"),
+            ("src/domain/format.ts", "39-43",
+             "export function escapeAtrib(text: string): string {\n"
+             "\treturn escapeHtml(text)\n"
+             "\t\t.replace(/\\\"/g, \"&quot;\")\n"
+             "\t\t.replace(/\\'/g, \"&#x27;\")\n"
+             "}"),
+            ("src/ui/views/crm/crmUi.ts", "57, 69, 77, 83, 93-94, 131",
+             "const attrs = ` class=\"input\" name=\"${name}\" value=\"${escapeAtrib(value)}\"`;\n"
+             "const valueAttr = escapeAtrib(String(value));\n"
+             "`<option value=\"${escapeAtrib(o.value)}\"${sel}>` +\n"
+             "`<span class=\"badge${caramel}\">${escapeHtml(label)}</span>`;"),
         ],
         porque=(
-            "`escapeHtml` escapa via textContent→innerHTML, que trata `&`, `<` e `>` mas "
-            "NÃO `\"` nem `'` — porque aspas só importam em contexto de atributo. Por isso o "
-            "projeto tem `escapeAtrib` (format.ts:39) e `escapeAttr` (dom.ts:65). Nos três "
-            "pontos acima o valor vai para dentro de aspas de atributo usando o helper "
-            "errado: `tag.color` num `class=` (gravável por qualquer autenticado em "
-            "`PUT /api/crm/tags/:id`), `value=` de input de produto, e o `src=` do QR do "
-            "WhatsApp (controlado pelo engine WAHA, alcançado por HTTP simples em dev). "
-            "Um `\"` no payload fecha o atributo e abre Markup."
+            "`escapeHtml` escapa `&`, `<` e `>` via `textContent`→`innerHTML`, mas não "
+            "aspas — corretamente, porque é um helper de contexto de texto. O risco é "
+            "latente: `escapeAtrib` existe e cobre o caso de atributo (`crmUi.ts:57,69,77,"
+            "83,131`), e hoje nenhum sink de atributo usa o helper base, portanto não há "
+            "injeção viva. O que fica registrado é a superfície: qualquer novo "
+            "`value=\"${escapeHtml(x)}\"` reproduz a quebra de atributo, e o nome do helper "
+            "não avisa. Agrava o escopo: com sessão em cookie HttpOnly (C1-02), mesmo um "
+            "eventual breakout não vira roubo de token.\n\n"
+            "Os sinks reais da rodada anterior estão corrigidos: `Modal.ts:32` escapa "
+            "`options.title`, `DashboardView.ts:88` escapa `i.name`/`i.unit`, "
+            "`LoginView.ts:46-47` escapa `me.name`/`me.email`, e a CSP do middleware "
+            "(`script-src 'self'`, sem `unsafe-inline`) contém o resto."
         ),
-        cond="tag.color e os valores de produto são graváveis por qualquer sessão; o QR exige controlar a resposta do engine (ou MITM em dev, onde a base URL é http://localhost:3000).",
-        correcao="Trocar por `escapeAtrib`/`escapeAttr` nos três pontos e unificar os dois helpers de atributo em um só.",
+        cond="Não explorável no código atual: nenhum atributo é preenchido com escapeHtml. Exige uma futura interpolação em atributo.",
+        correcao=(
+            "Fechar a classe de falha, não só o helper: renomear `escapeHtml` para "
+            "`escapeText` (nome que declara o contexto) e fazer `escapeAtrib` ser o único "
+            "aceito em atributo, com um teste que varra os arquivos de `src/ui` e falhe se "
+            "encontrar `=\"${escapeText(` ou `escapeHtml` dentro de atributo. Enquanto "
+            "isso, documentar no helper que ele NÃO é seguro em atributo."
+        ),
     ),
     dict(
-        id="C5-05", cat="cat5", sev="baixa",
-        titulo="numberField interpola `value` sem escape em cinco views",
+        id="C5-02", cat="cat5", sev="informativa",
+        titulo="Verificação positiva: CSP restritiva, sinks escapados e anti-SQLi por allowlist de coluna",
         arquivos=[
-            ("src/ui/views/crm/crmUi.ts", "69",
-             "const attrsB = ` name=\"${name}\" value=\"${value}\" required`;"),
-            ("src/ui/views/ProductsView.ts", "521",
-             "`value=\"${value}\" ${required ? 'required' : ''}></div>`;"),
-            ("src/ui/views/IngredientsView.ts", "195", "value=\"${value}\" required></div>`;"),
-            ("src/ui/views/ComponentsView.ts", "316", "`\" value=\"${value}\" required></div>`;"),
-            ("src/ui/views/SettingsView.ts", "97", "`\" value=\"${value}\" required></div>`;"),
+            ("src/middleware.ts", "31-56",
+             "CSP com script-src 'self' (sem unsafe-inline), frame-ancestors 'none',\n"
+             "base-uri 'self', mais HSTS, nosniff e X-Frame-Options."),
+            ("src/server/mapping.ts", "52-58",
+             "function keepAllowed(...): Record<string, unknown> {\n"
+             "\tif (!columns) return { ...entity };\n"
+             "\tconst allowed = new Set(columns);\n"
+             "\tconst out: Record<string, unknown> = {};"),
+            ("src/server/crud.ts", "46, 65, 78",
+             "await db.prepare(sql).bind(...values).run();  // insert/update/delete parametrizados"),
+            ("src/domain/format.ts", "33-43",
+             "escapeHtml (texto) e escapeAtrib (atributo) — helpers separados por contexto."),
         ],
         porque=(
-            "O campo `value` de todo `<input type=\"number\">` é interpolado cru. Os "
-            "parâmetros são tipados `number`, mas isso é só TypeScript: o servidor não "
-            "valida tipo nenhum — `entityToRow` só restringe NOMES de coluna "
-            "(mapping.ts:38, 48-58), o valor passa intacto. Um PUT com "
-            "`{\"yieldUnits\": \"\\\"><img src=x onerror=...>\"}` grava a string e ela volta "
-            "no formulário. `textField`, no mesmo arquivo, usa escapeHtml e "
-            "`crmUi.textField` usa escapeAtrib — a lacuna é só no numberField."
+            "A camada de escape está coerente onde importa, e a defesa não depende só "
+            "disso: a CSP sem `unsafe-inline` impede execução de script injetado mesmo que "
+            "um breakout de atributo ocorra, e o allowlist de coluna com `bind()` mantém "
+            "SQL fora do alcance do corpo JSON (nome de coluna não pode ser contrabandeado "
+            "como chave). Combinadas com o cookie HttpOnly (C1-02), as três camadas "
+            "independentes reduzem um erro de escaping futuro a um incidente de conteúdo, "
+            "não a comprometimento de sessão."
         ),
-        cond="Escrita por qualquer sessão autenticada (sem gate de papel nas rotas de entidade).",
-        correcao="`value=\"${escapeAtrib(String(value))}\"` nas cinco implementações, e validação de tipo no servidor para os campos numéricos.",
-    ),
-    dict(
-        id="C5-06", cat="cat5", sev="baixa",
-        titulo="rowButton interpola o valor do atributo `data-*` sem escape",
-        arquivos=[
-            ("src/ui/views/crm/crmUi.ts", "128-131",
-             "return (\n"
-             "\t\t`<button class=\"btn btn-ghost btn-sm${cls}\" data-${dataset}=\"${value}\">` +\n"
-             "\t\tlabel +\n"
-             "\t\t'</button>'\n"
-             "\t);"),
-        ],
-        porque=(
-            "O helper compartilhado de botão de linha coloca `value` dentro de aspas de "
-            "atributo sem escapar. Os valores atuais são ids de entidade gerados por "
-            "`uid()`, então não há caminho praticável hoje — registrado porque o helper é "
-            "usado por várias views e o contrato não documenta essa exigência."
-        ),
-        cond="Não explorável com os ids atuais; passaria a ser se algum caller passar texto.",
-        correcao="`data-${dataset}=\"${escapeAtrib(value)}\"` e um comentário exigindo id/texto já escapado.",
-    ),
-    dict(
-        id="C5-07", cat="cat5", sev="media",
-        titulo="Token de sessão em localStorage — qualquer injeção de HTML na origem vira sequestro de sessão",
-        arquivos=[
-            ("src/repositories/ApiAuthRepository.ts", "20",
-             "return localStorage.getItem(this.tokenKey);"),
-            ("src/repositories/ApiAuthRepository.ts", "56",
-             "localStorage.setItem(this.tokenKey, token);"),
-        ],
-        porque=(
-            "O token Bearer vive em `localStorage`, legível por qualquer script que rode na "
-            "origem. Os sinks de innerHTML verificados injetam HTML mas a CSP atual "
-            "(`script-src 'self'`) barra a execução de script, então hoje o pior caso é "
-            "injeção de HTML/form. O ponto é que o nível de dano é alto: se a CSP relaxar, "
-            "ou se um sink passar a permitir `javascript:`, o mesmo bug vira account "
-            "takeover completo em vez de simples deformação de HTML. `crypto.randomUUID()` "
-            "para o token não muda isso."
-        ),
-        cond="N/A — é um amplificador dos achados C5-01..C5-04.",
-        correcao="Migrar a sessão para cookie `HttpOnly; Secure; SameSite=Strict` (o que também resolve o token-em-URL do SSE, C1-02).",
+        cond="Não explorável: controle verificado, não ausência de controle.",
+        correcao="Nenhuma. Preservar a separação dos helpers de escape por contexto.",
     ),
 ]
 
-# ------------------------------------------------------- pontos fortes (ok)
+# --------------------------------------------------------------- pontos fortes
+# (titulo, local, descricao) — controles verificados que merecem permanecer.
 PONTOS_FORTES = [
-    ("Backbone de autenticação no middleware", "src/middleware.ts:116-136",
-     "Todas as rotas `/api/*` exigem sessão válida, exceto 5 caminhos explicitamente "
-     "listados em PUBLIC_PATHS; o resto responde 401 `nao_autenticado`. O usuário é "
-     "injetado em `locals` para os handlers."),
-    ("Rotas públicas se auto-autenticam (cobertura item a item)", "health.ts:15, webhook-config.ts:26 e :58",
-     "Como o middleware não resolve sessão nessas rotas, cada uma valida o token "
-     "sozinha — e todas as que precisam, validam. A rota de webhook não usa sessão: "
-     "autentica por HMAC."),
-    ("Webhook WAHA falha fechado e compara em tempo constante", "src/server/wahaWebhook.ts:47-64 e :157-162",
-     "Assinatura presente e errada é sempre recusada; `requireSignature` recusa payload "
-     "sem header; `constantTimeEqual` evita vazamento por tempo. O corpo bruto é arquivado "
-     "antes de qualquer parse."),
-    ("Anti-SQLi: allowlist de colunas e parâmetros vinculados", "src/server/mapping.ts:38,48-58 · crud.ts:31,46,65,78",
-     "`keepAllowed` descarta qualquer chave fora de `shape.columns`, o que impede "
-     "contrabandear nome de coluna (e portanto SQL) via JSON. Todo valor vai por "
-     "`bind()` com placeholder `?`."),
-    ("Senhas: PBKDF2-SHA256 100k com salt aleatório por usuário", "src/server/auth.ts:41-46, 218-221",
-     "Cada gravação de senha sorteia 16 bytes de sal (`crypto.getRandomValues`) e grava "
-     "hash+salt; o sal fixo do seed é só fallback de compatibilidade."),
-    ("Ciclo de vida de sessão previsível", "src/server/auth.ts:27, 120-147",
-     "TTL de 30 dias, `revokeOtherSessions` na troca de senha e `deleteSessionsForUser` "
-     "no login — uma sessão ativa por usuário."),
+    ("Recorte LGPD em cascata, no módulo, não na rota", "src/domain/lgpdScope.ts:69-92",
+     "Contatos por atribuição derivam conversas, mensagens e clientes/pedidos. A rota "
+     "consome o recorte, então o vazamento anterior não voltou por duplo caminho."),
+    ("SSE escopado na consulta, com escape para manager/admin", "src/pages/api/crm/events.ts:27-38, 201",
+     "`visibleConversationIds` devolve `null` só para manager/admin; nos demais papéis o "
+     "filtro vai para o SQL. Sem token em query string (único parâmetro lido é `since`)."),
+    ("Sessão em cookie HttpOnly; nada legível por script", "src/server/auth.ts:70",
+     "`HttpOnly; Secure; SameSite=Strict`, com o cliente guardando apenas perfil não-sensível."),
+    ("Escalada de privilégio fechada nos dois verbos de /api/users",
+     "src/pages/api/users/index.ts:31-33, 51-58 · [id].ts:62-65",
+     "Os papéis aceitos são derivados do corpo antes de qualquer validação; pedir `admin` "
+     "exige `ADMINS` tanto no POST quanto no PUT."),
+    ("Matriz de papéis por operação na fábrica de rotas",
+     "src/server/routeFactory.ts:19-34, 56-60, 204-228",
+     "leitura `viewer+`, escrita `agent+`, exclusão `manager+`; `admin` passa em todas. "
+     "Escrever deixou de ser synonym de `viewer`."),
+    ("ROLE_RANK finalmente decide", "src/server/authz.ts:25-30, 43-50",
+     "`hasRank`/`requireRank` comparam `ROLE_RANK`, dando semântica real à hierarquia que "
+     "antes era código morto."),
+    ("UI espelha o endpoint em vez de inventar permissão",
+     "src/ui/views/crm/CrmEquipeView.ts:42-52",
+     "O botão de criação é condicionado ao mesmo conjunto de papéis que o POST exige."),
+    ("settings: leitura pura na escrita, com allowlist", "src/pages/api/settings.ts:46-62",
+     "GET não escreve no banco; PUT exige `admin/manager` e o patch passa por "
+     "`sanitizeSettingsPatch` antes do merge."),
+    ("WhatsApp: papel E posse da conversa na escrita", "src/pages/api/whatsapp/send.ts:28-33, 50-51",
+     "Fecha as duas metades — posse sem papel (viewer donando a própria conversa) e papel "
+     "sem posse (agent em qualquer conversa)."),
+    ("Webhook WAHA: assinatura presente e errada é sempre recusada, comparação em tempo constante",
+     "src/server/wahaWebhook.ts:69-81, 179-184",
+     "`constantTimeEqual` evita vazamento por tempo; corpo bruto arquivado antes de qualquer "
+     "parse (fail-open deste ponto é C4-05, não daqui)."),
+    ("Anti-SQLi por allowlist de coluna + parâmetros vinculados",
+     "src/server/mapping.ts:52-58 · src/server/crud.ts:46, 65, 78",
+     "`keepAllowed` impede contrabandear nome de coluna via JSON; todo valor vai por `bind()`."),
+    ("Senhas: PBKDF2-SHA256 com sal por usuário, e sem seed reproduzível",
+     "src/server/auth.ts · scripts/bootstrap-admin.ts:26-32 · src/server/seedCredential.ts:36-43",
+     "Sal sorteado por gravação; o bootstrap sorteia a senha com `crypto.getRandomValues`; "
+     "existe função de fail-closed para hash legado (C4-07 registra que falta ligar no boot)."),
+    ("Backbone de autenticação no middleware", "src/middleware.ts:15-21, 116-136",
+     "Todas as rotas `/api/*` exigem sessão, exceto cinco caminhos explícitos em "
+     "`PUBLIC_PATHS`; o resto responde 401."),
+    ("As cinco rotas públicas se auto-autenticam", "whatsapp/health.ts · whatsapp/webhook-config.ts · crm/events.ts · whatsapp/send.ts",
+     "Como o middleware não resolve sessão nelas, cada uma valida o token sozinha — e todas "
+     "validam (inclusive `events.ts` e `send.ts`, que re-resolvem o usuário)."),
     ("Rate limit de login em D1, não em memória do isolate", "src/server/rateLimit.ts · src/middleware.ts:58-64",
      "5 tentativas de login e 3 de troca de senha por janela de 15 min, com contador "
-     "persistido — resiste ao restart de deploy e à dispersão por colo."),
-    ("Bloqueio da API enquanto a senha do seed não é trocada", "src/middleware.ts:25-29, 138-144",
-     "`mustChangePassword=1` produz 403 `troca_de_senha_obrigatoria` fora de uma "
-     "allowlist de três rotas — é o que de fato inutiliza a credencial padrão (C4-01)."),
+     "persistido: resiste a restart de deploy."),
     ("Guarda de mesma-origem nas rotas de sessão", "src/server/origin.ts:10-19",
-     "`login`, `logout`, `me` e `change-password` rejeitam `Origin` divergente; clientes "
-     "sem header (o engine WAHA) passam."),
-    ("Cabeçalhos de segurança e CSP restritiva", "src/middleware.ts:31-56",
-     "CSP com `script-src 'self'` (sem `unsafe-inline`), `frame-ancestors 'none'`, "
-     "`base-uri 'self'`, mais HSTS, `nosniff` e `X-Frame-Options`. É o que contém "
-     "C5-01/C5-02/C5-04 a injeção de script."),
-    ("Mensagens de WhatsApp — o campo de maior risco — são escapadas", "CrmInboxView.ts:711 e :602, :781 e :794",
-     "O texto chega de pessoas externas via webhook WAHA e é renderizado com "
-     "`escapeHtml(m.text)`; preview da caixa de entrada e corpo das notas também."),
-    ("Views do CRM escapam antes de interpolar", "CrmPainelView.ts:91-92, CrmFunilView.ts:101/113/128-130, CrmAgendaView.ts:84/91-92, CrmAtividadesView.ts:94-98, CrmCatalogoView.ts:58-60, CrmContatosView.ts:186-187",
-     "O padrão “escapar para uma local, depois interpolar” é consistente nessas telas: "
-     "nome de contato, título de negócio, etapa, evidência de atividade e descrição de "
-     "produto saem escapados."),
-    ("Auditoria das operações privilegiadas", "src/server/authz.ts:35-45 · routeFactory.ts:22-34",
-     "Negação por papel gera entrada `role_denied` com IP; criação de entidade gera "
+     "login/logout/me/change-password rejeitam `Origin` divergente; cliente sem header "
+     "(o engine WAHA) passa."),
+    ("CSP restritiva e anti-clickjacking", "src/middleware.ts:31-56",
+     "`script-src 'self'` sem `unsafe-inline`, `frame-ancestors 'none'`, `base-uri 'self'`, "
+     "HSTS, `nosniff`, `X-Frame-Options` — o que contém injeção de HTML."),
+    ("Auditoria das operações privilegiadas", "src/server/authz.ts · src/server/routeFactory.ts:42-54 · src/server/audit.ts",
+     "Negação por papel gera entrada de auditoria com IP; criação de entidade gera "
      "action_log com userId e clientId."),
     ("O transporte WAHA nunca carrega segredo no erro", "src/server/waha.ts:20-21, 40-47",
      "`WahaError` só formata `waha_<op>_<status>`; o corpo da resposta — que pode conter "
      "telefone, HMAC e API key — é descartado. Timeout em toda chamada."),
-    ("Placeholder de API key rejeitado na leitura de config", "src/server/waha.ts:60-70",
-     "`readWahaConfig` devolve null quando a chave é `WAHA_DEV_PLACEHOLDER_KEY`, então uma "
-     "clone fresca não tenta credencial falsa. É o padrão de validação que falta no "
-     "C4-04."),
-    ("Compose do WAHA usa sentinela fail-closed, não chave padrão", "waha/docker-compose.waha.yml:41",
-     "`WAHA_API_KEY: \"${WAHA_API_KEY_SHA512:-sha512:INVALID_CHANGE_ME}\"` — nenhum "
-     "hash de chave real casa, então o container recém-criado recusa tudo (401) em vez de "
-     "abrir com senha padrão."),
-    ("`.dev.vars` nunca entrou no git", "verificado: `git ls-files --error-unmatch .dev.vars` → erro; `git log --all -S` do prefixo da chave → vazio",
-     "A chave WAHA real (C4-02) está na árvore de trabalho mas não no histórico. A CI "
-     "também não injeta segredo em nenhum bloco `run:` — os jobs de deploy estão "
-     "comentados (ci.yml:146-209)."),
-    ("LGPD: o escopo do titular é filtrado por atribuição", "src/pages/api/me/data.ts:51-65 · erase.ts:115-125",
-     "Contatos, conversas, negócios, tarefas e consents são recortados por "
-     "`assignedUserId`/`assigneeUserId`, e o erasure apaga sessões/consents/conta além "
-     "de anonimizar os registros do titular. O defeito é a exceção, não a regra (C1-01)."),
-    ("Helpers de escape de atributo existem e são usados corretamente em parte do código", "src/domain/format.ts:39 · src/ui/dom.ts:65 · crmUi.ts:57,76,82",
-     "`escapeAtrib` e `escapeAttr` estão presentes e são usados em `crmUi.textField`, "
-     "dateField, datetimeField, optionHtml e no aria-label do gráfico — o problema é "
-     "aplicação inconsistente, não ausência (C5-04)."),
+    ("Compose do WAHA usa sentinela fail-closed", "waha/docker-compose.waha.yml:41",
+     "`WAHA_API_KEY: \"${WAHA_API_KEY_SHA512:-sha512:INVALID_CHANGE_ME}\"` — nenhum hash "
+     "real casa, então um container recém-criado recusa tudo em vez de abrir com senha padrão."),
+    ("Trava de regressão de segredo em texto versionado",
+     "tests/spec-v2/c-settings-secrets.test.ts:232-259",
+     "AC-334/AC-335 varrem todo arquivo rastreado e falham se a chave real ou uma "
+     "atribuição com cara de chave aparecer. Foi exatamente esse teste que reprovou o "
+     "relatório antigo (C4-01)."),
 ]
 
 # ---------------------------------------------------------- recomendações
+# (prioridade, achados, acao, porque)
 RECOMENDACOES = [
-    ("P1", "C2-01",
-     "Fechar a escalada de privilégio em POST /api/users: exigir papel `admin` sempre "
-     "que `body.role === 'admin'`, reaproveitando `allowedRoles()` do PUT irmão. "
-     "Adicionar teste que falhe para manager→admin.",
-     "Evita controle total do app por um papel intermediário."),
-    ("P1", "C1-01",
-     "Corrigir o recorte de /api/me/data e /api/me/export: derivar `messages` das "
-     "conversas do titular e `customers`/`orders` dos contatos filtrados (ou removê-los). "
-     "Teste que falhe para usuário sem atribuição.",
-     "Fecha o vazamento de PII e a exposição de todos os pedidos."),
-    ("P1", "C2-02",
-     "Dar papéis permitidos às fábricas `createCollectionRoutes`/`createItemRoutes` e "
-     "validar com `requireRole` por operação (leitura todos; escrita agent+; exclusão "
-     "manager+).",
-     "Faz o papel `viewer` significar “visualização” e fecha a escrita por papel baixo."),
+    ("P1", "C4-01 C4-02 C4-03",
+     "Rotacionar a WAHA_API_KEY (uma vez, cobre as três), reescrever este arquivo sem "
+     "segredo em claro — feito nesta rodada — e purgar `waha/.env` do histórico com "
+     "git filter-repo.",
+     "Segredo em texto versionado e em histórico é o único achado desta rodada que "
+     "compromete fora do perímetro da aplicação: qualquer clone tem a credencial. "
+     "Rotacionar invalida o que já vazou; reescrever o arquivo impede a repetição."),
     ("P1", "C3-01",
-     "Na fábrica de item routes, resolver o registro e exigir posse "
-     "(`<dono> === user.id` ou manager/admin) quando a tabela tiver coluna de dono, além "
-     "do gate de papel.",
-     "Fecha IDOR em ~24 rotas de uma vez, sem depender de cada arquivo."),
+     "Subir o piso de `update` para `manager` nas tabelas sensíveis sem dono (messages, "
+     "orders, calendar-events, conversation-notes, catalog-products) e modelar "
+     "`assignedUserId` nas demais tabelas de trabalho do CRM, registrando em "
+     "`OWNER_FIELDS`.",
+     "15 das 19 rotas de item não têm gate de posse nenhum; o piso `agent` de C2-02 "
+     "transformou isso em IDOR(truthy) para o papel mais comum do time."),
+    ("P1", "C5-02",
+     "Preservar a separação escapeText/escapeAtrib e a CSP sem `unsafe-inline`.",
+     "São as duas camadas que mantêm um erro de escaping futuro como incidente de "
+     "conteúdo, não como comprometimento de sessão."),
     ("P2", "C3-02",
-     "Exigir posse em `loadWahaConversation` e `requireRole(['agent','manager','admin'])` "
-     "em POST /api/whatsapp/send.",
-     "Impede disparo de WhatsApp para qualquer cliente por qualquer sessão."),
-    ("P2", "C5-01, C5-02",
-     "Escapar `options.title` dentro de Modal.ts e `i.name`/`i.unit` em DashboardView. "
-     "Adicionar lint forbidding interpolação sem escape em innerHTML.",
-     "Elimina as duas injeções de HTML armazenado de maior alcance."),
-    ("P2", "C5-04, C5-05, C5-06",
-     "Trocar `escapeHtml` por `escapeAtrib`/`escapeAttr` nos contextos de atributo, "
-     "unificar os dois helpers de atributo e escapar `value` nos `numberField`.",
-     "Fecha a quebra de atributo e o vetor de `<input type=number>`."),
-    ("P2", "C4-01",
-     "Eliminar a senha de seed: gerar o admin no primeiro boot ou exigir "
-     "`ADMIN_INITIAL_PASSWORD`; adicionar asserção de startup que rejeite o hash de seed.",
-     "Tira um credencial admin reproduzível do repositório."),
-    ("P2", "C2-03, C2-04",
-     "Unificar o gate de papel numa função compartilhada `can(user, action)` consumida "
-     "pela UI e pelo servidor, e condicionar o botão “+ Novo usuário”.",
-     "Elimina a divergência UI↔servidor que produziu o C2-01."),
-    ("P3", "C1-02, C5-07",
-     "Migrar a sessão para cookie `HttpOnly; Secure; SameSite=Strict`, o que elimina o "
-     "`?token=` do SSE e o `Access-Control-Allow-Origin: *`.",
-     "Reduz drasticamente o impacto de qualquer futura injeção de script."),
-    ("P3", "C3-03",
-     "Mover o default de settings para migration, dar allowlist de colunas a `settings` "
-     "e validar o patch contra um schema.",
-     "Retira escrita em rota de leitura e a gravação de colunas arbitrárias."),
-    ("P3", "C4-03",
-     "Remover `DeskcommCRM-RecipeCosting/` do repositório (ou movê-lo para repo próprio), "
-     "eliminando 4807 arquivos de superfície e de ruído de secrets.",
-     "Reduz exposição de segredo e ruído de scanner/DAST."),
-    ("P3", "C4-04, C2-05",
-     "Rejeitar placeholders e segredos curtos em `readWahaWebhookConfig`; usar "
-     "`ROLE_RANK` em `requireRole` ou remover a hierarquia morta.",
-     "Fecha defaults frouxos e dá semântica real aos papéis."),
-    ("P3", "C3-04",
-     "Teste que falhe se uma rota adicionada a PUBLIC_PATHS não chamar `userFromToken`, "
-     "garantindo a invariante de cobertura.",
-     "Protege contra regressão na lista pública."),
+     "Falhar fechado em `checkOwnership` quando o registro não tem dono (403 para papel "
+     "abaixo de manager), ou tornar a atribuição obrigatória no schema com backfill.",
+     "`DEFAULT ''` nas migrations garante linhas sem dono, e o código trata \"sem dono\" "
+     "como permissão — quanto mais antigo o registro, menos protegido."),
+    ("P2", "C3-03",
+     "Derivar `assignedUserId`/`assigneeUserId` do `locals.user.id` no servidor e remover "
+     "`createdBy`/`authorUserId`/`fromMe` da superfície de escrita, com lista de campos "
+     "imutáveis por tabela.",
+     "Autoatribuição e falsificação de autoria continuam disponíveis mesmo nas tabelas "
+     "com dono, porque o PUT aceita trocar o dono junto com o resto do registro."),
+    ("P2", "C4-04 C4-05",
+     "Trocar o default do template para `REQUIRE_SIGNATURE=\"true\"` e invertir a lógica "
+     "de C4-05 para que o modo estrito recuse quando o segredo não é utilizável — "
+     "atualizando o teste que hoje afirma o comportamento fail-open.",
+     "Um operador que liga a flag e esquece o segredo acaba com a verificação "
+     "inexistente, e o comentário do código promete o contrário do que ele faz."),
+    ("P2", "C5-01",
+     "Renomear `escapeHtml` para `escapeText` e adicionar teste que falhe se o helper de "
+     "texto aparecer dentro de um atributo em `src/ui`.",
+     "Fecha a classe de falha por contexto, não só o helper: o nome atual não avisa o "
+     "próximo autor, e nenhum sink vivo existe hoje para servir de trava."),
+    ("P3", "C4-07",
+     "Chamar `assertNoSeedCredential(env.DB)` e a validação de config do WAHA no boot "
+     "do Worker (ou em um preflight obrigatório do pipeline).",
+     "O fail-closed existe e é correto; só não está ligado ao processo que sobe a "
+     "aplicação, então erro de configuração vira degradação silenciosa em runtime."),
+    ("P3", "C4-06",
+     "Remover `continue-on-error` do `npm audit` ou condicionar a falha em nível critical.",
+     "Um controle que não controla é pior que a ausência dele: o relatório de CI mostra "
+     "verde onde há vulnerabilidade."),
+    ("P3", "C1-01",
+     "Registrar como invariante (teste) que o recorte LGPD nunca devolve linha sem "
+     "atribuição, e que rota nova não pode assumir `listEntities` restrita.",
+     "A listagem global é decisão de projeto legítima; o risco é ela ser tratada como "
+     "garantia por quem escreve a próxima rota."),
 ]
 
 # --------------------------------------------------------- issues github
 ISSUES = [
     dict(
         n=1,
-        titulo="[Segurança] Escalada de privilégio: `manager` cria conta `admin` em POST /api/users",
-        labels="security, critical, authz, privilege-escalation",
+        titulo="[Segurança] Segredo real da WAHA em arquivo versionado e no histórico do git",
+        labels="security, critical, secrets, git-history",
         problema=(
-            "A rota de criação de usuário aceita os papéis `['admin','manager']` e valida "
-            "o papel pedido apenas contra a lista de papéis **válidos**, que inclui "
-            "`admin`. Não há nenhuma verificação de que o papel pedido está dentro do que "
-            "o chamador pode conceder. Um usuário com papel `manager` — que não é "
-            "administrador — cria uma conta `admin` com senha escolhida por ele e passa a "
-            "controlar o aplicativo inteiro.\n\n"
-            "A rota irmã `PUT /api/users/[id]` já resolve isso corretamente: `allowedRoles()` "
-            "exige `['admin']` quando o corpo traz `role` ou `password`. A POST ficou de fora "
-            "dessa regra — a validação existe no próprio código e não foi aplicada ali. "
-            "A UI não é fronteira: `CrmEquipeView.roleOptions()` oferece os quatro papéis no "
-            "select sem limitar por papel do operador, e o botão “+ Novo usuário” é "
-            "renderizado sem gate algum."
+            "A credencial `WAHA_API_KEY` real está em três lugares.\n\n"
+            "**(a) Em arquivo rastreado.** `docs/security-audit/dados_auditoria.py` — o "
+            "arquivo de dados do próprio relatório de auditoria — continha o valor em "
+            "claro, para provar o achado que descrevia. É texto versionado: está no "
+            "histórico do git, em todo clone, em todo backup do repositório.\n\n"
+            "**(b) Na árvore de trabalho.** `.dev.vars:9` guarda o mesmo valor. O arquivo "
+            "está corretamente ignorado (AC-334 passa), então aqui a exposição é por "
+            "leitura de disco, não por repositório.\n\n"
+            "**(c) No histórico.** `waha/.env:12` foi versionado em nove commits e contém "
+            "o hash SHA-512 da credencial — não a chave, mas um derivado que permite "
+            "verificação offline de candidatos.\n\n"
+            "O achado é que a auditoria de segurança estava vazando o segredo que ela "
+            "audita: o teste de regressão do próprio repositório "
+            "(`c-settings-secrets.test.ts`, AC-335) reprovou por causa disso, e está "
+            "reprovando até que o arquivo seja corrigido."
         ),
         evidencia=(
-            "src/pages/api/users/index.ts:13\n"
-            "    const USER_MANAGERS: Role[] = ['admin', 'manager'];\n\n"
-            "src/pages/api/users/index.ts:31\n"
-            "    const denied = await requireRole(context, USER_MANAGERS);\n\n"
-            "src/pages/api/users/index.ts:12\n"
-            "    const ROLES: Role[] = ['viewer', 'agent', 'manager', 'admin'];\n\n"
-            "src/pages/api/users/index.ts:39-41\n"
-            "    if (!ROLES.includes(body.role as Role)) {\n"
-            "    \treturn json({ error: 'papel_invalido' }, 400);\n"
-            "    }\n\n"
-            "Contraste — a rota PUT restringe (src/pages/api/users/[id].ts:62-65):\n"
-            "    function allowedRoles(body: PutBody): Role[] {\n"
-            "    \tconst adminOnly = ADMIN_ONLY_FIELDS.some(f => body[f] !== undefined);\n"
-            "    \treturn adminOnly ? ADMINS : USER_MANAGERS;\n"
-            "    }"
+            "tests/spec-v2/c-settings-secrets.test.ts (AC-335, em falha)\n"
+            "    expect([file, leaked]).toEqual([file, []]);\n"
+            "    // file = docs/security-audit/dados_auditoria.py\n\n"
+            "waha/.env:12 (em commits antigos; hoje não rastreado)\n"
+            "WAHA_API_KEY_SHA512=sha512:<redigido>\n\n"
+            ".dev.vars:9 (untracked, .gitignore:5)\n"
+            "WAHA_API_KEY=\"<redigido>\"\n\n"
+            ".gitignore:5,7\n"
+            ".dev.vars\n"
+            ".env\n\n"
+            "commits que tocaram waha/.env:\n"
+            "882b050  59d917b  563bbf2  34829fe  46f03b2\n"
+            "588a256  0ce4f2d  8aab53d  484c891  90dfd83"
         ),
         impacto=(
-            "Controle total do aplicativo: um `manager` comprometido ou mal-intencionado "
-            "vira administrador, o que dá acesso a gestão de usuários, configurações e à "
-            "sessão do WhatsApp (`/api/whatsapp/session` é admin-only, e parar/iniciar a "
-            "engine derrubaria o canal comercial). Também permite preparar uma conta "
-            "persistente que sobrevive à troca de senha da vítima — o reset de senha do "
-            "dono não derruba a sessão de um admin novo."
+            "Comprometimento da credencial da API WAHA, e portanto do canal de WhatsApp "
+            "da operação: quem lê a chave pode chamar a API do engine (listar e manipular "
+            "sessões, enviar mensagens em nome da empresa). Não é uma falha explorável "
+            "por requisição anônima — é exposição por leitura de repositório, o que "
+            "implica qualquer pessoa com acesso ao código, CI, dependência com "
+            "persistência de artefato, ou cópia do projeto. Rotacionar é obrigatório "
+            "mesmo após remover o arquivo do working tree, porque o histórico preserva o "
+            "valor."
         ),
         correcao=(
-            "Aplicar `allowedRoles(body)` no POST (ou exigir `ADMINS` quando "
-            "`body.role === 'admin'`), e derivar o limite de um único lugar."
+            "1. Rotacionar a WAHA_API_KEY no engine (invalida tudo que já vazou, "
+            "histórico incluído).\n"
+            "2. Reescrever qualquer arquivo versionado que cite o segredo, substituindo "
+            "por `arquivo:linha` com valor redigido — este relatório já vem corrigido.\n"
+            "3. Purgar `waha/.env` do histórico: `git filter-repo --path waha/.env "
+            "--invert-paths`, com force-push coordenado. Se reescrever for inviável, "
+            "registrar que o hash está comprometido e que a rotação é obrigatória.\n"
+            "4. Nunca colar segredo em texto versionado, nem como evidência: `git log -S` "
+            "do prefixo basta para provar o achado."
         ),
         aceite=[
-            "POST /api/users com role='admin' por sessão `manager` retorna 403 `papel_insuficiente`.",
-            "POST /api/users com role='manager'|'agent'|'viewer' por sessão `manager` continua 201.",
-            "Teste automatizado no mesmo estilo de tests/server/authz.test.ts, com uma sessão `manager` no contexto.",
-            "O mesmo corpo enviado via PUT com role='admin' por `manager` também retorna 403 (paridade das duas rotas).",
-            "A UI esconde a opção `admin` no select quando o operador não é admin.",
+            "A WAHA_API_KEY atual é diferente da que aparece em qualquer commit (verificável com git log -S do prefixo antigo).",
+            "npm test passa, incluindo AC-335, sem que nenhum arquivo rastreado carregue a chave.",
+            "Nenhum arquivo rastreado contém valor de segredo; citações são arquivo:linha com valor redigido.",
+            "`git log --all -- waha/.env` não retorna commits (histórico purgado) ou há registro explícito de que o hash foi commitment-rotacionado.",
+            ".dev.vars continua não rastreado (AC-334) e a credencial local vem de cofre/wrangler secret, não de arquivo de texto.",
         ],
     ),
     dict(
         n=2,
-        titulo="[Segurança] Exportação LGPD (`/api/me/data`, `/api/me/export`) devolve mensagens, clientes e pedidos de todo o sistema",
-        labels="security, high, lgpd, data-leak, broken-access-control",
+        titulo="[Segurança] IDOR: agent+ altera registro de terceiro em 15 das 19 rotas de item",
+        labels="security, high, idor, broken-access-control, authorization",
         problema=(
-            "As duas rotas de privacidade do titular aplicam um recorte por atribuição "
-            "(`assignedUserId` / `assigneeUserId`) a contatos, conversas, negócios, "
-            "tarefas e consents — mas devolvem `messages`, `customers` e `orders` "
-            "**sem nenhum filtro**, direto do conjunto `all.*`, que é a base inteira "
-            "carregada por `loadLgpdData`.\n\n"
-            "Na prática, qualquer sessão autenticada — inclusive um usuário com papel "
-            "`viewer`, que por definição não deveria ver nada — consegue baixar a lista "
-            "completa de clientes (nome, telefone, e-mail) e de pedidos do D1 chamando "
-            "`GET /api/me/export`. Isso é pior que não filtrar: a rota é justamente o "
-            "endpoint que um titular usaria para exercitar seu direito de acesso, e ele "
-            "vaza a base de terceiros."
+            "`routeFactory.ts` tem um gate de posse (`checkOwnership`), mas ele só se "
+            "aplica às tabelas listadas em `OWNER_FIELDS` — hoje quatro: `contacts`, "
+            "`conversations`, `deals`, `tasks`. Das dezenove rotas de item expostas por "
+            "`createItemRoutes`, as outras quinze passam por "
+            "`if (!ownerField) return null; // Sem campo de dono, permite`.\n\n"
+            "Desde que o piso de escrita passou a ser `agent` (o papel que o time de "
+            "vendas realmente usa), a consequência é direta: qualquer `agent` faz PUT em "
+            "qualquer registro de `activities`, `appointment-types`, `calendar-events`, "
+            "`catalog-products`, `conversation-notes`, `messages`, `pipelines`, "
+            "`quick-replies`, `stages`, `tags`, e nas tabelas do ERP "
+            "(`components`, `customers`, `ingredients`, `orders`, `products`), bastando "
+            "conhecer o id.\n\n"
+            "O caso mais grave é `messages`. `MESSAGES_SHAPE` inclui `text`, `fromMe`, "
+            "`direction`, `createdBy`, `conversationId`, `externalId`, `remoteJid`. Não é "
+            "apenas leitura indevida de registro alheio: é **reescrita de mensagem já "
+            "entregue**, com marcação de direção e autoria forjadas."
         ),
         evidencia=(
-            "src/pages/api/me/data.ts:73\n"
-            "    messages: all.messages,\n\n"
-            "src/pages/api/me/data.ts:76-77\n"
-            "    customers: all.customers,\n"
-            "    orders: all.orders,\n\n"
-            "src/pages/api/me/export.ts:68\n"
-            "    messages: all.messages,\n\n"
-            "src/pages/api/me/export.ts:71-72\n"
-            "    customers: all.customers,\n"
-            "    orders: all.orders,\n\n"
-            "O recorte que existe, ao lado (src/pages/api/me/data.ts:51-65), mostra o padrão correto:\n"
-            "    const myContacts = all.contacts.filter(c => c.assignedUserId === user.id);\n"
-            "    deals: all.deals.filter(d => d.assignedUserId === user.id),\n"
-            "    tasks: all.tasks.filter(t => t.assigneeUserId === user.id),"
+            "src/server/routeFactory.ts:62-69\n"
+            "const OWNER_FIELDS: Record<string, string> = {\n"
+            "\tcontacts: 'assignedUserId',\n"
+            "\tconversations: 'assignedUserId',\n"
+            "\tdeals: 'assignedUserId',\n"
+            "\ttasks: 'assigneeUserId',\n"
+            "};\n\n"
+            "src/server/routeFactory.ts:81-82\n"
+            "\tconst ownerField = OWNER_FIELDS[table];\n"
+            "\tif (!ownerField) return null; // Sem campo de dono, permite\n\n"
+            "src/server/routeFactory.ts:29-34 (piso que torna isso alcançável)\n"
+            "const DEFAULT_ROLES: Required<RoleConfig> = {\n"
+            "\tlist: 'viewer', create: 'agent', update: 'agent', delete: 'manager',\n"
+            "};\n\n"
+            "src/pages/api/crm/messages/[id].ts:1-3 (sem RoleConfig, sem dono)\n"
+            "import { createItemRoutes } from '../../../../server/routeFactory';\n"
+            "import { MESSAGES_TABLE, MESSAGES_SHAPE } from '../../../../server/tables';\n"
+            "export const { PUT, DELETE } = createItemRoutes(MESSAGES_TABLE, MESSAGES_SHAPE);\n\n"
+            "src/server/tables.ts:169-175 (superfície de escrita)\n"
+            "\tcolumns: [\n"
+            "\t\t'ack', 'conversationId', 'createdAt', 'createdBy', 'deliveredAt', 'direction',\n"
+            "\t\t'editedAt', 'externalId', 'fromMe', 'id', 'mediaMime', 'mediaUrl',\n"
+            "\t\t'messageType', 'readAt', 'remoteJid', 'revokedAt', 'text', 'waStatus', ...\n"
+            "\t],\n"
+            "\tboolFields: ['fromMe'],"
         ),
         impacto=(
-            "Vazamento de dados pessoais entre usuários e exposição de informação "
-            "comercial (volume e valores de pedidos). Sob LGPD (art. 18 e art. 6º, VII) "
-            "isso é tratamento de dado de terceiro sem base legal e um incidente "
-            "notificável; um `viewer` já acessa tudo que a rota devolve."
+            "Um `agent` — o papel mais comum — pode alterar dados de qualquer colega e, em "
+            "`messages`, reescrever o histórico de conversa do inbox e forjar autoria/direção. "
+            "Como `DELETE` exige `manager`, o dano é de integridade, não de disponibilidade: "
+            "o registro some de vista, mas a fraude fica. Para o inbox, whose messages são "
+            "a evidência do relacionamento com o cliente, isso ébworse do que ler o que não "
+            "deveria."
         ),
         correcao=(
-            "Filtrar `messages` pelo conjunto de conversas do titular e derivar "
-            "`customers`/`orders` dos contatos filtrados — ou remover esses campos do "
-            "recorte, já que o titular não tem relação com pedidos de outros."
+            "1. Curto prazo, sem migration: declarar `RoleConfig` por tabela nas rotas "
+            "sensíveis, com `update: 'manager'` para `messages`, `orders`, "
+            "`calendar-events`, `conversation-notes` e `catalog-products`.\n"
+            "2. Longo prazo: adicionar `assignedUserId` às tabelas de trabalho do CRM "
+            "(`activities`, `conversation-notes`, `catalog-products`, `stages`, `tags`) com "
+            "migration e entrada em `OWNER_FIELDS`; para `messages`, resolver posse pela "
+            "conversa (`conversationId` → `conversations.assignedUserId`) em vez de coluna "
+            "própria.\n"
+            "3. Escrever o teste que hoje falha: agent + PUT em registro de terceiro = 403, "
+            "para todas as tabelas, e não só para as quatro com dono."
         ),
         aceite=[
-            "Um usuário sem nenhuma atribuição recebe `customers`, `orders` e `messages` vazios em /api/me/data e /api/me/export.",
-            "Um usuário com contatos atribuídos recebe apenas as mensagens das conversas desses contatos.",
-            "Nenhum campo de retorno contém linhas cujo `assignedUserId`/dono é de outro usuário.",
-            "Teste automatizado que falhe se uma linha de customers/orders/messages de terceiro aparecer no payload.",
+            "PUT /api/crm/messages/[id] por sessão agent em mensagem de conversa não atribuída retorna 403.",
+            "Não existe rota de item reachable por agent que aceite escrita sem gate de papel ou de posse (teste que varre src/pages/api/**/[id].ts falha se alguma aparecer).",
+            "messages: texto, direção, fromMe e createdBy não são alteráveis por PUT de agente em nenhuma tabela.",
+            "Toda tabela com coluna de dono tem entrada em OWNER_FIELDS, ou não tem coluna de dono.",
+            "Teste de tabela que falhe para qualquer tabela nova em createItemRoutes sem RoleConfig explícito quando o piso padrão exigir agente+ em dado sensível.",
         ],
     ),
     dict(
         n=3,
-        titulo="[Segurança] Papel `viewer` tem escrita e exclusão em todas as entidades (routeFactory sem requireRole)",
-        labels="security, high, authz, missing-authorization",
+        titulo="[Segurança] checkOwnership falha aberto quando o registro não tem dono, e o schema garante esse caso",
+        labels="security, medium, authorization, idor, data-model",
         problema=(
-            "Todas as rotas de entidade do CRM e do ERP são geradas por "
-            "`createCollectionRoutes` e `createItemRoutes`, e **nenhuma das duas chama "
-            "`requireRole`**. O único controle sobre elas é o middleware, que exige uma "
-            "sessão válida — e nada mais.\n\n"
-            "O tipo de papel inclui `viewer`, que a própria UI rotula “Visualização” "
-            "(`ROLE_LABELS.viewer`). Mas um `viewer` consegue `POST /api/crm/pipelines` "
-            "criar um funil, `POST /api/crm/tags` criar etiquetas e, via rota de item, "
-            "`DELETE /api/crm/contacts/<id>` apagar qualquer contato e `DELETE "
-            "/api/orders/<id>` apagar pedidos. O rótulo comercial diz o que o papel não "
-            "cumpre, e nenhum gate de frontend esconde nada: `pageHead()` renderiza o "
-            "botão “+ Novo usuário” incondicionalmente.\n\n"
-            "Busca por `requireRole` em todo `src/` retorna apenas 4 arquivos: "
-            "users/index.ts, users/[id].ts, settings.ts e whatsapp/session.ts."
+            "Mesmo nas quatro tabelas com dono, a checagem cede quando o campo está "
+            "vazio:\n\n"
+            "```ts\nconst ownerId = (entity as Record<string, unknown>)[ownerField];\n"
+            "if (!ownerId) return null; // Sem dono definido, permite\n```\n\n"
+            "O comentário assume que \"sem dono definido\" é estado legítimo. O schema "
+            "garante o contrário: `DEFAULT ''` em `contacts` e `deals` "
+            "(migration 0018), `tasks.assigneeUserId` (0003) e "
+            "`conversations.assignedUserId` (0003). Todo registro criado sem atribuição "
+            "explícita nasce sem dono — e nesse estado a proteção existe no código e não "
+            "dispara no dado.\n\n"
+            "O efeito é invertido ao que se espera de um controle de posse: quanto mais "
+            "antigo o registro (ou criado por um caminho que não preenche atribuição), "
+            "menos protegido. A condição étrivial de alcançar — um contato importado, uma "
+            "conversa criada pelo webhook sem atribuição."
         ),
         evidencia=(
-            "src/server/routeFactory.ts:39-57\n"
-            "    export function createCollectionRoutes(table: string, shape: TableShape) {\n"
-            "    \tconst GET: APIRoute = async () => {\n"
-            "    \t\tconst items = await listEntities(getDb(), table, shape);\n"
-            "    \t\treturn json(items);\n"
-            "    \t};\n"
-            "    \tconst POST: APIRoute = async (context) => {\n"
-            "    \t\t/* sem requireRole */\n"
-            "    \t};\n\n"
-            "src/server/routeFactory.ts:59-80\n"
-            "    export function createItemRoutes(table: string, shape: TableShape) {\n"
-            "    \tconst PUT: APIRoute = async (context) => { /* ... */ };\n"
-            "    \tconst DELETE: APIRoute = async (context) => { /* ... */ };\n\n"
-            "src/domain/crm.ts:5\n"
-            "    export type Role = 'viewer' | 'agent' | 'manager' | 'admin';\n\n"
-            "src/ui/views/crm/CrmEquipeView.ts:12\n"
-            "    viewer: 'Visualização',\n\n"
-            "src/ui/views/crm/CrmEquipeView.ts:42-47 (botão sem gate)\n"
-            "    function pageHead(): string {\n"
-            "    \tconst btn = '<button class=\"btn btn-primary\" id=\"new-user\">+ Novo usuário</button>';\n"
-            "    \treturn section('Equipe', 'Usuários e papéis do sistema', btn);\n"
-            "    }"
+            "src/server/routeFactory.ts:84-89\n"
+            "\tconst entity = await getEntity(db, table, shape, id);\n"
+            "\tif (!entity) return notFound();\n\n"
+            "\tconst ownerId = (entity as Record<string, unknown>)[ownerField] as\n"
+            "\t\tstring | undefined;\n"
+            "\tif (!ownerId) return null; // Sem dono definido, permite\n\n"
+            "migrations/0018_add_assigned_user_to_contact_deal.sql:12,15\n"
+            "ALTER TABLE contacts ADD COLUMN assignedUserId TEXT NOT NULL DEFAULT '';\n"
+            "ALTER TABLE deals ADD COLUMN assignedUserId TEXT NOT NULL DEFAULT '';\n\n"
+            "migrations/0003_crm.sql:66 (tasks)\n"
+            "  assigneeUserId TEXT NOT NULL DEFAULT '',\n\n"
+            "migrations/0003_crm.sql:99 (conversations)\n"
+            "  assignedUserId TEXT NOT NULL DEFAULT '',"
         ),
         impacto=(
-            "Qualquer conta de menor privilégio — inclusive uma criada para papel "
-            "somente-visualização — tem capacidade de escrita e exclusão sobre toda a base "
-            "de CRM e ERP: apagar contatos, conversas, mensagens, negócios, pedidos e "
-            "modificar a configuração de funil/etiquetas/agenda. Qualquer sessão "
-            "vazada ou conta descartada vira destruição em massa."
+            "Escritura por `agent` em qualquer registro sem dono, de forma silenciosa: o "
+            "código de autorização decide que pode, o resultado é 200, e não há log "
+            "registrando que a checagem foi omitida. Como a linha não tem dono, também não "
+            "existe rastro que permita dizer depois quem poderia ter escrito."
         ),
         correcao=(
-            "Dar a `createCollectionRoutes`/`createItemRoutes` uma lista de papéis "
-            "permitidos por operação e chamar `requireRole` antes de tocar o D1. "
-            "Sugestão: leitura = todos os papéis; escrita = `agent`, `manager`, `admin`; "
-            "exclusão = `manager`, `admin`."
+            "Escolher explicitamente uma das duas semânticas e implementá-la no schema, não "
+            "no default.\n\n"
+            "**(a) Falhar fechado:** `if (!ownerId) return json({ error: 'nao_autorizado' "
+            "}, 403)` para papéis abaixo de manager. Correção de uma linha, sem migration, "
+            "e é o que o resto do app já faz para segredo recusado.\n\n"
+            "**(b) Atribuição obrigatória:** `NOT NULL` sem default, com backfill "
+            "preenchendo `assignedUserId` a partir do primeiro admin, e atribuição "
+            "obrigatória na criação. Mais fiel ao modelo, mais caro de migrar.\n\n"
+            "Independente da escolha: log quando a checagem de posse for omitida por falta "
+            "de dono, para que o dado sem dono apareça."
         ),
         aceite=[
-            "POST /api/crm/pipelines com sessão `viewer` retorna 403 `papel_insuficiente`.",
-            "DELETE /api/crm/contacts/:id com sessão `viewer` retorna 403 e o registro continua no banco.",
-            "POST /api/orders com sessão `viewer` retorna 403.",
-            "DELETE /api/crm/pipelines/:id com sessão `agent` retorna 403.",
-            "Uma entrada `role_denied` é gravada em auth_audit para cada negativa (o authz.ts já faz isso).",
-            "A UI de cada tela reflete a mesma matriz de permissões.",
+            "Registro com assignedUserId/assigneeUserId vazio não pode ser alterado por agent (403), ou a semântica escolhida está documentada e testada.",
+            "Existe teste que cria explicitamente uma linha sem dono e demonstra o comportamento escolhido.",
+            "Nenhuma migration nova cria coluna de dono com DEFAULT ''.",
+            "A omissão da checagem por falta de dono gera entrada de log/auditoria.",
         ],
     ),
     dict(
         n=4,
-        titulo="[Segurança] IDOR: createItemRoutes faz PUT/DELETE por id sem checar posse nem papel",
-        labels="security, high, idor, broken-access-control",
+        titulo="[Segurança] PUT aceita campos de atribuição e autoria: autoatribuição e falsificação de autoria",
+        labels="security, medium, mass-assignment, idor, authorization",
         problema=(
-            "`createItemRoutes` resolve o registro pelo `context.params.id` e vai direto "
-            "para `updateEntity`/`deleteEntity`. Não há comparação de "
-            "`assignedUserId`/`assigneeUserId` nem gate de papel — a mesma lacuna que a "
-            "issue anterior apontou, agora no eixo de posse.\n\n"
-            "Todos os arquivos `[id].ts` são aliases de duas linhas dessa fábrica, e foram "
-            "percorridos um a um: contatos, conversas, mensagens, negócios, tarefas, "
-            "pipelines, etapas, respostas-rápidas, agenda, catálogo, atividades, notas de "
-            "conversa, etiquetas, tipos de agenda, clientes, pedidos, produtos, "
-            "ingredientes, componentes e usuários. Efeito concreto: um usuário com papel "
-            "`viewer` apaga qualquer contato, conversa, negócio ou pedido pelo id.\n\n"
-            "E como as listagens devolvem a base inteira (o projeto é single-tenant por "
-            "desenho), os ids necessários para o ataque saem eles próprios das respostas "
-            "de listagem — não é preciso adivinhar nada."
+            "O `updateHandler` repassa o corpo do PUT direto ao merge, e a única "
+            "restrição é a coluna existir no `shape`. Como os shapes incluem os campos de "
+            "atribuição e autoria, três jogadas ficam disponíveis:\n\n"
+            "**(a) Autoatribuição.** `PUT` com `assignedUserId: <meu id>` no corpo move o "
+            "registro para si — inclusive nas quatro tabelas que *têm* dono, porque o gate "
+            "compara o dono persistido, e o dono novo vai na mesma requisição. Um agente "
+            "toma o contato de outro em uma chamada, sem nenhum 403.\n\n"
+            "**(b) Falsificação de autoria.** `createdBy`/`authorUserId` são colunas "
+            "comuns nos shapes e são graváveis: um agente escreve que a mensagem ou a "
+            "atividade foi criada por outra pessoa.\n\n"
+            "**(c) Reescrita de direção.** Em `messages`, `text` + `fromMe` + `direction` "
+            "mudar juntos transforma mensagem recebida em enviada, ou o contrário — "
+            "compartilhado com a issue 2, mas com vetor próprio (mass assignment, não "
+            "falta de posse)."
         ),
         evidencia=(
-            "src/server/routeFactory.ts:60-72\n"
-            "    const PUT: APIRoute = async (context) => {\n"
-            "    \tconst patch = (await context.request.json()) as { id?: string; } & Record<string, unknown>;\n"
-            "    \tconst saved = await updateEntity(\n"
-            "    \t\tgetDb(), table, shape, context.params.id!, patch\n"
-            "    \t);\n"
-            "    \treturn saved ? json(saved) : notFound();\n"
-            "    };\n\n"
-            "src/server/routeFactory.ts:74-77\n"
-            "    const DELETE: APIRoute = async (context) => {\n"
-            "    \tawait deleteEntity(getDb(), table, context.params.id!);\n"
-            "    \treturn json({ ok: true });\n"
-            "    };\n\n"
-            "Exemplo de alias — src/pages/api/crm/contacts/[id].ts:3\n"
-            "    export const { PUT, DELETE } = createItemRoutes(CONTACTS_TABLE, CONTACTS_SHAPE);\n\n"
-            "Exemplo de alias — src/pages/api/orders/[id].ts:3\n"
-            "    export const { PUT, DELETE } = createItemRoutes(ORDERS_TABLE, ORDERS_SHAPE);"
+            "src/server/routeFactory.ts:176-183\n"
+            "\t\tconst patch = (await context.request.json()) as {\n"
+            "\t\t\tid?: string;\n"
+            "\t\t} & Record<string, unknown>;\n"
+            "\t\tconst invalid = refuseInvalid(shape, patch);\n"
+            "\t\tif (invalid) return invalid;\n"
+            "\t\tconst saved = await updateEntity(\n"
+            "\t\t\tgetDb(), table, shape, context.params.id!, patch\n"
+            "\t\t);\n\n"
+            "src/server/crud.ts:59-65 (merge sem allowlist própria)\n"
+            "\tconst merged = { ...existing, ...patch } as T;\n"
+            "\tconst row = entityToRow(merged as Record<string, unknown>, shape);\n"
+            "\tconst { sql, values } = buildUpdate(table, id, row, shape.columns);\n\n"
+            "src/server/tables.ts:169-175 (createdBy, fromMe, direction são colunas do shape)\n"
+            "\tcolumns: ['ack', 'conversationId', 'createdAt', 'createdBy', 'deliveredAt',\n"
+            "\t\t'direction', ..., 'fromMe', ..., 'text', ...],\n"
+            "\tboolFields: ['fromMe'],"
         ),
         impacto=(
-            "Qualquer sessão autenticada pode apagar ou alterar qualquer registro de "
-            "qualquer entidade por id — incluindo conversas e mensagens do WhatsApp, "
-            "negócios e pedidos. Combinado com a listagem sem filtro, é um "
-            "read-write-destroy global para a base do CRM, sem necessidade de privilégio "
-            "nenhum além de estar logado."
+            "Autoatribuição contorna a única proteção de posse que existe (issue 3) sem "
+            "precisar de nenhuma condição especial — basta o gate de posse ver o dono "
+            "antigo. Falsificação de autoria quebra a trilha de auditoria do CRM: "
+            "`action_log` registra quem fez a operação, mas o registro aponta outra pessoa "
+            "como autora, e as duas informações passam a discordar sem sinal."
         ),
         correcao=(
-            "Antes do write, resolver o registro existente e exigir: (a) papel mínimo "
-            "para a operação e (b) quando a tabela tiver coluna de dono, "
-            "`registro.<dono> === user.id` **ou** papel `manager`/`admin`. Fazer isso na "
-            "fábrica, para não depender de cada arquivo de rota."
+            "Separar campo de criação de campo de manutenção:\n\n"
+            "- `assignedUserId`/`assigneeUserId`: ignorar o valor do corpo e derivar de "
+            "`locals.user.id` (com um caso explícito de reatribuição por manager/admin, "
+            "que é operação legítima de gestão).\n"
+            "- `createdBy`/`authorUserId`: preenchidos na criação, nunca aceitos no PUT. "
+            "- `fromMe`/`direction`: mudados apenas por caminho de sistema (ingest do "
+            "webhook), não pela API de CRUD.\n\n"
+            "A forma mecânica de garantir é uma lista `IMMUTABLE_FIELDS` por tabela "
+            "verificada antes do merge, com teste que falhe para PUT tentando mudar "
+            "`createdBy` em qualquer tabela."
         ),
         aceite=[
-            "DELETE /api/crm/contacts/:id de um contato atribuído a outro usuário, por sessão `agent`, retorna 403 e não apaga o registro.",
-            "O mesmo DELETE por sessão `manager` ou `admin` funciona.",
-            "PUT /api/crm/tasks/:id de tarefa com outro `assigneeUserId`, por sessão `agent`, retorna 403.",
-            "As rotas sem coluna de dono (ex.: tags, produtos) exigem papel mínimo para escrita/exclusão.",
-            "A verificação está na fábrica (um único lugar), não replicada em 24 arquivos.",
-            "Teste automatizado cobrindo ao menos uma entidade com dono (contacts) e uma sem (tags).",
+            "PUT com assignedUserId no corpo não altera o dono do registro (o valor vem do locals.user ou é ignorado).",
+            "PUT com createdBy/authorUserId no corpo não altera a autoria registrada.",
+            "PUT com fromMe/direction em messages retorna 400 ou é ignorado, fora do caminho de ingest.",
+            "Existe lista de campos imutáveis por tabela e teste que cobre, no mínimo, createdBy e assignedUserId.",
         ],
     ),
     dict(
         n=5,
-        titulo="[Segurança] IDOR no envio de WhatsApp: qualquer sessão envia mensagem em qualquer conversa",
-        labels="security, high, idor, whatsapp",
+        titulo="[Segurança] Webhook WAHA: template nasce com assinatura desligada e o modo estrito falha aberto sem segredo utilizável",
+        labels="security, medium, webhook, fail-open, config-default",
         problema=(
-            "`POST /api/whatsapp/send` recebe `conversationId` no corpo e resolve a "
-            "conversa por id. `loadWahaConversation` valida apenas que a conversa existe e "
-            "que `channel === 'whatsapp'` — **nunca** compara "
-            "`conversation.assignedUserId` com o usuário chamador. A rota também não tem "
-            "`requireRole`, só sessão.\n\n"
-            "Resultado: qualquer conta autenticada, de qualquer papel (inclusive "
-            "`viewer`), pode listar as conversas — as listagens não filtram nada — e então "
-            "disparar WhatsApp para qualquer cliente do negócio, em nome da empresa. O "
-            "canal é externo e comercial: a mensagem chega ao celular do cliente final."
+            "Duas falhas encostadas, com o mesmo efeito prático: nenhum request é "
+            "autenticado por assinatura.\n\n"
+            "**(a) Default inseguro no template.** `.dev.vars.example:34-35` traz "
+            "`WAHA_HMAC_SECRET=\"\"` e `WAHA_WEBHOOK_REQUIRE_SIGNATURE=\"\"`. Quem copia o "
+            "template — o caminho natural, já que o resto vem preenchido — e não edita "
+            "esses dois campos sobe o receiver com a verificação desligada. O comentário "
+            "do próprio template avisa que vazio desliga.\n\n"
+            "**(b) fail-open na combinação flag+segredo.** Em "
+            "`authenticateWahaWebhook`, a recusa de payload sem assinatura exige as duas "
+            "condições:\n\n"
+            "```ts\nif (config.requireSignature && config.hmacSecret) {\n"
+            "\treturn { ok: false, reason: 'missing_signature', ... };\n"
+            "}\nreturn { ok: true, reason: 'ok', signatureVerified: false };\n```\n\n"
+            "Se o operador liga `REQUIRE_SIGNATURE=true` mas o segredo é recusado por "
+            "`usableSecret` (placeholder, curto, vazio), `hmacSecret` é `null`, a conjunção "
+            "falha e a execução cai no `return { ok: true }` final. A configuração que o "
+            "operador entende como \"mais segura\" resulta em nenhuma verificação — e o "
+            "comentário nas linhas 33-34 do mesmo arquivo afirma o oposto: \"um segredo "
+            "recusado DEIXA A VERIFICACAO DESLIGADA (fail-closed, nunca fail-open)\".\n\n"
+            "O caminho de assinatura presente está correto (nega sem segredo, compara em "
+            "tempo constante); o defeito é só a combinação."
         ),
         evidencia=(
-            "src/pages/api/whatsapp/send.ts:15-16\n"
-            "    const user = await userFromToken(db, context.request);\n"
-            "    if (!user) return json({ error: 'sessao_invalida' }, 401);\n\n"
-            "src/pages/api/whatsapp/send.ts:26-31\n"
-            "    const message = await sendWahaText(db, client, {\n"
-            "    \tconversationId: parsed.value.conversationId,\n"
-            "    \ttext: parsed.value.text,\n"
-            "    \tuserId: user.id,\n"
-            "    \treplyTo: parsed.value.replyTo\n"
-            "    });\n\n"
-            "src/server/wahaSend.ts:62-79 (sem checagem de dono)\n"
-            "    async function loadWahaConversation(\n"
-            "    \tdb: Database, conversationId: string\n"
-            "    ): Promise<Conversation> {\n"
-            "    \tconst conversation = await getEntity<Conversation>(\n"
-            "    \t\tdb, CONVERSATIONS_TABLE, CONVERSATIONS_SHAPE, conversationId\n"
-            "    \t);\n"
-            "    \tif (!conversation) {\n"
-            "    \t\tthrow new WahaSendError('conversation_not_found', 'Conversa não encontrada');\n"
-            "    \t}\n"
-            "    \tif (conversation.channel !== 'whatsapp') {\n"
-            "    \t\tthrow new WahaSendError('wrong_channel', 'Esta conversa não é do canal WhatsApp');\n"
-            "    \t}\n"
-            "    \treturn conversation;   // <-- assignedUserId nunca é comparado\n"
-            "    }\n\n"
-            "    $ grep -c assignedUserId src/server/wahaSend.ts\n"
-            "    0"
+            ".dev.vars.example:33-35\n"
+            "# Um segredo de uso unico por ambiente: `openssl rand -hex 32`.\n"
+            "# Vazio DESLIGA a verificacao de assinatura; um segredo curto (<32) tambem e\n"
+            "# recusado e o receiver falha fechado. Copie este arquivo e troque o valor.\n"
+            "WAHA_HMAC_SECRET=\"\"\n"
+            "WAHA_WEBHOOK_REQUIRE_SIGNATURE=\"\"\n\n"
+            "src/server/wahaWebhook.ts:33-34 (o que o código promete)\n"
+            "// curtas sao recusados, e um segredo recusado DEIXA A VERIFICACAO DESLIGADA\n"
+            "// (fail-closed, nunca fail-open).\n\n"
+            "src/server/wahaWebhook.ts:44-49 (recusa de segredo inutilizavel)\n"
+            "function usableSecret(value: string | null): string | null {\n"
+            "\tif (!value) return null;\n"
+            "\tif (PLACEHOLDER_SECRETS.has(value.trim().toLowerCase())) return null;\n"
+            "\tif (value.length < HMAC_MIN_BYTES) return null;\n"
+            "\treturn value;\n"
+            "}\n\n"
+            "src/server/wahaWebhook.ts:82-85 (o que o código faz)\n"
+            "\tif (config.requireSignature && config.hmacSecret) {\n"
+            "\t\treturn { ok: false, reason: 'missing_signature', signatureVerified: false };\n"
+            "\t}\n"
+            "\treturn { ok: true, reason: 'ok', signatureVerified: false };\n\n"
+            "tests/server/wahaWebhook.test.ts:102 (a prova viva do fail-open)\n"
+            "  const auth = await authenticateWahaWebhook(request(BODY, 'anything'),\n"
+            "    { hmacSecret: null, requireSignature: true });\n"
+            "  // o teste afirma que o payload é aceito neste caso"
         ),
         impacto=(
-            "Abuso de canal comercial a partir de conta de menor privilégio: envio de "
-            "mensagens não autorizadas (golpe, phishing, oferta indevida) para a base de "
-            "clientes, com custo por mensagem e sem rasto de autorização além do "
-            "`createdBy` na linha enviada."
+            "Qualquer POST em `/api/whatsapp/webhook` é aceito, arquivado e ingerido no "
+            "CRM sem autenticação. O que o atacante controla vai para o inbox: mensagens, "
+            "ticks de entrega e updates de status, com `externalId` e `remoteJid` "
+            "forjáveis. Isso permite forjar conversas e adulterar o histórico de delivery "
+            "que o painel mostra. A rota é `PUBLIC_PATHS`, então nenhum middleware a "
+            "protege — a assinatura é a única fronteira."
         ),
         correcao=(
-            "Exigir `conversation.assignedUserId === user.id || ['manager','admin'].includes(user.role)` "
-            "em `loadWahaConversation`, e aplicar `requireRole(['agent','manager','admin'])` na rota."
+            "1. Inverter a condição para que a recusa dependa só da flag:\n"
+            "   `if (config.requireSignature && !signature) return { ok: false, reason: "
+            "'missing_signature' }`. Modo estrito sem segredo utilizável passa a recusar "
+            "todo request, que é o fail-closed prometido.\n"
+            "2. Trocar o default do template para `WAHA_WEBHOOK_REQUIRE_SIGNATURE=\"true\"`, "
+            "marcando o segredo como obrigatório; se o modo aberto for necessário em dev, "
+            "que seja explícito e comentado.\n"
+            "3. Falhar no startup (não no request) quando o modo estrito não tiver "
+            "segredo — hoje a recusa é por request, então o sintoma é \"a verificação não "
+            "existe\" em vez de um erro de configuração.\n"
+            "4. Atualizar o teste de `tests/server/wahaWebhook.test.ts:102`, que hoje "
+            "consagra o comportamento fail-open."
         ),
         aceite=[
-            "POST /api/whatsapp/send com `conversationId` de conversa atribuída a outro usuário, por sessão `agent`, retorna 403.",
-            "O mesmo envio por sessão `manager` ou `admin` funciona.",
-            "Uma sessão `viewer` recebe 403 na rota mesmo em conversa própria.",
-            "A mensagem de erro não distingue “não existe” de “não é sua” (evita enumeração de conversas).",
-            "Teste automatizado em tests/server cobrindo os dois caminhos.",
+            "authenticateWahaWebhook com requireSignature=true e hmacSecret=null recusa payload sem assinatura (missing_signature).",
+            "O teste que hoje afirma o contrário foi alterado, e há teste para assinatura presente + segredo ausente (bad_signature).",
+            ".dev.vars.example traz REQUIRE_SIGNATURE=true e o segredo marcado como obrigatório.",
+            "UmReceiver com modo estrito e segredo inválido falha no boot com erro de configuração, não apenas em request.",
+            "POST sem header x-webhook-hmac no receiver em modo estrito não altera nenhum registro no D1.",
         ],
     ),
     dict(
         n=6,
-        titulo="[Segurança] Injeção de HTML armazenada via nome de ingrediente/contato em openModal e no Dashboard",
-        labels="security, high, xss, stored-xss",
+        titulo="[Segurança] Controles que não controlam: npm audit sem gate e assertNoSeedCredential fora do boot",
+        labels="security, low, ci, fail-open, configuration",
         problema=(
-            "`openModal` interpola `options.title` diretamente no `innerHTML` do backdrop, "
-            "sem escape. Dois callers passam dado vindo do banco sem escapar: o nome do "
-            "contato (`Histórico de ${contact.name}`) e o nome do ingrediente "
-            "(`Movimentar: ${ingredient.name}`).\n\n"
-            "Separadamente, `DashboardView.lowStockRow` interpola `${i.name}` cru no "
-            "innerHTML — e o Dashboard é a primeira tela que qualquer usuário vê ao entrar, "
-            "o que dá alcance máximo ao payload.\n\n"
-            "Como **nenhuma** rota de ingrediente ou contato exige papel mínimo para "
-            "escrita, qualquer sessão autenticada (inclusive `viewer`) planta o payload "
-            "com um `PUT /api/ingredients/:id` e ele é renderizado depois para todos os "
-            "usuários que abrirem aquele formulário ou o Dashboard. A tela de Equipe mostra "
-            "o padrão correto logo ao lado (`CrmEquipeView` escapa `me.name`/`me.email` nas "
-            "linhas 65-66), então trata-se de views que esqueceram o escape."
+            "Dois controles existem, estão escritos corretamente, e não produzem efeito "
+            "porque nenhum ponto do sistema os invoca no momento em que decides.\n\n"
+            "**(a) `npm audit` não bloqueia.** O step da CI roda "
+            "`npm audit --audit-level=high` com `continue-on-error: true`. Vulnerabilidade "
+            "high ou critical produz step marcado como sucesso: o job aparece verde no "
+            "relatório da CI. Um controle que não controla é pior que a ausência dele, "
+            "porque cria confiança falsa.\n\n"
+            "**(b) `assertNoSeedCredential` não é chamada no boot.** A função falha "
+            "fechado enquanto existe hash de seed reproduzível, com mensagem explícita — e "
+            "seus únicos consumidores são o próprio script de bootstrap e os testes. "
+            "Nenhuma chamada em `src/server`, nenhuma em `worker.ts`. O entrypoint sobe sem "
+            "verificar nada. O mesmo vale para a configuração do webhook: segredo ausente "
+            "não gera erro de boot, vira degradação silenciosa em runtime (issue 5).\n\n"
+            "O fechamento do achado de senha de seed da auditoria anterior é real — o seed "
+            "não grava hash reproduzível e `bootstrap-admin.ts:26-32` sorteia a senha com "
+            "`crypto.getRandomValues`. O que falta é o fail-closed que protege o estado "
+            "herdado estar ligado ao processo que sobe a aplicação."
         ),
         evidencia=(
-            "src/ui/Modal.ts:28-31\n"
-            "    backdrop.innerHTML = `\n"
-            "    \t<div class=\"modal\" role=\"dialog\" aria-modal=\"true\">\n"
-            "    \t\t<div class=\"modal-head\">\n"
-            "    \t\t\t<h3>${options.title}</h3>\n\n"
-            "src/ui/views/crm/CrmContatosView.ts:302\n"
-            "    openModal({ title: `Histórico de ${contact?.name ?? 'contato'}`, bodyHtml });\n\n"
-            "src/ui/views/StockView.ts:169-170\n"
-            "    const title = `Movimentar: ${ingredient.name}`;\n"
-            "    const modal = openModal({ title, bodyHtml: formHtml(ingredient) });\n\n"
-            "src/ui/views/DashboardView.ts:86-88\n"
-            "    function lowStockRow(i: Ingredient): string {\n"
-            "    \treturn `<div class=\"calc-row\"><span>${i.name}</span>\n"
-            "    \t\t<span class=\"num soft\">${i.stock} / ${i.minStock} ${i.unit}</span></div>`;\n"
-            "    }\n\n"
-            "Contraste — o mesmo dado escapado em src/ui/views/crm/CrmEquipeView.ts:65-66\n"
-            "    const name = escapeHtml(me.name);\n"
-            "    const email = escapeHtml(me.email);"
+            ".github/workflows/ci.yml:142-144\n"
+            "      - name: Run npm audit\n"
+            "        run: npm audit --audit-level=high\n"
+            "        continue-on-error: true\n\n"
+            "src/server/seedCredential.ts:36-43\n"
+            "// Fail-closed: refuses to continue while a replayable admin credential exists.\n"
+            "export async function assertNoSeedCredential(db: Database): Promise<void> {\n"
+            "\tconst users = await listEntities<{ email: string; passwordHash: string }>(\n"
+            "\t\tdb, USERS_TABLE, USERS_SHAPE\n"
+            "\t);\n"
+            "\tconst offender = users.find((user) => isLegacySeedHash(user.passwordHash));\n"
+            "\tif (offender) throw new SeedCredentialError(offender.email);\n"
+            "}\n\n"
+            "src/worker.ts:12-25 (o boot não verifica nada)\n"
+            "export default {\n"
+            "\tasync fetch(request: Request, env: Env, ctx: ExecutionContext) {\n"
+            "\t\tconst state = new FetchState(request);\n"
+            "\t\tconst asset = await cf(state, env, ctx);\n"
+            "\t\tif (asset) return asset;\n"
+            "\t\treturn finalize(state, await astro(state));\n"
+            "\t},\n"
+            "\tasync scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext) {\n"
+            "\t\tawait runRetention(env.DB, env);\n"
+            "\t}\n"
+            "};\n\n"
+            "grep -rn assertNoSeedCredential src/ scripts/ tests/\n"
+            "  scripts/bootstrap-admin.ts:59,87\n"
+            "  tests/spec-v2/c-settings-secrets.test.ts:135-141\n"
+            "  (nenhuma em src/server nem em worker.ts)"
         ),
         impacto=(
-            "Injeção de HTML armazenada, com leitura garantida: o Dashboard é a home de "
-            "qualquer sessão. A CSP atual (`script-src 'self'`, sem `unsafe-inline`) bloqueia "
-            "handlers inline, então o resultado hoje é injeção de HTML/atributo — "
-            "phishing visual, injeção de formulário, sequestro de clique — e não execução "
-            "de script. Se a CSP for relaxada, ou se o token em `localStorage` "
-            "(ApiAuthRepository.ts:56) for lido por um gadget, o mesmo bug vira "
-            "sequestro de conta completo."
+            "Indireto, e é por isso que fica em baixa. (a) Um CVE high em dependência "
+            "transita sem bloquear merge, e o sinal verde na CI é o oposto do que deveria "
+            "comunicar. (b) Um deploy com credencial legada de seed, ou com webhook em "
+            "modo aberto, sobe \"normalmente\": o problema só aparece quando alguém usa — e "
+            "a defesa que existe para impedi-lo não está no caminho."
         ),
         correcao=(
-            "Escapar `options.title` dentro de Modal.ts — ponto único que cobre os dois "
-            "callers — e escapar `i.name`/`i.unit` em DashboardView. Idealmente adicionar "
-            "uma regra de lint que proíba interpolação em `innerHTML` sem `escapeHtml`/"
-            "`escapeAtrib`."
+            "1. Remover `continue-on-error` do step de `npm audit` (ou manter o step "
+            "tolerante e adicionar condição de falha separada para `critical`, com o "
+            "relatório enviado como artifact).\n"
+            "2. Chamar `assertNoSeedCredential(env.DB)` no boot do Worker — uma vez, com "
+            "cache por isolate ou verificado no bundle — e falhar o deploy quando ela "
+            "lançar. Na mesma passagem, validar a configuração do WAHA: `WAHA_API_KEY` "
+            "presente e `WAHA_HMAC_SECRET` utilizável quando `REQUIRE_SIGNATURE=true`.\n"
+            "3. Alternativa mais leve e mais garantida: um `npm run preflight` obrigatório "
+            "no pipeline, com a checagem rodando contra o D1 remoto — desde que o pipeline "
+            "não seja opcional nem esteja commented out."
         ),
         aceite=[
-            "PUT /api/ingredients/:id com name='<img src=x onerror=alert(1)>' e a abertura do formulário de movimentação mostra o texto literal, sem elemento criado.",
-            "O mesmo nome malicioso no Dashboard aparece escapado.",
-            "Modal.ts escapa o title (teste de unidade com title contendo '<b>' e '\"').",
-            "Existe regra de lint/CI que falha se uma atribuição a innerHTML interpolar variável sem um dos helpers de escape.",
-            "Teste de UI (happy-dom) cobrindo Modal.ts com title contendo HTML.",
-        ],
-    ),
-    dict(
-        n=7,
-        titulo="[Segurança] escapeHtml não escapa aspas e é usado em contexto de atributo (quebra de atributo)",
-        labels="security, medium, xss, escaping",
-        problema=(
-            "`escapeHtml` (src/domain/format.ts:33-37) escapa via "
-            "`textContent → innerHTML`, o que trata `&`, `<` e `>` mas **não** `\"` nem "
-            "`'` — aspas só importam em contexto de atributo, e o helper não pode saber "
-            "onde o resultado será usado. É por isso que o projeto tem `escapeAtrib` "
-            "(format.ts:39) e `escapeAttr` (dom.ts:65).\n\n"
-            "Em três pontos o valor vai para dentro de aspas de atributo usando o helper "
-            "errado:\n"
-            "• `CrmEtiquetasView:91` — `class=\"chip chip-${escapeHtml(tag.color)}\"`, e "
-            "`tag.color` é gravável por qualquer sessão autenticada via "
-            "`PUT /api/crm/tags/:id` (nenhum gate de papel).\n"
-            "• `ProductsView:508-510` — `value=\"${escapeHtml(value)}\"`, enquanto o "
-            "`crmUi.textField` equivalente usa `escapeAtrib` (crmUi.ts:57).\n"
-            "• `CrmWhatsAppView:308-310` — `src=\"${escapeHtml(qr)}\"`, onde `qr` vem do "
-            "engine WAHA (alcançável por HTTP simples em dev).\n\n"
-            "Um `\"` no payload fecha o atributo e abre Markup. Some-se a isso que existem "
-            "**dois** helpers de escape de atributo divergentes no projeto, o que é a "
-            "causa raiz do padrão inconsistente.\n\n"
-            "A mesma classe de bug aparece nos `numberField` (crmUi.ts:69, "
-            "ProductsView:521, IngredientsView:195, ComponentsView:316, SettingsView:97), "
-            "que interpolam `value` cru, e no `rowButton` (crmUi.ts:129), que interpola o "
-            "atributo `data-*` sem escape. Os valores atuais são numéricos ou ids, mas o "
-            "servidor não valida tipo — `entityToRow` só restringe nomes de coluna."
-        ),
-        evidencia=(
-            "src/domain/format.ts:33-37\n"
-            "    export function escapeHtml(text: string): string {\n"
-            "    \tconst div = document.createElement('div');\n"
-            "    \tdiv.textContent = text ?? '';\n"
-            "    \treturn div.innerHTML;\n"
-            "    }\n"
-            "    // -> escapa & < > ; NÃO escapa \" nem '\n\n"
-            "src/domain/format.ts:39-42 (o helper correto, que existe)\n"
-            "    export function escapeAtrib(text: string): string {\n"
-            "    \treturn escapeHtml(text)\n"
-            "    \t\t.replace(/\"/g, \"&quot;\")\n"
-            "    \t\t.replace(/\\'/g, \"&#x27;\")\n"
-            "    }\n\n"
-            "src/ui/dom.ts:65-67 (o segundo helper, divergente)\n"
-            "    export function escapeAttr(text: string): string {\n"
-            "    \treturn String(text).replace(/\"/g, '&quot;');\n"
-            "    }\n\n"
-            "src/ui/views/crm/CrmEtiquetasView.ts:91\n"
-            "    `<span class=\"chip chip-${escapeHtml(tag.color)}\">` +\n\n"
-            "src/ui/views/ProductsView.ts:508-510\n"
-            "    <input class=\"input\" name=\"${name}\" value=\"${escapeHtml(value)}\" required>\n\n"
-            "src/ui/views/crm/CrmWhatsAppView.ts:308-310\n"
-            "    const safe = escapeHtml(qr);\n"
-            "    const tag = qr.startsWith('data:') ? `<img src=\"${safe}\" ...>`\n\n"
-            "src/ui/views/crm/crmUi.ts:69\n"
-            "    const attrsB = ` name=\"${name}\" value=\"${value}\" required`;"
-        ),
-        impacto=(
-            "Injeção de atributo/HTML a partir de `tag.color` (controlável por qualquer "
-            "sessão) e dos valores de produto gravados via API. Sob a CSP atual o efeito "
-            "para em HTML, mas a superfície fica disponível caso a CSP mude."
-        ),
-        correcao=(
-            "Trocar por `escapeAtrib`/`escapeAttr` nos pontos de atributo e unificar os "
-            "dois helpers em um único `escapeAttr`, removendo a duplicação. Escapar "
-            "também `value` nos `numberField` e o atributo `data-*` do `rowButton`."
-        ),
-        aceite=[
-            "PUT /api/crm/tags/:id com color='x\" onmouseover=\"alert(1)' renderiza o atributo class intacto, sem atributo extra.",
-            "ProductsView usa o helper de atributo no value do input.",
-            "Existe exatamente um helper de escape de atributo em src/ (grep por 'export function escape' retorna três funções: html, attr e nada mais).",
-            "numberField (crmUi.ts:69, ProductsView:521, IngredientsView:195, ComponentsView:316, SettingsView:97) escapa o value.",
-            "rowButton (crmUi.ts:129) escapa o valor do atributo data-*.",
-            "Teste de unidade que falhe se escapeHtml aplicado em atributo receber aspas sem escapar.",
-        ],
-    ),
-    dict(
-        n=8,
-        titulo="[Segurança] Credencial de administrador padrão (`admin123`) documentada no repositório, com salt fixo no código",
-        labels="security, high, secrets, default-credentials",
-        problema=(
-            "A migration de seed grava um usuário administrador com a senha `admin123`, "
-            "usando o salt FIXO `deskcomm-seed-v1` — e esse mesmo salt está no código-fonte, "
-            "como valor default do parâmetro `salt` de `verifyPassword`. O hash também está "
-            "versionado (a migration 0019 o usa de propósito, para ser idempotente).\n\n"
-            "O resultado é um credencial de administrador **reproduzível por qualquer pessoa "
-            "com o repositório**: e-mail `admin@deskcomm.local`, senha `admin123`, sal "
-            "conhecido. Além disso, `verifyPassword` cai de volta nesse sal padrão sempre "
-            "que a linha não tem `passwordSalt`, o que amplia o alcance do valor fixo.\n\n"
-            "Há uma mitigação real e bem feita — `mustChangePassword=1` (migrations "
-            "0020/0021) e o middleware respondendo 403 `troca_de_senha_obrigatoria` fora de "
-            "uma allowlist de três rotas. O que não existe é validação de startup que "
-            "rejeite o credencial de seed: o **login retorna 200 e um token de sessão "
-            "válido**; só a API fica fechada depois disso."
-        ),
-        evidencia=(
-            "migrations/0004_crm_seed.sql:5-9\n"
-            "    -- Admin user — senha padrão \"admin123\" (PBKDF2-SHA256, 100k iterações, sal\n"
-            "    -- \"deskcomm-seed-v1\"). Troque na primeira sessão pela tela de Equipe.\n"
-            "    INSERT OR IGNORE INTO users (id, name, email, passwordHash, role, createdAt) VALUES\n"
-            "      ('seed-user-admin', 'Administrador', 'admin@deskcomm.local',\n"
-            "       '022d504d3b3433f2cde7ac9185a4e1d340e67ed70a943dbc4ef14bf8c3174a00', 'admin', '2026-01-01T00:00:00.000Z');\n\n"
-            "src/server/auth.ts:26\n"
-            "    const SALT = 'deskcomm-seed-v1';\n\n"
-            "src/server/auth.ts:48-52\n"
-            "    export async function verifyPassword(\n"
-            "    \tpassword: string,\n"
-            "    \tstoredHash: string,\n"
-            "    \tsalt: string = SALT      // <-- default é o sal publicado\n"
-            "    ): Promise<boolean> {\n\n"
-            "A mitigação que existe — src/middleware.ts:138-144\n"
-            "    async function blockedByPasswordChange(user: User, pathname: string): Promise<boolean> {\n"
-            "    \tif (PASSWORD_CHANGE_ALLOWED.has(pathname)) return false;\n"
-            "    \treturn Number(user.mustChangePassword ?? 0) === 1;\n"
-            "    }"
-        ),
-        impacto=(
-            "Em qualquer ambiente novo onde `npm run db:seed:remote` roda sem o operador "
-            "trocar a senha, existe um login de administrador reproduzível a partir do "
-            "repositório. O `mustChangePassword` reduz o alcance (a API fica 403), mas o "
-            "atacante ainda obtém uma sessão autenticada válida — suficiente para as três "
-            "rotas da allowlist (`/api/auth/me`, `/api/auth/logout`, "
-            "`/api/auth/change-password`) e para enumerar o estado da instalação."
-        ),
-        correcao=(
-            "Deixar de semear senha. Gerar o admin no primeiro boot com senha aleatória "
-            "exibida uma única vez, ou exigir `ADMIN_INITIAL_PASSWORD` no env. Adicionar "
-            "asserção de startup que aborta se o `passwordHash` do seed ainda estiver "
-            "presente, e remover o sal fixo do default de `verifyPassword`."
-        ),
-        aceite=[
-            "Nenhuma migration versionada contém senha de administrador em texto plano.",
-            "Um banco novo semeado não permite login com 'admin123'.",
-            "verifyPassword não tem mais o sal fixo como valor default (ou o default é explicitamente rejeitado).",
-            "Existe asserção de startup que falha se users.passwordHash do seed-user-admin estiver presente.",
-            "O README descreve o fluxo de criação do primeiro admin sem credencial padrão.",
-        ],
-    ),
-    dict(
-        n=9,
-        titulo="[Segurança] Defaults de segredo e app vendorizado: placeholder de HMAC aceito como segredo e DeskcommCRM inteiro no repositório",
-        labels="security, medium, secrets, supply-chain, housekeeping",
-        problema=(
-            "Duas coisas de higiene de segredo, ambas verificadas:\n\n"
-            "**(a) Placeholder aceito como segredo.** `readWahaWebhookConfig` usa um helper "
-            "`text()` que só checa \"string não vazia\", então o valor de instrução "
-            "`gere-um-segredo-por-ambiente-openssl-rand-hex-32` presente no `.dev.vars` "
-            "passa a valer como segredo HMAC válido. Neste ambiente o efeito é fail-closed "
-            "(bom, porque `WAHA_WEBHOOK_REQUIRE_SIGNATURE=\"true\"` está ligado), mas o "
-            "critério de validade é frouxo: \"não vazio\" é o único teste. O contraste é o "
-            "próprio projeto: `readWahaConfig` já rejeita explicitamente "
-            "`WAHA_DEV_PLACEHOLDER_KEY` — o padrão certo existe, só não foi aplicado aqui. "
-            "E o `.dev.vars.example` deixa o campo **vazio**, o que desliga a verificação "
-            "inteira.\n\n"
-            "Além disso, o `.dev.vars` da árvore de trabalho contém uma `WAHA_API_KEY` real "
-            "de 64 hex (não versionada — confirmado com `git ls-files --error-unmatch` e "
-            "`git log --all -S`).\n\n"
-            "**(b) Segundo aplicativo inteiro no repositório.** `DeskcommCRM-RecipeCosting/` "
-            "é uma cópia completa de outro produto (Next.js + Supabase + Sentry) com 4807 "
-            "arquivos rastreados, incluindo `.env.example` (25 KB), "
-            "`.env.hostgator.example` (17 KB), `supabase/migrations/`, `Dockerfile*` e "
-            "`docker-compose.prod.yml`. Os JWTs que aparecem ali são fixtures públicos do "
-            "Supabase e placeholders (`chave-de-mentira`) — nenhum segredo real foi "
-            "encontrado. O problema é estrutural: superfície de segredo e de ataque sem "
-            "revisão, e ruído para qualquer scanner/DAST."
-        ),
-        evidencia=(
-            ".dev.vars:31\n"
-            "    WAHA_HMAC_SECRET=\"gere-um-segredo-por-ambiente-openssl-rand-hex-32\"\n\n"
-            "src/server/wahaWebhook.ts:29-35\n"
-            "    export function readWahaWebhookConfig(source: unknown): WahaWebhookConfig {\n"
-            "    \tconst record = source as Record<string, unknown> | null | undefined;\n"
-            "    \tconst secret = text(record?.WAHA_HMAC_SECRET);   // <-- só exige não-vazio\n"
-            "    \tconst flag = record?.WAHA_WEBHOOK_REQUIRE_SIGNATURE ?? '';\n"
-            "    \tconst requireSignature = String(flag) === 'true';\n"
-            "    \treturn { hmacSecret: secret, requireSignature };\n"
-            "    }\n\n"
-            "O padrão correto que já existe no projeto — src/server/waha.ts:60-70\n"
-            "    export function readWahaConfig(source: unknown): WahaConfig | null {\n"
-            "    \tconst url = text(record?.WAHA_API_BASE_URL);\n"
-            "    \tconst apiKey = text(record?.WAHA_API_KEY);\n"
-            "    \tif (!url || !apiKey || apiKey === WAHA_DEV_PLACEHOLDER_KEY) return null;\n"
-            "    }\n\n"
-            ".dev.vars:9\n"
-            "    WAHA_API_KEY=\"7ff62014c4d63e715d9efeffc400964dff94299ed806165134b2744dff2ec818\"\n\n"
-            "DeskcommCRM-RecipeCosting/.env.example           (25.097 bytes, versionado)\n"
-            "DeskcommCRM-RecipeCosting/.env.hostgator.example (17.002 bytes, versionado)\n"
-            "DeskcommCRM-RecipeCosting/docker-compose.prod.yml (produção de outro app, versionado)\n"
-            "git ls-files DeskcommCRM-RecipeCosting | wc -l  ->  4807"
-        ),
-        impacto=(
-            "Nenhum segredo real exposto foi encontrado — este achado é sobre fraza de "
-            "controle e higiene, não sobre um breach. O risco concreto é (a): uma "
-            "configuração com segredo placeholder-but-non-empty não é rejeitada, e o "
-            "`.dev.vars.example` ensaia justamente a configuração que DESLIGA a verificação "
-            "de assinatura. O risco de (b) é desupply chain: qualquer segredo que entre "
-            "nessa árvore no futuro é commitado junto com o app principal, sem revisão."
-        ),
-        correcao=(
-            "(a) Rejeitar valores conhecidos de placeholder e segredos com menos de 32 "
-            "bytes em `readWahaWebhookConfig`, e preencher o exemplo com um valor que "
-            "force o operador a gerar o seu. (b) Remover `DeskcommCRM-RecipeCosting/` do "
-            "repositório (ou movê-lo para repo próprio / submódulo explícito) e adicionar "
-            "gitleaks/trufflehog no CI."
-        ),
-        aceite=[
-            "readWahaWebhookConfig devolve null (ou o chamador recusa) quando WAHA_HMAC_SECRET é o placeholder ou tem menos de 32 bytes.",
-            ".dev.vars.example traz um valor que não habilita a assinatura por acidente.",
-            "git ls-files DeskcommCRM-RecipeCosting retorna vazio, e o caminho está no .gitignore.",
-            "O CI roda um scanner de segredo (gitleaks/trufflehog) e falha em alta.",
-            "Existe um teste unitário para readWahaWebhookConfig cobrindo placeholder, vazio e tamanho curto.",
-        ],
-    ),
-    dict(
-        n=10,
-        titulo="[Segurança] Sessão em localStorage e token em query string no SSE amplificam qualquer injeção de HTML",
-        labels="security, medium, session, defense-in-depth",
-        problema=(
-            "O token Bearer vive em `localStorage` "
-            "(`ApiAuthRepository.ts:20,56`), legível por qualquer script que rode na "
-            "origem. E, porque o `EventSource` não consegue mandar header "
-            "`Authorization`, o middleware abre uma exceção e aceita o token por query "
-            "string em `/api/crm/events` (`middleware.ts:75-87`, "
-            "`crm/events.ts:137`), com `Access-Control-Allow-Origin: *` na resposta.\n\n"
-            "Hoje a CSP (`script-src 'self'`, sem `unsafe-inline`) impede que os sinks de "
-            "innerHTML verificados executem script, então o pior caso é injeção de HTML. "
-            "O ponto do achado é o nível de dano: se a CSP relaxar, ou se um sink passar a "
-            "aceitar `javascript:`, o mesmo bug vira sequestro de conta completo em vez de "
-            "deformação de HTML. E o token em URL vaza para log de acesso, header `Referer` "
-            "e histórico do navegador — risco que o comentário do próprio middleware "
-            "reconhece ao justificar a exceção."
-        ),
-        evidencia=(
-            "src/repositories/ApiAuthRepository.ts:20\n"
-            "    return localStorage.getItem(this.tokenKey);\n\n"
-            "src/repositories/ApiAuthRepository.ts:56\n"
-            "    localStorage.setItem(this.tokenKey, token);\n\n"
-            "src/middleware.ts:70-75 (o comentário admite o trade-off)\n"
-            "    // The SSE endpoint is the one route a browser can only reach with the token in\n"
-            "    // the query string: an EventSource cannot set an Authorization header, so the\n"
-            "    // client puts `?token=` in the URL (see sseEventUrl in the CRM views). Every\n"
-            "    // other route stays Bearer-only — a token in a URL lands in access logs,\n"
-            "    // Referer headers and browser history.\n\n"
-            "src/pages/api/crm/events.ts:137\n"
-            "    const queryToken = url.searchParams.get('token');\n\n"
-            "src/pages/api/crm/events.ts:172\n"
-            "    'Access-Control-Allow-Origin': '*'"
-        ),
-        impacto=(
-            "Risco de defence-in-depth: não é explorável isoladamente, mas é o que "
-            "transformaria as injeções de HTML das outras issues em comprometimento total "
-            "de sessão. O token em query string, isoladamente, é exposição de credencial em "
-            "log/Referer/histórico — em especial porque o SSE também faz broadcast de todas "
-            "as mensagens e telefones do sistema."
-        ),
-        correcao=(
-            "Migrar a sessão para cookie `HttpOnly; Secure; SameSite=Strict`, o que "
-            "resolve de uma vez o token-em-URL do SSE, o `Access-Control-Allow-Origin: *` "
-            "e a leitura do token por script."
-        ),
-        aceite=[
-            "Nenhuma rota aceita token por query string (grep por searchParams.get('token') não retorna nada em src/).",
-            "A sessão é um cookie HttpOnly: o teste frontend não consegue ler o token via document.cookie.",
-            "/api/crm/events não envia Access-Control-Allow-Origin.",
-            "O middleware não tem mais a exceção SSE_PATH.",
-            "Logout invalida o cookie (e a linha em sessions) e a sessão não sobrevive ao cookie-clear.",
-        ],
-    ),
-    dict(
-        n=11,
-        titulo="[Segurança] GET /api/settings escreve no banco e faz merge cego de colunas arbitrárias",
-        labels="security, medium, broken-access-control, hardening",
-        problema=(
-            "A rota de leitura de configurações também **escreve**: quando o registro "
-            "`global` ainda não existe, o GET faz `INSERT OR REPLACE` com "
-            "`DEFAULT_SETTINGS`. Estado que muda em resposta a um GET, sem gate de papel "
-            "nenhum (o GET não chama `requireRole`).\n\n"
-            "O PUT tem gate de `['admin','manager']`, mas faz `{ ...current, ...patch }` "
-            "sem validar o patch contra um schema, e `settings` é a **única** tabela sem "
-            "lista `columns` no shape — `keepAllowed` não filtra nada (o próprio comentário "
-            "em mapping.ts registra isso). O resultado é que quem pode escreve escolhe "
-            "quais colunas da linha `settings` sobrescreve, inclusive nomes que a coluna não "
-            "tem."
-        ),
-        evidencia=(
-            "src/pages/api/settings.ts:13-19\n"
-            "    export const GET: APIRoute = async () => {\n"
-            "    \tconst db = getDb();\n"
-            "    \tconst existing = await readSettings(db);\n"
-            "    \tif (existing) return json(existing);\n"
-            "    \tawait writeSettings(db, DEFAULT_SETTINGS);   // <-- GET que escreve\n"
-            "    \treturn json(DEFAULT_SETTINGS);\n"
-            "    };\n\n"
-            "src/pages/api/settings.ts:25-28\n"
-            "    const patch: Partial<Settings> = await context.request.json();\n"
-            "    \tconst current = (await readSettings(db)) ?? DEFAULT_SETTINGS;\n"
-            "    \tconst merged = { ...current, ...patch };   // <-- merge sem validação\n"
-            "    \tawait writeSettings(db, merged);\n\n"
-            "src/server/mapping.ts:9-10 (a própria ressalva)\n"
-            "    // Omitting `columns` stays permissive; only `settings` does that, because\n"
-            "    // its route has no shape of its own.\n\n"
-            "src/server/mapping.ts:48-53\n"
-            "    function keepAllowed(\n"
-            "    \tentity: Record<string, unknown>,\n"
-            "    \tcolumns: string[] | undefined\n"
-            "    ): Record<string, unknown> {\n"
-            "    \tif (!columns) return { ...entity };"
-        ),
-        impacto=(
-            "Um `manager` (papel não-administrador) consegue gravar colunas arbitrárias na "
-            "configuração global, com efeito direto em cálculo de custos, preços e margens "
-            "exibidos no Ateliê. O GET-que-escreve também torna a rota não-idempotente e "
-            "cria estado em um read, o que complica cache e auditoria."
-        ),
-        correcao=(
-            "Mover a criação do registro default para uma migration/seed, deixar o GET "
-            "puramente de leitura, dar a `settings` uma lista explícita de colunas no "
-            "shape, e validar o patch contra um schema antes do merge."
-        ),
-        aceite=[
-            "GET /api/settings não executa nenhuma instrução de escrita (verificável com um D1 fake que conte as calls).",
-            "settings tem shape.columns explícito; uma chave fora da lista é descartada no merge.",
-            "PUT com chave desconhecida no corpo não altera a linha persistida.",
-            "Existe schema de validação (zod ou equivalente) para o patch de settings.",
-        ],
-    ),
-    dict(
-        n=12,
-        titulo="[Segurança] Gate de papel do frontend divergente do endpoint (e ROLE_RANK morto)",
-        labels="security, medium, authz, consistency",
-        problema=(
-            "O gate de papel não é uma fonte única, e isso já produziu erro nos dois "
-            "sentidos.\n\n"
-            "**(a) UI mais permissiva que o servidor.** `CrmEquipeView.actionButtons` "
-            "libera o botão Excluir para `manager`, mas `DELETE /api/users/[id]` exige "
-            "`['admin']`. O servidor está certo e a UI mente — o operador clica e leva 403.\n\n"
-            "**(b) UI sem gate nenhum.** `pageHead()` renderiza “+ Novo usuário” "
-            "incondicionalmente, sem olhar o papel: um `viewer` vê e clica.\n\n"
-            "**(c) Hierarquia de papéis declarada e nunca usada.** `ROLE_RANK` "
-            "(`viewer:0 … admin:3`) está definido em crm.ts e não tem nenhum consumidor em "
-            "`src/` ou `tests/`. Os gates comparam listas explícitas, então o modelo de "
-            "papéis é informal: o que vale é apenas o que cada lista escrita à mão disser — "
-            "e é exatamente aí que a escalada de privilégio da issue #1 passou."
-        ),
-        evidencia=(
-            "src/ui/views/crm/CrmEquipeView.ts:102-104\n"
-            "    const canRemove =\n"
-            "    \t(me?.role === 'admin' || me?.role === 'manager') &&\n"
-            "    \t(me?.id !== user.id || others.length === 0);\n\n"
-            "src/pages/api/users/[id].ts:50 (servidor mais estrito)\n"
-            "    const denied = await requireRole(context, ADMINS);\n\n"
-            "src/ui/views/crm/CrmEquipeView.ts:42-47 (sem gate nenhum)\n"
-            "    function pageHead(): string {\n"
-            "    \tconst btn = '<button class=\"btn btn-primary\" id=\"new-user\">+ Novo usuário</button>';\n"
-            "    \treturn section('Equipe', 'Usuários e papéis do sistema', btn);\n"
-            "    }\n\n"
-            "src/domain/crm.ts:166-171 (hierarquia morta)\n"
-            "    export const ROLE_RANK: Record<Role, number> = {\n"
-            "    \tviewer: 0,\n"
-            "    \tagent: 1,\n"
-            "    \tmanager: 2,\n"
-            "    \tadmin: 3\n"
-            "    };\n"
-            "    // grep em src/ e tests/: apenas a definição, nenhum consumidor."
-        ),
-        impacto=(
-            "Não há bypass por si só (o servidor sempre decide), mas a divergência "
-            "confunde o operador sobre o que é permitido, e a duplicação da matriz de "
-            "papéis em literais é a causa estrutural da escalada de privilégio — o mesmo "
-            "arquivo `users/index.ts` valida papel corretamente no PUT e incorretamente "
-            "no POST."
-        ),
-        correcao=(
-            "Extrair uma matriz `can(user, action)` em módulo único, consumida pela UI "
-            "(para desabilitar/esconder) e pelo servidor (via `requireRole`). Usar "
-            "`ROLE_RANK[user.role] >= ROLE_RANK[required]` em `requireRole`, ou remover a "
-            "hierarquia e a menção a ranking."
-        ),
-        aceite=[
-            "Existe uma função/matriz única descrevendo (papel, ação) e ela é usada por authz.ts e pelas views.",
-            "O botão Excluir só aparece quando o endpoint aceita o papel (manager não vê para usuário).",
-            "O botão '+ Novo usuário' é condicionado ao papel na renderização.",
-            "ROLE_RANK tem um consumidor, ou deixou de existir.",
-            "Teste garante que UI e servidor concordam para (viewer, agent, manager, admin).",
+            "npm audit --audit-level=high falha o job quando há vulnerabilidade high (ou critical, conforme a política escolhida).",
+            "assertNoSeedCredential é chamada no boot do Worker / em preflight obrigatório, e o deploy falha quando existe hash legado.",
+            "Config ausente ou inválida do WAHA produz erro de boot, não apenas resposta 200 silenciosa em runtime.",
+            "Existe teste que falha se assertNoSeedCredential perder o único consumidor de produção.",
         ],
     ),
 ]

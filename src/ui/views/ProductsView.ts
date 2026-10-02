@@ -8,7 +8,8 @@ import {
 	formatBRL,
 	formatNumber,
 	uid,
-	escapeHtml
+	escapeHtml,
+	escapeAtrib
 } from '../../domain/format';
 import { renderEmptyState } from '../CrudTable';
 import { openModal, closeModal } from '../Modal';
@@ -518,5 +519,5 @@ function numberField(
 ): string {
 	return `<div class="field"><label class="field-label">${label}</label>
 		<input class="input" type="number" step="0.01" min="0" name="${name}" ` +
-		`value="${value}" ${required ? 'required' : ''}></div>`;
+		`value="${escapeAtrib(String(value))}" ${required ? 'required' : ''}></div>`;
 }

@@ -372,15 +372,15 @@ describe('Inbox recebimento (poll de histórico)', () => {
       ?.textContent).toBe('✓✓✷');
   });
 
-  it('envia o token de sessão ao conectar o EventSource', async () => {
-    // Regression: /api/crm/events returns 401 without a token, and an
-    // EventSource cannot set an Authorization header — so the URL must
-    // carry `?token=`. Without it the browser stream never opens and the
-    // chat would freeze (never receive webhook-pushed messages).
+  it('conecta o EventSource sem vazar o token na URL', async () => {
+    // O stream autentica pelo cookie de sessao que o browser ja envia. Um
+    // `?token=` na URL vazaria a credencial para o historico, para o log do
+    // servidor e para qualquer `Referer` — e o EventSource nem precisa disso.
     eventSourceUrls.length = 0;
     buildCtx(serverState());
     const sseUrl = eventSourceUrls[0];
     expect(sseUrl.startsWith('/api/crm/events?since=')).toBe(true);
-    expect(sseUrl).toContain('token=test-token-123');
+    expect(sseUrl).not.toContain('token');
+    expect(sseUrl).not.toContain('test-token-123');
   });
 });

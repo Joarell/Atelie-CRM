@@ -14,16 +14,10 @@ import type {
 } from '../../../domain/crm';
 import type { Customer, Order } from '../../../domain/types';
 
-interface LgpdData {
-	contacts: Contact[];
-	conversations: Conversation[];
-	messages: Message[];
-	deals: Deal[];
-	tasks: Task[];
-	customers: Customer[];
-	orders: Order[];
-	consents: ConsentRecord[];
-}
+import {
+	buildLgpdPayload,
+	type LgpdData
+} from '../../../domain/lgpdScope';
 
 async function loadLgpdData(db: Database): Promise<LgpdData> {
 	return {
@@ -36,21 +30,7 @@ async function loadLgpdData(db: Database): Promise<LgpdData> {
 		tasks: await listEntities<Task>(db, TASKS_TABLE, {}),
 		customers: await listEntities<Customer>(db, CUSTOMERS_TABLE, {}),
 		orders: await listEntities<Order>(db, ORDERS_TABLE, {}),
-		consents: await listEntities<ConsentRecord>(db, CONSENT_TABLE, {}),
-	};
-}
-
-function selectUserRows(user: User, all: LgpdData) {
-	return {
-		contacts: all.contacts.filter(c => c.assignedUserId === user.id),
-		conversations: all.conversations.filter(
-			c => c.assignedUserId === user.id
-		),
-		deals: all.deals.filter(d => d.assignedUserId === user.id),
-		tasks: all.tasks.filter(t => t.assigneeUserId === user.id),
-		consents: all.consents.filter(
-			c => c.subjectId === user.id && c.subjectType === 'user'
-		),
+		consents: await listEntities<ConsentRecord>(db, CONSENT_TABLE, {})
 	};
 }
 
@@ -59,29 +39,13 @@ function exportFileName(user: User): string {
 	return `attachment; filename="lgpd-export-${user.id}-${day}.json"`;
 }
 
-function buildExportData(user: User, all: LgpdData) {
-	const mine = selectUserRows(user, all);
-	return {
-		profile: publicUser(user),
-		contacts: mine.contacts,
-		conversations: mine.conversations,
-		messages: all.messages,
-		deals: mine.deals,
-		tasks: mine.tasks,
-		customers: all.customers,
-		orders: all.orders,
-		consents: mine.consents,
-		exportedAt: new Date().toISOString(),
-		formatVersion: '1.0',
-	};
-}
-
 export const GET: APIRoute = async (context) => {
 	const user = await userFromToken(getDb(), context.request);
 	if (!user) return json({ error: 'não_autenticado' }, 401);
 
 	const db = getDb();
 	const all = await loadLgpdData(db);
+	const now = () => new Date().toISOString();
 
 	await recordAudit(db, newAuditEntry(
 		user.id,
@@ -90,7 +54,7 @@ export const GET: APIRoute = async (context) => {
 		clientIp(context.request)
 	));
 
-	const exportData = buildExportData(user, all);
+	const exportData = buildLgpdPayload(user, all, publicUser(user), now);
 
 	return new Response(JSON.stringify(exportData, null, 2), {
 		headers: {

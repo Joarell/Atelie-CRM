@@ -72,18 +72,27 @@ describe('middleware auth', () => {
     state.db = await dbWithSession();
   });
 
-  it('lets the SSE endpoint authenticate with a query token', async () => {
+  it('refuses a query token on the SSE endpoint', async () => {
     const res = await send(ctx(`${SSE}?since=1&token=${TOKEN}`));
+    expect(res.status).toBe(401);
+  });
+
+  it('lets the SSE endpoint authenticate with the session cookie', async () => {
+    const res = await send(
+      ctx(`${SSE}?since=1`, { headers: { Cookie: `crm_session=${TOKEN}` } })
+    );
     expect(res.status).toBe(200);
   });
 
-  it('rejects the SSE endpoint without a token', async () => {
+  it('rejects the SSE endpoint without a session', async () => {
     const res = await send(ctx(`${SSE}?since=1`));
     expect(res.status).toBe(401);
   });
 
-  it('rejects the SSE endpoint with a wrong query token', async () => {
-    const res = await send(ctx(`${SSE}?since=1&token=errado`));
+  it('rejects the SSE endpoint with a wrong cookie value', async () => {
+    const res = await send(
+      ctx(`${SSE}?since=1`, { headers: { Cookie: 'crm_session=errado' } })
+    );
     expect(res.status).toBe(401);
   });
 

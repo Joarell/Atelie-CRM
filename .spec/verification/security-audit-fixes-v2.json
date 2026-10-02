@@ -1,0 +1,265 @@
+{
+  "feature": "security-audit-fixes-v2",
+  "timestamp": "2026-10-02T10:03:49.498Z",
+  "gitRev": "e5cd231",
+  "command": "npx vitest run --reporter=tap",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 1642,
+  "results": {
+    "AC-301": {
+      "status": "pass",
+      "testName": "@spec:AC-301 export returns only messages from my conversations # time=166.85ms",
+      "method": "tap"
+    },
+    "AC-302": {
+      "status": "pass",
+      "testName": "@spec:AC-302 export returns only my customers and orders # time=4.69ms",
+      "method": "tap"
+    },
+    "AC-303": {
+      "status": "pass",
+      "testName": "@spec:AC-303 /api/me/data and /api/me/export agree on the scope # time=17.44ms",
+      "method": "tap"
+    },
+    "AC-304": {
+      "status": "pass",
+      "testName": "@spec:AC-304 the stream emits only my conversations messages # time=20.13ms",
+      "method": "tap"
+    },
+    "AC-305": {
+      "status": "pass",
+      "testName": "@spec:AC-305 auth comes from the cookie, never from a query token # time=8.77ms",
+      "method": "tap"
+    },
+    "AC-306": {
+      "status": "pass",
+      "testName": "@spec:AC-306 listEntities returns every row of the table # time=11.16ms",
+      "method": "tap"
+    },
+    "AC-307": {
+      "status": "pass",
+      "testName": "@spec:AC-307 manager creating an admin via POST is refused # time=103.57ms",
+      "method": "tap"
+    },
+    "AC-308": {
+      "status": "pass",
+      "testName": "@spec:AC-308 manager still creates manager/agent/viewer # time=123.97ms",
+      "method": "tap"
+    },
+    "AC-309": {
+      "status": "pass",
+      "testName": "@spec:AC-309 POST and PUT share the same allowedRoles rule # time=10.78ms",
+      "method": "tap"
+    },
+    "AC-310": {
+      "status": "pass",
+      "testName": "@spec:AC-310 viewer POST on an entity route is refused # time=5.06ms",
+      "method": "tap"
+    },
+    "AC-311": {
+      "status": "pass",
+      "testName": "@spec:AC-311 viewer PUT and DELETE on an item route are refused # time=7.47ms",
+      "method": "tap"
+    },
+    "AC-316": {
+      "status": "pass",
+      "testName": "@spec:AC-316 one matrix governs every entity: list viewer+, write agent+, delete manager+ # time=11.27ms",
+      "method": "tap"
+    },
+    "AC-317": {
+      "status": "pass",
+      "testName": "@spec:AC-317 the Excluir button is absent for a manager # time=69.61ms",
+      "method": "tap"
+    },
+    "AC-318": {
+      "status": "pass",
+      "testName": "@spec:AC-318 the new-user button is hidden from a viewer # time=6.40ms",
+      "method": "tap"
+    },
+    "AC-319": {
+      "status": "pass",
+      "testName": "@spec:AC-319 ROLE_RANK gives the role hierarchy real effect # time=3.87ms",
+      "method": "tap"
+    },
+    "AC-320": {
+      "status": "pass",
+      "testName": "@spec:AC-320 agent PUT on another agent contact is refused # time=3.90ms",
+      "method": "tap"
+    },
+    "AC-321": {
+      "status": "pass",
+      "testName": "@spec:AC-321 agent DELETE on an order is refused by the manager floor # time=4.14ms",
+      "method": "tap"
+    },
+    "AC-322": {
+      "status": "pass",
+      "testName": "@spec:AC-322 manager and admin may alter any record # time=8.71ms",
+      "method": "tap"
+    },
+    "AC-323": {
+      "status": "pass",
+      "testName": "@spec:AC-323 the same factory rejects foreign rows for every owned entity # time=7.50ms",
+      "method": "tap"
+    },
+    "AC-324": {
+      "status": "pass",
+      "testName": "@spec:AC-324 sending to another agent conversation is refused # time=4.80ms",
+      "method": "tap"
+    },
+    "AC-325": {
+      "status": "pass",
+      "testName": "@spec:AC-325 viewer cannot reach the WhatsApp send route # time=2.72ms",
+      "method": "tap"
+    },
+    "AC-326": {
+      "status": "pass",
+      "testName": "@spec:AC-326 GET performs no write when settings row is absent # time=161.19ms",
+      "method": "tap"
+    },
+    "AC-327": {
+      "status": "pass",
+      "testName": "@spec:AC-327 PUT discards a key outside the settings allowlist # time=19.27ms",
+      "method": "tap"
+    },
+    "AC-328": {
+      "status": "pass",
+      "testName": "@spec:AC-328 a non-numeric field is rejected before the merge # time=6.48ms",
+      "method": "tap"
+    },
+    "AC-329": {
+      "status": "pass",
+      "testName": "@spec:AC-329 every public route self-authenticates # time=1.77ms",
+      "method": "tap"
+    },
+    "AC-330": {
+      "status": "pass",
+      "testName": "@spec:AC-330 no migration seeds a plaintext admin123 # time=6.64ms",
+      "method": "tap"
+    },
+    "AC-331": {
+      "status": "pass",
+      "testName": "@spec:AC-331 a fresh database gets an admin with a random password # time=55.70ms",
+      "method": "tap"
+    },
+    "AC-332": {
+      "status": "pass",
+      "testName": "@spec:AC-332 startup refuses a database carrying the legacy seed hash # time=4.09ms",
+      "method": "tap"
+    },
+    "AC-333": {
+      "status": "pass",
+      "testName": "@spec:AC-333 verifyPassword has no fixed-salt default # time=7.58ms",
+      "method": "tap"
+    },
+    "AC-334": {
+      "status": "pass",
+      "testName": "@spec:AC-334 .dev.vars is not tracked # time=15.37ms",
+      "method": "tap"
+    },
+    "AC-335": {
+      "status": "pass",
+      "testName": "@spec:AC-335 no tracked file carries the real WAHA key # time=190.73ms",
+      "method": "tap"
+    },
+    "AC-336": {
+      "status": "pass",
+      "testName": "@spec:AC-336 a placeholder or short secret yields no usable secret # time=0.77ms",
+      "method": "tap"
+    },
+    "AC-337": {
+      "status": "pass",
+      "testName": "@spec:AC-337 the example env file ships an empty HMAC secret # time=1.90ms",
+      "method": "tap"
+    },
+    "AC-338": {
+      "status": "pass",
+      "testName": "@spec:AC-338 DeskcommCRM is untracked and gitignored # time=7.18ms",
+      "method": "tap"
+    },
+    "AC-340": {
+      "status": "pass",
+      "testName": "@spec:AC-340 openModal escapes options.title # time=4.72ms",
+      "method": "tap"
+    },
+    "AC-341": {
+      "status": "pass",
+      "testName": "@spec:AC-341 callers pass raw text because the sink escapes once # time=2.25ms",
+      "method": "tap"
+    },
+    "AC-342": {
+      "status": "pass",
+      "testName": "@spec:AC-342 lowStockRow escapes the ingredient name and unit # time=0.45ms",
+      "method": "tap"
+    },
+    "AC-343": {
+      "status": "pass",
+      "testName": "@spec:AC-343 LoginView escapes the profile name and email # time=5.45ms",
+      "method": "tap"
+    },
+    "AC-344": {
+      "status": "pass",
+      "testName": "@spec:AC-344 the tag chip escapes the interpolated color # time=1.27ms",
+      "method": "tap"
+    },
+    "AC-345": {
+      "status": "pass",
+      "testName": "@spec:AC-345 ProductsView numeric inputs escape the value # time=3.68ms",
+      "method": "tap"
+    },
+    "AC-346": {
+      "status": "pass",
+      "testName": "@spec:AC-346 the WhatsApp QR src is attribute-escaped # time=2.14ms",
+      "method": "tap"
+    },
+    "AC-347": {
+      "status": "pass",
+      "testName": "@spec:AC-347 there is a single attribute escape implementation # time=1.16ms",
+      "method": "tap"
+    },
+    "AC-348": {
+      "status": "pass",
+      "testName": "@spec:AC-348 numberField escapes the numeric value # time=0.52ms",
+      "method": "tap"
+    },
+    "AC-349": {
+      "status": "pass",
+      "testName": "@spec:AC-349 a non-numeric numeric field is rejected before persist # time=15.82ms",
+      "method": "tap"
+    },
+    "AC-350": {
+      "status": "pass",
+      "testName": "@spec:AC-350 rowButton escapes the data-* attribute # time=4.71ms",
+      "method": "tap"
+    },
+    "AC-351": {
+      "status": "pass",
+      "testName": "@spec:AC-351 no session token is exposed to scripts # time=2.08ms",
+      "method": "tap"
+    },
+    "AC-352": {
+      "status": "pass",
+      "testName": "@spec:AC-352 the SSE route refuses a query-string token # time=0.68ms",
+      "method": "tap"
+    },
+    "AC-353": {
+      "status": "pass",
+      "testName": "@spec:AC-353 the SSE route never sets a wildcard CORS origin # time=5.84ms",
+      "method": "tap"
+    }
+  },
+  "principles": {
+    "P-004": {
+      "status": "pass",
+      "testName": "@principle:P-004 consent is granular per purpose # time=20.45ms"
+    },
+    "P-005": {
+      "status": "pass",
+      "testName": "@principle:P-005 retention windows are configurable # time=0.91ms"
+    },
+    "P-006": {
+      "status": "pass",
+      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=2.46ms"
+    }
+  }
+}

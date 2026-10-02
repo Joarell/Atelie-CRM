@@ -25,18 +25,56 @@ async function sign(body: string, secret: string): Promise<string> {
   return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+// 64 bytes hex: `readWahaWebhookConfig` recusa segredo curto, entao um literal
+// tipo SECRET nao serve mais como fixture de "segredo valido".
+const SECRET = 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90';
+
 const BODY = JSON.stringify({
   event: 'message.any',
   session: 'default',
   payload: { id: 'true_5511999999999@c.us_ABC', from: '5511999999999@c.us', body: 'oi', fromMe: false }
 });
 
+describe('readWahaWebhookConfig refuses weak secrets', () => {
+  it('rejects the documented placeholder as if it were empty', () => {
+    // O valor que o proprio .dev.vars.example mandava preencher passava quando
+    // o unico criterio era "text()": a assinatura HMAC ficava sem forca real.
+    expect(
+      readWahaWebhookConfig({
+        WAHA_HMAC_SECRET: 'gere-um-segredo-por-ambiente-openssl-rand-hex-32'
+      })
+    ).toEqual({ hmacSecret: null, requireSignature: false });
+  });
+
+  it('rejects a short secret (< 32 bytes)', () => {
+    expect(readWahaWebhookConfig({ WAHA_HMAC_SECRET: 's3cret' }))
+      .toEqual({ hmacSecret: null, requireSignature: false });
+  });
+
+  it('rejects common placeholders regardless of case/padding', () => {
+    for (const bad of ['change-me', 'CHANGE-ME', ' secret ', 'INVALID_CHANGE_ME']) {
+      expect(readWahaWebhookConfig({ WAHA_HMAC_SECRET: bad }).hmacSecret)
+        .toBeNull();
+    }
+  });
+
+  it('fails closed: a signed event cannot pass without a usable secret', async () => {
+    const signature = await sign(BODY, SECRET);
+    const ok = await authenticateWahaWebhook(
+      request(BODY, signature),
+      { hmacSecret: null, requireSignature: false }
+    );
+    expect(ok.ok).toBe(false);
+    expect(ok.signatureVerified).toBe(false);
+  });
+});
+
 describe('readWahaWebhookConfig / authenticateWahaWebhook', () => {
   it('reads the secret and strict mode off by default', () => {
     expect(readWahaWebhookConfig({})).toEqual({ hmacSecret: null, requireSignature: false });
-    expect(readWahaWebhookConfig({ WAHA_HMAC_SECRET: 's3cret' })).toEqual({ hmacSecret: 's3cret', requireSignature: false });
-    expect(readWahaWebhookConfig({ WAHA_HMAC_SECRET: 's3cret', WAHA_WEBHOOK_REQUIRE_SIGNATURE: 'true' })).toEqual({
-      hmacSecret: 's3cret',
+    expect(readWahaWebhookConfig({ WAHA_HMAC_SECRET: SECRET })).toEqual({ hmacSecret: SECRET, requireSignature: false });
+    expect(readWahaWebhookConfig({ WAHA_HMAC_SECRET: SECRET, WAHA_WEBHOOK_REQUIRE_SIGNATURE: 'true' })).toEqual({
+      hmacSecret: SECRET,
       requireSignature: true
     });
   });
@@ -52,11 +90,11 @@ describe('readWahaWebhookConfig / authenticateWahaWebhook', () => {
   });
 
   it('accepts a correct signature and rejects a wrong one', async () => {
-    const good = await sign(BODY, 's3cret');
-    const ok = await authenticateWahaWebhook(request(BODY, good), { hmacSecret: 's3cret', requireSignature: true });
+    const good = await sign(BODY, SECRET);
+    const ok = await authenticateWahaWebhook(request(BODY, good), { hmacSecret: SECRET, requireSignature: true });
     expect(ok).toEqual({ ok: true, reason: 'ok', signatureVerified: true });
 
-    const bad = await authenticateWahaWebhook(request(BODY, 'deadbeef'), { hmacSecret: 's3cret', requireSignature: true });
+    const bad = await authenticateWahaWebhook(request(BODY, 'deadbeef'), { hmacSecret: SECRET, requireSignature: true });
     expect(bad).toEqual({ ok: false, reason: 'bad_signature', signatureVerified: false });
   });
 
@@ -66,9 +104,9 @@ describe('readWahaWebhookConfig / authenticateWahaWebhook', () => {
   });
 
   it('verifyWahaHmac is constant-time equal on the lowercase hex', async () => {
-    const signature = await sign(BODY, 's3cret');
-    expect(await verifyWahaHmac(BODY, signature.toUpperCase(), 's3cret')).toBe(true);
-    expect(await verifyWahaHmac(BODY + 'x', signature, 's3cret')).toBe(false);
+    const signature = await sign(BODY, SECRET);
+    expect(await verifyWahaHmac(BODY, signature.toUpperCase(), SECRET)).toBe(true);
+    expect(await verifyWahaHmac(BODY + 'x', signature, SECRET)).toBe(false);
     expect(await verifyWahaHmac(BODY, signature, 'other')).toBe(false);
   });
 });

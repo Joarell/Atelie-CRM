@@ -44,12 +44,27 @@ describe('password hashing (matches migrations/0004_crm_seed.sql)', () => {
     await hashPassword('warmup');
   });
 
-  it('verifies the seeded admin password against its stored hash', async () => {
-    expect(await verifyPassword('admin123', SEED_ADMIN_HASH)).toBe(true);
+  it('verifies a password against its own stored salt', async () => {
+    const digest = await hashPassword('senha-de-teste');
+    expect(
+      await verifyPassword('senha-de-teste', digest.hash, digest.salt)
+    ).toBe(true);
   });
 
   it('rejects a wrong password', async () => {
-    expect(await verifyPassword('senha-errada', SEED_ADMIN_HASH)).toBe(false);
+    const digest = await hashPassword('senha-de-teste');
+    expect(
+      await verifyPassword('senha-errada', digest.hash, digest.salt)
+    ).toBe(false);
+  });
+
+  // Nao ha mais sal fixo: uma linha sem passwordSalt simplesmente nao verifica,
+  // entao o par (senha, sal) do seed deixou de ser reproduzivel pelo codigo.
+  it('refuses to verify a row without a salt (no fixed-salt fallback)', async () => {
+    const digest = await hashPassword('senha-de-teste');
+    expect(await verifyPassword('senha-de-teste', digest.hash, '')).toBe(false);
+    expect(await verifyPassword('senha-de-teste', digest.hash, null)).toBe(false);
+    expect(await verifyPassword('senha-de-teste', digest.hash, undefined)).toBe(false);
   });
 
   it('hashPassword produces a 64-char hex digest that round-trips', async () => {

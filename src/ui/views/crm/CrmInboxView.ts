@@ -214,11 +214,11 @@ function attachEventListeners(
 	};
 }
 
-// EventSource cannot set an Authorization header, so the session token
-// (localStorage) travels as a query param — the only channel it owns.
-function sseEventUrl(token: string | null): string {
-	const authQuery = token ? `&token=${encodeURIComponent(token)}` : '';
-	return `/api/crm/events?since=${Date.now()}${authQuery}`;
+// The session cookie is HttpOnly, so EventSource authenticates the stream the
+// same way any other request does — no token in the URL (which would leak into
+// access logs, Referer headers and browser history).
+function sseEventUrl(): string {
+	return `/api/crm/events?since=${Date.now()}`;
 }
 
 // Start an SSE connection to /api/crm/events and update the caches when
@@ -233,7 +233,7 @@ function startSSE(ctx: AppContext): () => void {
 		eventSource = null;
 	}
 
-	eventSource = new EventSource(sseEventUrl(ctx.auth.token?.() ?? null));
+	eventSource = new EventSource(sseEventUrl());
 
 	const refreshInbox = createRefreshInbox(ctx);
 	testRefreshInbox = refreshInbox;

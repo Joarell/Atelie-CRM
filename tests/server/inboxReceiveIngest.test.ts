@@ -7,9 +7,12 @@ import {
 } from '../../src/server/tables';
 import { FakeD1 } from '../helpers/fakeD1';
 
+// >= HMAC_MIN_BYTES (32): `readWahaWebhookConfig` recusa segredo curto e
+// placeholders, entao 's3cret' nao representa mais um segredo valido.
 const state = vi.hoisted(() => ({
+  SECRET: 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90',
   db: null as unknown as FakeD1,
-  hmacSecret: 's3cret' as string | undefined,
+  hmacSecret: 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90',
   requireSignature: 'true' as string | undefined
 }));
 
@@ -62,9 +65,18 @@ function webhookContext(body: unknown, signature?: string): APIContext {
   return { request } as unknown as APIContext;
 }
 
+// As rotas de colecao agora exigem sessao (o gate por papel vive na fabrica),
+// entao um contexto sem `locals.user` responde 401 em vez da lista.
+function asCaller(): APIContext {
+  return {
+    request: new Request('http://localhost/api/messages'),
+    locals: { user: { id: 'u1', role: 'admin' } }
+  } as unknown as APIContext;
+}
+
 async function sendWebhook(body: unknown): Promise<void> {
   const response = await postWebhook(
-    webhookContext(body, await sign(JSON.stringify(body), 's3cret'))
+    webhookContext(body, await sign(JSON.stringify(body), state.SECRET))
   );
   expect(response.status).toBe(200);
 }
@@ -95,14 +107,14 @@ const INBOUND = {
 describe('webhook → D1 → API GET (histórico de recebimento)', () => {
   beforeEach(() => {
     state.db = FakeD1.empty();
-    state.hmacSecret = 's3cret';
+    state.hmacSecret = state.SECRET;
     state.requireSignature = 'true';
   });
 
   it('serves a webhook-received message to the conversations the poll reads', async () => {
     await sendWebhook(INBOUND);
 
-    const asMessages = await messagesGET({} as APIContext);
+    const asMessages = await messagesGET(asCaller());
     const messages = entries(await asMessages.json());
     expect(messages).toHaveLength(1);
     expect(messages[0]).toMatchObject({
@@ -112,13 +124,13 @@ describe('webhook → D1 → API GET (histórico de recebimento)', () => {
       conversationId: expect.any(String) as unknown as string
     });
 
-    const asConversations = await conversationsGET({} as APIContext);
+    const asConversations = await conversationsGET(asCaller());
     const conversations = entries(await asConversations.json());
     expect(conversations).toHaveLength(1);
     expect(conversations[0].remoteId).toBe('5511999999999@c.us');
     expect(conversations[0].lastMessageAt).toBeTruthy();
 
-    const asContacts = await contactsGET({} as APIContext);
+    const asContacts = await contactsGET(asCaller());
     const contacts = entries(await asContacts.json());
     expect(contacts).toHaveLength(1);
     expect(contacts[0]).toMatchObject({ name: 'Maria' });
@@ -164,7 +176,7 @@ describe('webhook → D1 → API GET (histórico de recebimento)', () => {
       }
     });
 
-    const asMessages = await messagesGET({} as APIContext);
+    const asMessages = await messagesGET(asCaller());
     const messages = entries(await asMessages.json());
     expect(messages).toHaveLength(2);
     const fresh = messages.find((m) => m.externalId === 'NEW1');
@@ -173,7 +185,7 @@ describe('webhook → D1 → API GET (histórico de recebimento)', () => {
     expect(fresh!.createdAt).not.toBe('1970-01-01T00:00:00.000Z');
     expect(Date.parse(fresh!.createdAt as string)).toBeGreaterThan(0);
 
-    const asConversations = await conversationsGET({} as APIContext);
+    const asConversations = await conversationsGET(asCaller());
     const conversations = entries(await asConversations.json());
     expect(conversations).toHaveLength(1);
     expect(conversations[0].id).toBe('conv-ana');
@@ -187,7 +199,7 @@ describe('webhook → D1 → API GET (histórico de recebimento)', () => {
       payload: { id: 'true_5511999999999@c.us_RECV1', ack: 2 }
     });
 
-    const asMessages = await messagesGET({} as APIContext);
+    const asMessages = await messagesGET(asCaller());
     const messages = entries(await asMessages.json());
     expect(messages[0].waStatus).toBe('delivered');
   });
@@ -208,7 +220,7 @@ describe('webhook → D1 → API GET (histórico de recebimento)', () => {
       }
     });
 
-    const asMessages = await messagesGET({} as APIContext);
+    const asMessages = await messagesGET(asCaller());
     const messages = entries(await asMessages.json());
     expect(messages).toHaveLength(2);
     const sent = messages.filter((m) => m.direction === 'outbound');

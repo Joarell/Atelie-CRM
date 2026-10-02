@@ -11,7 +11,8 @@ import {
 	newSession,
 	createSessionRow,
 	deleteSessionsForUser,
-	purgeExpiredSessions
+	purgeExpiredSessions,
+	setSessionCookie
 } from '../../../server/auth';
 import { recordAudit, newAuditEntry, clientIp } from '../../../server/audit';
 
@@ -61,7 +62,12 @@ async function grant(user: User, db: Database, ip: string): Promise<Response> {
 	await deleteSessionsForUser(db, user.id);
 	const session = await createSessionRow(db, newSession(user.id));
 	await recordAudit(db, newAuditEntry(user.id, 'login_ok', user.email, ip));
-	return json({ token: session.token, user: publicUser(user) });
+	const headers = new Headers({ 'Content-Type': 'application/json' });
+	await setSessionCookie(headers, session.token);
+	return new Response(
+		JSON.stringify({ user: publicUser(user) }),
+		{ status: 200, headers }
+	);
 }
 
 async function readLoginBody(request: Request): Promise<LoginBody> {

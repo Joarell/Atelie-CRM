@@ -2,11 +2,12 @@
 -- seeded pipelines/stages, plus demo data so the main screens are not empty
 -- on a fresh install). Run with: npm run db:seed:local (or db:seed:remote).
 
--- Admin user — senha padrão "admin123" (PBKDF2-SHA256, 100k iterações, sal
--- "deskcomm-seed-v1"). Troque na primeira sessão pela tela de Equipe.
-INSERT OR IGNORE INTO users (id, name, email, passwordHash, role, createdAt) VALUES
-  ('seed-user-admin', 'Administrador', 'admin@deskcomm.local',
-   '022d504d3b3433f2cde7ac9185a4e1d340e67ed70a943dbc4ef14bf8c3174a00', 'admin', '2026-01-01T00:00:00.000Z');
+-- O admin NAO e semeado aqui. A senha `admin123` vivia neste arquivo e o sal
+-- fixo `deskcomm-seed-v1` em src/server/auth.ts, o que tornava o credencial de
+-- administrador reproduzivel por qualquer pessoa com o repositorio. O primeiro
+-- admin nasce por `npm run admin:bootstrap`, com senha aleatoria de uso unico (ou
+-- ADMIN_INITIAL_PASSWORD do env) e `mustChangePassword` ligado. Os demais
+-- INSERTs de demo sao preservados.
 
 INSERT OR IGNORE INTO pipelines (id, name, isDefault) VALUES
   ('seed-pipeline-vendas', 'Funil de vendas', 1);

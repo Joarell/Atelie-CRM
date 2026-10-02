@@ -48,11 +48,27 @@ describe('access model is documented', () => {
     );
   });
 
-  it('@spec:AC-139 no non-LGPD route reads the assignment fields', () => {
-    const routes = apiRoutesUsingFields();
-    expect(routes).toHaveLength(3);
+  // Alem do escopo LGPD, o SSE recorta o stream pelas conversas do usuario e
+  // /api/whatsapp/send exige posse da conversa: autorizacao por posse, nao so
+  // metadado. data.ts/export.ts nao aparecem aqui porque delegam o recorte a
+  // src/domain/lgpdScope.ts — um unico lugar onde o campo de dono e lido.
+  it('@spec:AC-139 assignment fields are read only where ownership is enforced', () => {
+    const allowed = [...LGPD_FILES, 'events.ts', 'send.ts'];
+    const routes = apiRoutesUsingFields().map((r) => r.split('/').pop());
     for (const route of routes) {
-      expect(LGPD_FILES).toContain(route.split('/').pop());
+      expect(allowed).toContain(route);
     }
+    // Nenhuma rota nova pode ler o campo de dono sem entrar nesta lista.
+    expect(routes.sort()).toEqual(['erase.ts', 'events.ts', 'send.ts']);
+  });
+
+  it('@spec:AC-139 the LGPD routes delegate the recorte to the shared helper', () => {
+    for (const route of ['data.ts', 'export.ts']) {
+      const src = readFileSync(`src/pages/api/me/${route}`, 'utf8');
+      expect(src).toContain('buildLgpdPayload');
+      expect(FIELDS.some((field) => src.includes(field))).toBe(false);
+    }
+    const helper = readFileSync('src/domain/lgpdScope.ts', 'utf8');
+    expect(FIELDS.some((field) => helper.includes(field))).toBe(true);
   });
 });

@@ -2,7 +2,9 @@ import type { APIRoute } from 'astro';
 import { getDb } from '../../../server/context';
 import { assertSameOrigin } from '../../../server/origin';
 import { json } from '../../../server/http';
-import { userFromToken, deleteSession } from '../../../server/auth';
+import {
+	userFromToken, deleteSession, clearSessionCookie
+} from '../../../server/auth';
 import { recordAudit, newAuditEntry, clientIp } from '../../../server/audit';
 
 export const POST: APIRoute = async (context) => {
@@ -17,5 +19,7 @@ export const POST: APIRoute = async (context) => {
 			newAuditEntry(user.id, 'logout', user.email, clientIp(context.request))
 		);
 	}
-	return json({ ok: true });
+	const headers = new Headers({ 'Content-Type': 'application/json' });
+	await clearSessionCookie(headers);
+	return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
 };

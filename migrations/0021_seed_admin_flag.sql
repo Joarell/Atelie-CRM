@@ -1,11 +1,10 @@
 -- migrations/0021_seed_admin_flag.sql
--- Light the flag for the seeded admin, in every environment.
+-- Keep the column's default at 0 for every pre-existing user: nobody is locked
+-- out of the API by this migration.
 --
--- The guard is deliberately narrow: only the seeded row is touched, so an
--- operator who already created their own admin keeps a working account. The
--- statement is idempotent (a second run just rewrites 1 onto 1), which matters
--- because this migration runs on databases that never held the seed at all.
+-- A flag do admin de seed nao e mais ligada aqui. O par (senha "admin123", sal
+-- "deskcomm-seed-v1") deixou de existir — 0004_crm_seed.sql nao grava mais senha e
+-- 0023_admin_bootstrap cria o primeiro admin com senha aleatoria de uso unico,
+-- ja com `mustChangePassword = 1`. Nao ha mais linha `seed-user-admin` para marcar.
 
-UPDATE users
-SET mustChangePassword = 1
-WHERE id = 'seed-user-admin';
+-- (nenhuma escrita: a coluna ja nasce com DEFAULT 0 em 0020)

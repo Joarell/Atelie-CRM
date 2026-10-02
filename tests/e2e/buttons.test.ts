@@ -300,7 +300,7 @@ function apiContext(request: Request): APIContext {
   return {
     request,
     params: {},
-    locals: { user: { id: 'seed-user-e2e' } }
+    locals: { user: { id: 'seed-user-e2e', role: 'admin' } }
   } as unknown as APIContext;
 }
 
@@ -455,7 +455,9 @@ describe('E2E: Button functionality tests', () => {
     await waitFor(() => {
       if (!document.querySelector('.toast')) throw new Error('no toast');
     });
-    expect(localStorage.getItem('crm_token')).toBeTruthy();
+    // A sessao mora num cookie HttpOnly: nenhum script da origem le o token.
+    expect(localStorage.getItem('crm_user')).toBeTruthy();
+    expect(localStorage.getItem('crm_token')).toBeNull();
     expect(window.location.hash).toBe('#/');
 
     window.dispatchEvent(new Event('hashchange'));
@@ -912,11 +914,11 @@ it('renders "Novo pedido" button and toggles composer', async () => {
       logoutLink?.click();
       
       await waitFor(() => {
-        if (localStorage.getItem('crm_token')) throw new Error('still logged in');
+        if (localStorage.getItem('crm_user')) throw new Error('still logged in');
       });
       
-      // After logout, the app should redirect to login or show login hint
-      // The token is cleared, so we're logged out
+      // O logout limpa o cache de perfil; o cookie e' expirado pelo servidor.
+      expect(localStorage.getItem('crm_user')).toBeNull();
       expect(localStorage.getItem('crm_token')).toBeNull();
       // The click handler is async: let its logout fetch settle before the
       // environment tears down, otherwise happy-dom aborts the pending

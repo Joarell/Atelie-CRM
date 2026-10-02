@@ -1,6 +1,6 @@
 import type { AppContext } from '../../state/AppContext';
 import type { Settings } from '../../domain/types';
-import { formatBRL } from '../../domain/format';
+import { formatBRL, escapeAtrib } from '../../domain/format';
 import { showToast } from '../Toast';
 import { autoRerender } from '../reactive';
 import { qs, formValues } from '../dom';
@@ -93,8 +93,9 @@ function fieldRow3(a: string, b: string, c: string): string {
 
 function field(name: string, label: string, value: number): string {
 	return `<div class="field"><label class="field-label">${label}</label>
-		<input class="input" type="number" step="0.01" min="0" name="${name}` +
-		`" value="${value}" required></div>`;
+		<input class="input" type="number" step="0.01" min="0" ` +
+		`name="${escapeAtrib(name)}" value="${escapeAtrib(String(value))}" ` +
+		`required></div>`;
 }
 
 function summaryHtml(s: Settings): string {

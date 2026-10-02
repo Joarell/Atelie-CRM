@@ -32,8 +32,14 @@ vi.mock('cloudflare:workers', () => ({
   env: { get DB() { return state.db; } }
 }));
 
+// Os gates por papel leem `locals.user.role`; um usuario sem papel reprova em
+// toda escrita, entao o contexto de integracao precisa declarar um papel real.
 function apiContext(request: Request, params: Record<string, string> = {}): APIContext {
-  return { request, params, locals: { user: { id: 'test-user' } } } as unknown as APIContext;
+  return {
+    request,
+    params,
+    locals: { user: { id: 'test-user', role: 'admin' } }
+  } as unknown as APIContext;
 }
 
 function jsonBody(data: unknown, token?: string): RequestInit {
@@ -57,8 +63,15 @@ async function createTestUser(db: FakeD1, email: string, password: string): Prom
     .bind(user.id, user.name, user.email, user.passwordHash, user.passwordSalt, user.role, user.createdAt).run();
   
   const loginResponse = await loginPost(apiContext(new Request('http://localhost/api/auth/login', jsonBody({ email, password }))));
-  const loginData = await loginResponse.json() as { token: string; user: User };
-  return { user, token: loginData.token };
+  expect(loginResponse.status).toBe(200);
+  // A sessao volta num cookie HttpOnly, entao o corpo traz so o usuario publico.
+  const loginData = await loginResponse.json() as { user: User };
+  expect(loginData).not.toHaveProperty('token');
+  // O token e' lido da linha criada, nao do header: o `Headers` do happy-dom
+  // (ambiente deste arquivo) nao expoe `set-cookie` via get().
+  const sessions = db.rows(SESSIONS_TABLE);
+  expect(sessions).toHaveLength(1);
+  return { user, token: sessions[0].token as string };
 }
 
 describe('Integration: Auth + CRUD flows', () => {

@@ -109,7 +109,7 @@ function apiContext(request: Request): APIContext {
   return {
     request,
     params: {},
-    locals: { user: { id: 'u1' } }
+    locals: { user: { id: 'u1', role: 'admin' } }
   } as unknown as APIContext;
 }
 
@@ -186,7 +186,7 @@ describe('Contatos: saving a contact reaches the table', () => {
       new Event('submit', { bubbles: true })
     );
     await waitFor(() => {
-      if (!localStorage.getItem('crm_token')) throw new Error('no token');
+      if (!localStorage.getItem('crm_user')) throw new Error('no session');
     });
 
     window.location.hash = '#/contatos';
