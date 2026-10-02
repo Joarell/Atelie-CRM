@@ -1,0 +1,304 @@
+{
+  "runId": "atelie-erp(1)-security-audit-fixes-mupi2egi",
+  "feature": "security-audit-fixes",
+  "agent": "claude",
+  "modo": "paralelo",
+  "paralelizar": null,
+  "modeloForcado": null,
+  "esforcoForcado": null,
+  "geradoEm": "2026-10-01 12:17",
+  "branchTrabalho": "spec/security-audit-fixes",
+  "baseDir": ".spec/features/security-audit-fixes",
+  "specDir": ".spec",
+  "repoName": "atelie-erp(1)",
+  "logsDir": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-logs",
+  "ondas": [
+    [
+      "faixa-1",
+      "faixa-2",
+      "faixa-3"
+    ],
+    [
+      "faixa-4",
+      "faixa-5",
+      "faixa-6"
+    ],
+    [
+      "faixa-7",
+      "faixa-8",
+      "faixa-9"
+    ],
+    [
+      "faixa-10"
+    ]
+  ],
+  "faixas": [
+    {
+      "id": "faixa-1",
+      "branch": "spec/security-audit-fixes-faixa-1",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-faixa-1",
+      "tarefas": [
+        {
+          "id": "T-101",
+          "titulo": "Núcleo de autorização: requireRole",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "src/server/authz.ts",
+            "tests/server/authz.test.ts"
+          ],
+          "refs": [
+            "US-100",
+            "AC-108"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-2",
+      "branch": "spec/security-audit-fixes-faixa-2",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-faixa-2",
+      "tarefas": [
+        {
+          "id": "T-102",
+          "titulo": "Allowlist de colunas vira a fonte de verdade",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "src/server/tables.ts",
+            "src/server/mapping.ts",
+            "src/server/sql.ts",
+            "tests/server/tableColumns.test.ts",
+            "tests/server/mapping.test.ts",
+            "tests/server/sql.test.ts"
+          ],
+          "refs": [
+            "US-101",
+            "AC-109",
+            "AC-110",
+            "AC-111",
+            "AC-112",
+            "AC-113",
+            "AC-114"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-3",
+      "branch": "spec/security-audit-fixes-faixa-3",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-faixa-3",
+      "tarefas": [
+        {
+          "id": "T-103",
+          "titulo": "Segredo da WAHA fora do controle de versão",
+          "modelo": "claude-sonnet-5",
+          "esforco": "low",
+          "arquivos": [
+            ".gitignore",
+            "waha/docker-compose.waha.yml",
+            "waha/.env.example",
+            "tests/server/wahaComposeSecurity.test.ts"
+          ],
+          "refs": [
+            "US-103",
+            "AC-120",
+            "AC-121",
+            "AC-122",
+            "AC-123"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-4",
+      "branch": "spec/security-audit-fixes-faixa-4",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-faixa-4",
+      "tarefas": [
+        {
+          "id": "T-104",
+          "titulo": "Escape correto em atributo HTML",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "src/domain/format.ts",
+            "src/ui/views/crm/crmUi.ts",
+            "src/ui/views/CustomersView.ts",
+            "src/ui/views/crm/CrmInboxView.ts",
+            "tests/domain/format.test.ts",
+            "tests/ui/escapeAtrib.test.ts"
+          ],
+          "refs": [
+            "US-105",
+            "AC-131",
+            "AC-132",
+            "AC-133",
+            "AC-134"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-5",
+      "branch": "spec/security-audit-fixes-faixa-5",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-faixa-5",
+      "tarefas": [
+        {
+          "id": "T-105",
+          "titulo": "Recorte LGPD sem trabalho duplicado",
+          "modelo": "claude-sonnet-5",
+          "esforco": "low",
+          "arquivos": [
+            "src/pages/api/me/data.ts",
+            "src/pages/api/me/export.ts",
+            "tests/server/lgpdRights.test.ts"
+          ],
+          "refs": [
+            "US-106",
+            "AC-135",
+            "AC-136"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-6",
+      "branch": "spec/security-audit-fixes-faixa-6",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-faixa-6",
+      "tarefas": [
+        {
+          "id": "T-106",
+          "titulo": "Modelo de acesso documentado",
+          "modelo": "claude-sonnet-5",
+          "esforco": "low",
+          "arquivos": [
+            "README.md",
+            "tests/server/accessModelDoc.test.ts"
+          ],
+          "refs": [
+            "US-107",
+            "AC-137",
+            "AC-138",
+            "AC-139"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-7",
+      "branch": "spec/security-audit-fixes-faixa-7",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-faixa-7",
+      "tarefas": [
+        {
+          "id": "T-107",
+          "titulo": "Rotas de usuario e settings exigem papel",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "src/pages/api/users/index.ts",
+            "src/pages/api/users/[id].ts",
+            "src/pages/api/settings.ts",
+            "tests/server/usersAuthz.test.ts",
+            "tests/server/settings.test.ts"
+          ],
+          "refs": [
+            "US-100",
+            "AC-100",
+            "AC-101",
+            "AC-102",
+            "AC-103",
+            "AC-104",
+            "AC-105",
+            "AC-106",
+            "AC-107"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-8",
+      "branch": "spec/security-audit-fixes-faixa-8",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-faixa-8",
+      "tarefas": [
+        {
+          "id": "T-108",
+          "titulo": "Middleware: sessao WhatsApp e bloqueio de troca",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "src/middleware.ts",
+            "src/pages/api/whatsapp/session.ts",
+            "tests/server/middleware.test.ts",
+            "tests/server/whatsappSessionRoute.test.ts"
+          ],
+          "refs": [
+            "US-102",
+            "AC-115",
+            "AC-116",
+            "AC-117",
+            "AC-118",
+            "AC-119",
+            "AC-127"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-9",
+      "branch": "spec/security-audit-fixes-faixa-9",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-faixa-9",
+      "tarefas": [
+        {
+          "id": "T-109",
+          "titulo": "Troca obrigatoria da senha do seed",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "migrations/0020_users_must_change_password.sql",
+            "migrations/0021_seed_admin_flag.sql",
+            "package.json",
+            "src/domain/crm.ts",
+            "src/server/auth.ts",
+            "src/pages/api/auth/login.ts",
+            "src/pages/api/auth/change-password.ts",
+            "scripts/generate-admin-seed.ts",
+            "tests/server/mustChangePassword.test.ts"
+          ],
+          "refs": [
+            "US-104",
+            "AC-124",
+            "AC-125",
+            "AC-126",
+            "AC-128",
+            "AC-129",
+            "AC-130"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-10",
+      "branch": "spec/security-audit-fixes-faixa-10",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-faixa-10",
+      "tarefas": [
+        {
+          "id": "T-110",
+          "titulo": "Contrato das rotas por id",
+          "modelo": "claude-sonnet-5",
+          "esforco": "low",
+          "arquivos": [
+            "tests/server/idRoutesContract.test.ts"
+          ],
+          "refs": [
+            "US-108",
+            "AC-140",
+            "AC-141"
+          ]
+        }
+      ]
+    }
+  ],
+  "sequenciais": [],
+  "concluidas": [],
+  "avisos": []
+}
