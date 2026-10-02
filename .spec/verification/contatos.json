@@ -1,55 +1,55 @@
 {
   "feature": "contatos",
-  "timestamp": "2026-10-01T21:23:40.581Z",
-  "gitRev": "1ecabba",
+  "timestamp": "2026-10-02T00:56:16.709Z",
+  "gitRev": "3d6780c",
   "command": "npx vitest run --reporter=tap",
   "reporter": "tap",
-  "exitCode": 0,
-  "testsParsed": 1540,
+  "exitCode": 1,
+  "testsParsed": 1544,
   "results": {
     "AC-028": {
       "status": "pass",
-      "testName": "shows a row for every contact in the repository @spec:AC-028 # time=139.65ms",
+      "testName": "shows a row for every contact in the repository @spec:AC-028 # time=99.17ms",
       "method": "tap"
     },
     "AC-029": {
       "status": "pass",
-      "testName": "renders each saved contact by name, phone and e-mail @spec:AC-029 # time=9.78ms",
+      "testName": "renders each saved contact by name, phone and e-mail @spec:AC-029 # time=8.20ms",
       "method": "tap"
     },
     "AC-030": {
       "status": "pass",
-      "testName": "sorts the whole set by name @spec:AC-030 # time=12.84ms",
+      "testName": "sorts the whole set by name @spec:AC-030 # time=11.66ms",
       "method": "tap"
     },
     "AC-031": {
       "status": "pass",
-      "testName": "shows the empty state when nothing is saved @spec:AC-031 # time=3.22ms",
+      "testName": "shows the empty state when nothing is saved @spec:AC-031 # time=6.52ms",
       "method": "tap"
     },
     "AC-032": {
       "status": "pass",
-      "testName": "persists the submitted fields and shows the new row @spec:AC-032 # time=25.91ms",
+      "testName": "persists the submitted fields and shows the new row @spec:AC-032 # time=34.21ms",
       "method": "tap"
     },
     "AC-033": {
       "status": "pass",
-      "testName": "closes the modal so the new contact is visible @spec:AC-033 # time=10.31ms",
+      "testName": "closes the modal so the new contact is visible @spec:AC-033 # time=18.35ms",
       "method": "tap"
     }
   },
   "principles": {
     "P-004": {
       "status": "pass",
-      "testName": "@principle:P-004 consent is granular per purpose # time=32.23ms"
+      "testName": "@principle:P-004 consent is granular per purpose # time=64.93ms"
     },
     "P-005": {
       "status": "pass",
-      "testName": "@principle:P-005 retention windows are configurable # time=5.95ms"
+      "testName": "@principle:P-005 retention windows are configurable # time=3.51ms"
     },
     "P-006": {
       "status": "pass",
-      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=2.82ms"
+      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=7.11ms"
     }
   }
 }
