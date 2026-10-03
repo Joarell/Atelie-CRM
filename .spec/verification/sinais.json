@@ -2021,10 +2021,10 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "lgpd-privacidade",
       "ref": "—",
-      "ocorrencias": 30,
+      "ocorrencias": 36,
       "primeiraVez": "2026-09-29T04:38:01.654Z",
-      "ultimaVez": "2026-10-02T22:54:33.138Z",
-      "gitRev": "2f3aba4"
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
     },
     "VERIFY_FALHOU::contatos::AC-028": {
       "codigo": "VERIFY_FALHOU",
@@ -2084,19 +2084,19 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "updated-contacts",
       "ref": "—",
-      "ocorrencias": 29,
+      "ocorrencias": 35,
       "primeiraVez": "2026-09-29T04:44:30.894Z",
-      "ultimaVez": "2026-10-02T22:54:33.138Z",
-      "gitRev": "2f3aba4"
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
     },
     "VERIFY_OBSOLETO::contatos::—": {
       "codigo": "VERIFY_OBSOLETO",
       "feature": "contatos",
       "ref": "—",
-      "ocorrencias": 28,
+      "ocorrencias": 34,
       "primeiraVez": "2026-09-30T00:42:24.634Z",
-      "ultimaVez": "2026-10-02T22:54:33.136Z",
-      "gitRev": "2f3aba4"
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
     },
     "SPEC_SEM_US::stock::.spec/features/stock/spec.md": {
       "codigo": "SPEC_SEM_US",
@@ -2237,10 +2237,10 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "stock",
       "ref": "—",
-      "ocorrencias": 26,
+      "ocorrencias": 32,
       "primeiraVez": "2026-10-01T12:10:20.850Z",
-      "ultimaVez": "2026-10-02T22:54:33.138Z",
-      "gitRev": "2f3aba4"
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
     },
     "AC_SEM_TASK::security-audit-fixes::AC-100": {
       "codigo": "AC_SEM_TASK",
@@ -3650,10 +3650,10 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "security-audit-fixes",
       "ref": "—",
-      "ocorrencias": 21,
+      "ocorrencias": 27,
       "primeiraVez": "2026-10-02T05:28:32.603Z",
-      "ultimaVez": "2026-10-02T22:54:33.138Z",
-      "gitRev": "2f3aba4"
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
     },
     "ARQUIVO_INEXISTENTE::security-audit-fixes-v2::T-001": {
       "codigo": "ARQUIVO_INEXISTENTE",
@@ -5963,10 +5963,10 @@
       "codigo": "VERIFY_OBSOLETO",
       "feature": "security-audit-fixes-v2",
       "ref": "—",
-      "ocorrencias": 7,
+      "ocorrencias": 13,
       "primeiraVez": "2026-10-02T09:15:05.331Z",
-      "ultimaVez": "2026-10-02T22:54:33.138Z",
-      "gitRev": "2f3aba4"
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
     },
     "ID_DUPLICADO::security-audit-fixes-v3::ASM-003": {
       "codigo": "ID_DUPLICADO",
@@ -6017,19 +6017,19 @@
       "codigo": "ARQUIVO_INEXISTENTE",
       "feature": "security-audit-fixes-v3",
       "ref": "T-327",
-      "ocorrencias": 3,
+      "ocorrencias": 9,
       "primeiraVez": "2026-10-02T15:48:52.161Z",
-      "ultimaVez": "2026-10-02T15:49:55.901Z",
-      "gitRev": "2f3aba4"
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
     },
     "ARQUIVO_INEXISTENTE::security-audit-fixes-v3::T-328": {
       "codigo": "ARQUIVO_INEXISTENTE",
       "feature": "security-audit-fixes-v3",
       "ref": "T-328",
-      "ocorrencias": 9,
+      "ocorrencias": 15,
       "primeiraVez": "2026-10-02T15:48:52.161Z",
-      "ultimaVez": "2026-10-02T15:49:55.901Z",
-      "gitRev": "2f3aba4"
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
     },
     "ARQUIVO_INEXISTENTE::security-audit-fixes-v3::T-329": {
       "codigo": "ARQUIVO_INEXISTENTE",
@@ -6399,6 +6399,294 @@
       "primeiraVez": "2026-10-02T22:54:33.138Z",
       "ultimaVez": "2026-10-02T22:54:33.138Z",
       "gitRev": "2f3aba4"
+    },
+    "SPEC_SEM_US::CMV::.spec/features/CMV/spec.md": {
+      "codigo": "SPEC_SEM_US",
+      "feature": "CMV",
+      "ref": ".spec/features/CMV/spec.md",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-03T11:48:32.449Z",
+      "ultimaVez": "2026-10-03T11:48:32.457Z",
+      "gitRev": "908a93a"
+    },
+    "FEATURE_DIVERGENTE::CMV::.spec/features/CMV/spec.md": {
+      "codigo": "FEATURE_DIVERGENTE",
+      "feature": "CMV",
+      "ref": ".spec/features/CMV/spec.md",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-03T11:48:32.457Z",
+      "ultimaVez": "2026-10-03T11:48:32.457Z",
+      "gitRev": "908a93a"
+    },
+    "SECAO_AUSENTE::CMV::.spec/features/CMV/spec.md": {
+      "codigo": "SECAO_AUSENTE",
+      "feature": "CMV",
+      "ref": ".spec/features/CMV/spec.md",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-03T11:48:32.458Z",
+      "ultimaVez": "2026-10-03T11:48:32.458Z",
+      "gitRev": "908a93a"
+    },
+    "AC_INCOMPLETO::CMV::AC-412": {
+      "codigo": "AC_INCOMPLETO",
+      "feature": "CMV",
+      "ref": "AC-412",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-10-03T12:19:55.998Z",
+      "ultimaVez": "2026-10-03T12:19:56.002Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-401": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-401",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-402": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-402",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-403": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-403",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-404": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-404",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-405": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-405",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-406": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-406",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-407": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-407",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-408": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-408",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-409": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-409",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-410": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-410",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-411": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-411",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-412": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-412",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-413": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-413",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-414": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-414",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-415": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-415",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-416": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-416",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-417": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-417",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-418": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-418",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-419": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-419",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-420": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-420",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "AC_SEM_TESTE::CMV::AC-421": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "CMV",
+      "ref": "AC-421",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-10-03T12:19:56.002Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "ARQUIVO_INEXISTENTE::CMV::T-402": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "CMV",
+      "ref": "T-402",
+      "ocorrencias": 4,
+      "primeiraVez": "2026-10-03T12:23:39.812Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "ARQUIVO_INEXISTENTE::CMV::T-403": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "CMV",
+      "ref": "T-403",
+      "ocorrencias": 6,
+      "primeiraVez": "2026-10-03T12:23:39.813Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "ARQUIVO_INEXISTENTE::CMV::T-404": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "CMV",
+      "ref": "T-404",
+      "ocorrencias": 4,
+      "primeiraVez": "2026-10-03T12:23:39.813Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "ARQUIVO_INEXISTENTE::CMV::T-405": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "CMV",
+      "ref": "T-405",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-03T12:23:39.813Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "ARQUIVO_INEXISTENTE::CMV::T-406": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "CMV",
+      "ref": "T-406",
+      "ocorrencias": 8,
+      "primeiraVez": "2026-10-03T12:23:39.813Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "ARQUIVO_INEXISTENTE::CMV::T-407": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "CMV",
+      "ref": "T-407",
+      "ocorrencias": 4,
+      "primeiraVez": "2026-10-03T12:23:39.813Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
+    },
+    "ARQUIVO_INEXISTENTE::CMV::T-409": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "CMV",
+      "ref": "T-409",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-10-03T12:23:39.813Z",
+      "ultimaVez": "2026-10-03T12:23:40.185Z",
+      "gitRev": "908a93a"
     }
   }
 }

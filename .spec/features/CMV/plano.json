@@ -1,0 +1,257 @@
+{
+  "runId": "atelie-erp(1)-CMV-musd5qk4",
+  "feature": "CMV",
+  "agent": "claude",
+  "modo": "paralelo",
+  "paralelizar": null,
+  "modeloForcado": null,
+  "esforcoForcado": null,
+  "geradoEm": "2026-10-03 12:23",
+  "branchTrabalho": "spec/CMV",
+  "baseDir": ".spec/features/CMV",
+  "specDir": ".spec",
+  "repoName": "atelie-erp(1)",
+  "logsDir": "../onp-worktrees/atelie-erp(1)-CMV-logs",
+  "ondas": [
+    [
+      "faixa-1",
+      "faixa-2",
+      "faixa-3"
+    ],
+    [
+      "faixa-4",
+      "faixa-5",
+      "faixa-6"
+    ],
+    [
+      "faixa-7",
+      "faixa-8",
+      "faixa-9"
+    ]
+  ],
+  "faixas": [
+    {
+      "id": "faixa-1",
+      "branch": "spec/CMV-faixa-1",
+      "worktree": "../onp-worktrees/atelie-erp(1)-CMV-faixa-1",
+      "tarefas": [
+        {
+          "id": "T-401",
+          "titulo": "CMV e CPV unitários no modelo de precificação",
+          "modelo": "claude-sonnet-5",
+          "esforco": "low",
+          "arquivos": [
+            "src/domain/pricing.ts",
+            "tests/domain/pricing.test.ts"
+          ],
+          "refs": [
+            "US-401",
+            "AC-401",
+            "AC-402",
+            "AC-404",
+            "AC-405",
+            "AC-406",
+            "AC-407"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-2",
+      "branch": "spec/CMV-faixa-2",
+      "worktree": "../onp-worktrees/atelie-erp(1)-CMV-faixa-2",
+      "tarefas": [
+        {
+          "id": "T-402",
+          "titulo": "Matemática do período em src/domain/cmv.ts",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "src/domain/cmv.ts",
+            "tests/domain/cmv.test.ts"
+          ],
+          "refs": [
+            "US-404",
+            "AC-416",
+            "AC-417",
+            "AC-418"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-3",
+      "branch": "spec/CMV-faixa-3",
+      "worktree": "../onp-worktrees/atelie-erp(1)-CMV-faixa-3",
+      "tarefas": [
+        {
+          "id": "T-403",
+          "titulo": "Tabela de compras, rota e registro no CRUD",
+          "modelo": "claude-sonnet-5",
+          "esforco": "low",
+          "arquivos": [
+            "migrations/0024_purchases.sql",
+            "src/server/tables.ts",
+            "src/pages/api/purchases/index.ts",
+            "src/pages/api/purchases/[id].ts"
+          ],
+          "refs": [
+            "US-403",
+            "AC-410"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-4",
+      "branch": "spec/CMV-faixa-4",
+      "worktree": "../onp-worktrees/atelie-erp(1)-CMV-faixa-4",
+      "tarefas": [
+        {
+          "id": "T-404",
+          "titulo": "Serviço de compras com validação e entrada de estoque",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "src/domain/types.ts",
+            "src/services/PurchasesService.ts",
+            "tests/services/purchasesService.test.ts"
+          ],
+          "refs": [
+            "US-403",
+            "AC-410",
+            "AC-411",
+            "AC-412",
+            "AC-413",
+            "AC-414"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-5",
+      "branch": "spec/CMV-faixa-5",
+      "worktree": "../onp-worktrees/atelie-erp(1)-CMV-faixa-5",
+      "tarefas": [
+        {
+          "id": "T-405",
+          "titulo": "Linhas de CMV e CPV nas telas de Produtos",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "src/ui/views/ProductsView.ts",
+            "tests/ui/productsCmv.test.ts"
+          ],
+          "refs": [
+            "US-401",
+            "US-402",
+            "AC-401",
+            "AC-402",
+            "AC-403",
+            "AC-408",
+            "AC-409"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-6",
+      "branch": "spec/CMV-faixa-6",
+      "worktree": "../onp-worktrees/atelie-erp(1)-CMV-faixa-6",
+      "tarefas": [
+        {
+          "id": "T-406",
+          "titulo": "Relatório de CMV e CPV do período",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "src/services/CmvService.ts",
+            "src/ui/views/CmvView.ts",
+            "tests/services/cmvService.test.ts",
+            "tests/ui/cmvReport.test.ts"
+          ],
+          "refs": [
+            "US-404",
+            "AC-416",
+            "AC-417",
+            "AC-418",
+            "AC-419",
+            "AC-420"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-7",
+      "branch": "spec/CMV-faixa-7",
+      "worktree": "../onp-worktrees/atelie-erp(1)-CMV-faixa-7",
+      "tarefas": [
+        {
+          "id": "T-407",
+          "titulo": "Tela de registro de compras",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "src/ui/views/PurchasesView.ts",
+            "tests/ui/purchasesView.test.ts"
+          ],
+          "refs": [
+            "US-403",
+            "AC-410",
+            "AC-411",
+            "AC-413",
+            "AC-414",
+            "AC-415"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-8",
+      "branch": "spec/CMV-faixa-8",
+      "worktree": "../onp-worktrees/atelie-erp(1)-CMV-faixa-8",
+      "tarefas": [
+        {
+          "id": "T-408",
+          "titulo": "Wiring: contexto, navegação e rotas",
+          "modelo": "claude-sonnet-5",
+          "esforco": "low",
+          "arquivos": [
+            "src/state/AppContext.ts",
+            "src/ui/Sidebar.ts",
+            "src/main.ts",
+            "src/ui/icons.ts",
+            "tests/ui/sidebar.test.ts"
+          ],
+          "refs": [
+            "US-404",
+            "AC-421"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-9",
+      "branch": "spec/CMV-faixa-9",
+      "worktree": "../onp-worktrees/atelie-erp(1)-CMV-faixa-9",
+      "tarefas": [
+        {
+          "id": "T-409",
+          "titulo": "Seed de compras",
+          "modelo": "claude-sonnet-5",
+          "esforco": "low",
+          "arquivos": [
+            "migrations/0025_purchases_seed.sql"
+          ],
+          "refs": [
+            "US-403",
+            "US-404"
+          ]
+        }
+      ]
+    }
+  ],
+  "sequenciais": [],
+  "concluidas": [],
+  "avisos": []
+}
