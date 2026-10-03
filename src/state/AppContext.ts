@@ -9,8 +9,11 @@ import { OrderService } from '../services/OrderService';
 import { CustomerService } from '../services/CustomerService';
 import { CrmService, type CrmRepositories } from '../services/CrmService';
 import { WhatsappService } from '../services/WhatsappService';
+import { PurchasesService } from '../services/PurchasesService';
+import { CmvService } from '../services/CmvService';
 import type {
-	Ingredient, RecipeComponent, Product, Customer, Order, StockMovement
+	Ingredient, RecipeComponent, Product, Customer, Order, StockMovement,
+	Purchase
 } from '../domain/types';
 import type {
 	User, Contact, Pipeline, Stage, Deal, Task, QuickReply,
@@ -40,6 +43,7 @@ export class AppContext {
 	readonly orders: IRepository<Order> = this.erpRepos.orders;
 	readonly movements: IRepository<StockMovement> = this.erpRepos.movements;
 	readonly settings: ApiSettingsRepository = this.erpRepos.settings;
+	readonly purchases: IRepository<Purchase> = this.erpRepos.purchases;
 
 	readonly users: IRepository<User> = this.crmRepos.users;
 	readonly contacts: IRepository<Contact> = this.crmRepos.contacts;
@@ -69,6 +73,8 @@ export class AppContext {
 	readonly customer: CustomerService = this.services.customer;
 	readonly crm: CrmService = this.services.crm;
 	readonly whatsapp: WhatsappService = this.services.whatsapp;
+	readonly purchasesService: PurchasesService = this.services.purchases;
+	readonly cmv: CmvService = this.services.cmv;
 
 	private buildErpRepos(): {
 		ingredients: IRepository<Ingredient>;
@@ -78,6 +84,7 @@ export class AppContext {
 		orders: IRepository<Order>;
 		movements: IRepository<StockMovement>;
 		settings: ApiSettingsRepository;
+		purchases: IRepository<Purchase>;
 	} {
 		const token = () => this.auth.token();
 		return {
@@ -89,7 +96,8 @@ export class AppContext {
 			movements: new ApiRepository<StockMovement>(
 				'/api/stock-movements', token
 			),
-			settings: new ApiSettingsRepository('/api/settings')
+			settings: new ApiSettingsRepository('/api/settings'),
+			purchases: new ApiRepository<Purchase>('/api/purchases', token)
 		};
 	}
 
@@ -125,6 +133,8 @@ export class AppContext {
 		customer: CustomerService;
 		crm: CrmService;
 		whatsapp: WhatsappService;
+		purchases: PurchasesService;
+		cmv: CmvService;
 	} {
 		const pricing = new PricingService(this.ingredients, this.components);
 		const stock = new StockService(
@@ -136,7 +146,13 @@ export class AppContext {
 		const whatsapp = new WhatsappService(
 			this.waha, this.messages, this.conversations
 		);
-		return { pricing, stock, order, customer, crm, whatsapp };
+		const purchases = new PurchasesService(
+			this.purchases, this.ingredients, this.movements, stock
+		);
+		const cmv = new CmvService(
+			this.ingredients, this.orders, this.products, this.purchases, this.movements
+		);
+		return { pricing, stock, order, customer, crm, whatsapp, purchases, cmv };
 	}
 
 	private buildCrmRepositories(): CrmRepositories {
