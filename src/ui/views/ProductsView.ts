@@ -62,19 +62,40 @@ function renderCard(product: Product, ctx: AppContext): string {
 		} · rende ${product.yieldUnits}</div>
 			<div class="rc-title">${escapeText(product.name)}</div></div>
 		<div class="rc-body">
-			<div class="calc-row"><span class="soft">Custo total</span>` +
-			`<span class="num">${formatBRL(pricing.totalCost)}</span></div>
-			<div class="calc-row"><span class="soft">Preço sugerido</span>` +
-			`<strong class="num">${formatBRL(pricing.suggestedPrice)}` +
-			`</strong></div>
-			<div class="calc-row"><span class="soft">Preço por unidade</span>` +
-			`<span class="num">${formatBRL(pricing.unitPrice)}</span></div>
+			${cardCostRows(pricing)}
 		</div>
 		<div class="rc-foot"><span class="soft">Lucro</span>
 			<span class="badge badge-sage">${formatBRL(pricing.profit)}` +
 			` · ${formatNumber(pricing.profitPercent)}%</span></div>
 		<div class="rc-actions">
 			${cardActions(product)}</div></div>`;
+}
+
+function cardCostRows(
+	pricing: ReturnType<AppContext['pricing']['productPricing']>
+): string {
+	const rows = [
+		costRow('Custo total', pricing.totalCost, 'soft'),
+		costRow('CMV', pricing.cmvUnit, 'soft'),
+		costRow('CPV', pricing.cpvUnit, 'soft'),
+		costRow('Preço sugerido', pricing.suggestedPrice, 'soft', true),
+		costRow('Preço por unidade', pricing.unitPrice, 'soft')
+	];
+	return rows.join('');
+}
+
+function costRow(
+	label: string,
+	value: number,
+	labelClass: string,
+	strong = false
+): string {
+	const val = `<span class="num">${formatBRL(value)}</span>`;
+	const lab = `<span class="${labelClass}">${label}</span>`;
+	const content = strong
+		? `<strong class="num">${formatBRL(value)}</strong>`
+		: val;
+	return `<div class="calc-row">${lab}${content}</div>`;
 }
 
 function cardActions(product: Product): string {
@@ -433,26 +454,42 @@ function calcBoxHtml(
 	pricing: ReturnType<AppContext['pricing']['productPricing']>
 ): string {
 	return `<div class="calc-box">
-		<div class="calc-row"><span>Custo direto (receita)</span>` +
-		`<span>${formatBRL(direct)}</span></div>
-		<div class="calc-row"><span>Mão de obra</span>` +
-		`<span>${formatBRL(pricing.laborCost)}</span></div>
-		<div class="calc-row"><span>Despesas fixas</span>` +
-		`<span>${formatBRL(pricing.fixedCost)}</span></div>
-		<div class="calc-row"><span>Despesas variáveis</span>` +
-		`<span>${formatBRL(pricing.variableCost)}</span></div>
-		<div class="calc-row total"><span>Custo total</span>` +
-		`<span>${formatBRL(pricing.totalCost)}</span></div>
-		<div class="calc-row"><span>Markup (${
-			formatNumber(pricing.markupPercent)
-		}%)</span><span>${formatBRL(pricing.markupValue)}</span></div>
-		<div class="calc-row total"><span>Preço de venda sugerido</span>` +
-		`<span>${formatBRL(pricing.suggestedPrice)}</span></div>
-		<div class="calc-row"><span>Preço por unidade</span>` +
-		`<span>${formatBRL(pricing.unitPrice)}</span></div>
-		<div class="calc-row"><span>Lucro</span><span>${
-			formatBRL(pricing.profit)
-		} (${formatNumber(pricing.profitPercent)}%)</span></div></div>`;
+		${calcBoxRows(direct, pricing)}
+		</div>`;
+}
+
+function calcBoxRows(
+	direct: number,
+	pricing: ReturnType<AppContext['pricing']['productPricing']>
+): string {
+	const rows = [
+		calcRow('Custo direto (receita)', formatBRL(direct)),
+		calcRow('Mão de obra', formatBRL(pricing.laborCost)),
+		calcRow('Despesas fixas', formatBRL(pricing.fixedCost)),
+		calcRow('Despesas variáveis', formatBRL(pricing.variableCost)),
+		calcRow('Custo total', formatBRL(pricing.totalCost), true),
+		calcRow('CMV', formatBRL(pricing.cmvUnit)),
+		calcRow('CPV', formatBRL(pricing.cpvUnit)),
+		calcRow('Markup', `${formatNumber(pricing.markupPercent)}%`),
+		calcRow('Preço de venda sugerido', formatBRL(pricing.suggestedPrice), true),
+		calcRow('Preço por unidade', formatBRL(pricing.unitPrice)),
+		calcRow('Lucro', profitLine(pricing))
+	];
+	return rows.join('');
+}
+
+function profitLine(
+	pricing: ReturnType<AppContext['pricing']['productPricing']>
+): string {
+	const p = formatBRL(pricing.profit);
+	const pct = formatNumber(pricing.profitPercent);
+	return `${p} (${pct}%)`;
+}
+
+function calcRow(label: string, value: string, total = false): string {
+	const cls = total ? 'total' : '';
+	return `<div class="calc-row ${cls}"><span>${label}</span>` +
+		`<span>${value}</span></div>`;
 }
 
 function wireFormEvents(

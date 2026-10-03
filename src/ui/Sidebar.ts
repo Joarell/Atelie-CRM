@@ -53,6 +53,7 @@ export const ATELIE_GROUP: NavGroup = {
 		{ path: '/atelie/estoque', label: 'Estoque', icon: 'estoque' },
 		{ path: '/atelie/pedidos', label: 'Pedidos', icon: 'pedidos' },
 		{ path: '/atelie/clientes', label: 'Clientes', icon: 'clientes' },
+		{ path: '/atelie/cmv', label: 'CMV', icon: 'cmv' },
 		{ path: '/atelie/configuracoes', label: 'Configurações', icon: 'config' }
 	]
 };

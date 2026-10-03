@@ -166,3 +166,108 @@ describe('calculateProductPricing', () => {
     expect(pricing.variableCost).toBe(0);
   });
 });
+
+describe('cmvUnit and cpvUnit', () => {
+  const flour: Ingredient = {
+    id: 'flour', name: 'Farinha', unit: 'g', packageSize: 1000, packagePrice: 10, stock: 100, minStock: 20
+  };
+  const butter: Ingredient = {
+    id: 'butter', name: 'Manteiga', unit: 'g', packageSize: 200, packagePrice: 16, stock: 50, minStock: 10
+  };
+  const byId = (map: Record<string, Ingredient>) => (id: string) => map[id];
+
+  it('@spec:AC-401 — cmvUnit is directCost divided by yieldUnits', () => {
+    const product: Product = {
+      id: 'p1', name: 'Torta', category: 'Doce', yieldUnits: 4, prepTime: 60,
+      labor: { salary: 2400, daysPerMonth: 24, hoursPerDay: 8 },
+      fixedExpenses: { rent: 800, energy: 250, water: 90, internet: 120, office: 60, mei: 76 },
+      variablePercent: 10, markupPercent: 70,
+      items: [{ kind: 'ingredient', refId: 'flour', qty: 400 }]
+    };
+    const directCost = productDirectCost(product, byId({ flour }), () => undefined);
+    const pricing = calculateProductPricing(product, directCost);
+    expect(pricing.cmvUnit).toBeCloseTo(400 * 0.01 / 4); // 400g * R$0.01/g / 4 = R$1.00
+  });
+
+  it('@spec:AC-402 — cpvUnit adds laborCost to directCost then divides by yieldUnits', () => {
+    const product: Product = {
+      id: 'p2', name: 'Torta', category: 'Doce', yieldUnits: 4, prepTime: 60,
+      labor: { salary: 2400, daysPerMonth: 24, hoursPerDay: 8 },
+      fixedExpenses: { rent: 800, energy: 250, water: 90, internet: 120, office: 60, mei: 76 },
+      variablePercent: 10, markupPercent: 70,
+      items: [{ kind: 'ingredient', refId: 'flour', qty: 400 }]
+    };
+    const directCost = productDirectCost(product, byId({ flour }), () => undefined);
+    const pricing = calculateProductPricing(product, directCost);
+    const expectedCpv = (directCost + pricing.laborCost) / 4;
+    expect(pricing.cpvUnit).toBeCloseTo(expectedCpv);
+  });
+
+  it('@spec:AC-404 — cmvUnit includes component ingredient costs multiplied by quantity', () => {
+    const filling: RecipeComponent = {
+      id: 'recheio', name: 'Creme', type: 'recheio', yieldDesc: '1x', prepTime: 5,
+      items: [{ ingredientId: 'butter', qty: 50 }]
+    };
+    const product: Product = {
+      id: 'p3', name: 'Bolo', category: 'Doce', yieldUnits: 8, prepTime: 60,
+      labor: { salary: 2400, daysPerMonth: 24, hoursPerDay: 8 },
+      fixedExpenses: { rent: 800, energy: 250, water: 90, internet: 120, office: 60, mei: 76 },
+      variablePercent: 10, markupPercent: 70,
+      items: [
+        { kind: 'ingredient', refId: 'flour', qty: 1000 },
+        { kind: 'component', refId: 'recheio', qty: 2 }
+      ]
+    };
+    const directCost = productDirectCost(product, byId({ flour, butter }), (id) => id === 'recheio' ? filling : undefined);
+    const pricing = calculateProductPricing(product, directCost);
+    const expectedCmv = (1000 * 0.01 + 2 * (50 * 0.08)) / 8;
+    expect(pricing.cmvUnit).toBeCloseTo(expectedCmv);
+  });
+
+  it('@spec:AC-405 — empty recipe yields cmvUnit and cpvUnit as 0 (no NaN/Infinity)', () => {
+    const product: Product = {
+      id: 'p4', name: 'Vazio', category: 'Doce', yieldUnits: 4, prepTime: 60,
+      labor: { salary: 0, daysPerMonth: 0, hoursPerDay: 0 },
+      fixedExpenses: { rent: 0, energy: 0, water: 0, internet: 0, office: 0, mei: 0 },
+      variablePercent: 0, markupPercent: 0,
+      items: []
+    };
+    const pricing = calculateProductPricing(product, 0);
+    expect(pricing.cmvUnit).toBe(0);
+    expect(pricing.cpvUnit).toBe(0);
+    expect(Number.isFinite(pricing.cmvUnit)).toBe(true);
+    expect(Number.isFinite(pricing.cpvUnit)).toBe(true);
+  });
+
+  it('@spec:AC-406 — yieldUnits zero returns whole-batch cost, no division by zero', () => {
+    const product: Product = {
+      id: 'p5', name: 'SemRendimento', category: 'Doce', yieldUnits: 0, prepTime: 60,
+      labor: { salary: 2400, daysPerMonth: 24, hoursPerDay: 8 },
+      fixedExpenses: { rent: 800, energy: 250, water: 90, internet: 120, office: 60, mei: 76 },
+      variablePercent: 10, markupPercent: 70,
+      items: [{ kind: 'ingredient', refId: 'flour', qty: 400 }]
+    };
+    const directCost = productDirectCost(product, byId({ flour }), () => undefined);
+    const pricing = calculateProductPricing(product, directCost);
+    expect(pricing.cmvUnit).toBe(directCost);
+    expect(pricing.cpvUnit).toBe(directCost + pricing.laborCost);
+    expect(Number.isFinite(pricing.cmvUnit)).toBe(true);
+    expect(Number.isFinite(pricing.cpvUnit)).toBe(true);
+  });
+
+  it('@spec:AC-407 — cmvUnit changes when ingredient packagePrice changes', () => {
+    const product: Product = {
+      id: 'p6', name: 'Torta', category: 'Doce', yieldUnits: 4, prepTime: 60,
+      labor: { salary: 2400, daysPerMonth: 24, hoursPerDay: 8 },
+      fixedExpenses: { rent: 800, energy: 250, water: 90, internet: 120, office: 60, mei: 76 },
+      variablePercent: 10, markupPercent: 70,
+      items: [{ kind: 'ingredient', refId: 'flour', qty: 400 }]
+    };
+    const directCost1 = productDirectCost(product, byId({ flour }), () => undefined);
+    const pricing1 = calculateProductPricing(product, directCost1);
+    const flourDouble: Ingredient = { ...flour, packagePrice: 20 };
+    const directCost2 = productDirectCost(product, byId({ flour: flourDouble }), () => undefined);
+    const pricing2 = calculateProductPricing(product, directCost2);
+    expect(pricing2.cmvUnit).toBeCloseTo(pricing1.cmvUnit * 2);
+  });
+});

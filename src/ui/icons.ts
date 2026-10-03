@@ -20,7 +20,7 @@ export type IconName =
 	| 'clientes' | 'config' | 'sun'
 	| 'moon' | 'menu' | 'close'
 	| 'logout' | 'plus' | 'minus'
-	| 'chevron-down'
+	| 'chevron-down' | 'cmv';
 
 export const PATHS: Record<IconName, ReadonlyArray<string>> = {
 	// Vendas ─ CRM
@@ -152,6 +152,9 @@ export const PATHS: Record<IconName, ReadonlyArray<string>> = {
 	],
 	'chevron-down': [
 		'<path d="M6.4 9.4 l5.6 5.6 5.6 -5.6"/>',
+	],
+	cmv: [
+		'<path d="M12 4.7 v14.6 M4.7 12 h14.6 M12 8 a4 4 0 1 1 0 8 4 4 0 0 1 0 -8"/>',
 	],
 };
 

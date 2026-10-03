@@ -132,6 +132,23 @@ export interface Settings {
 	defaultMarkupPercent: number;
 }
 
+export interface PurchaseItem {
+	ingredientId: string;
+	ingredientName: string;
+	qty: number;
+	packageSize: number;
+	packagePrice: number;
+}
+
+export interface Purchase {
+	id: string;
+	supplier: string;
+	invoice: string;
+	date: string; // ISO date (YYYY-MM-DD)
+	items: PurchaseItem[];
+	notes: string;
+}
+
 export const DEFAULT_SETTINGS: Settings = {
 	salary: 1800,
 	daysPerMonth: 24,

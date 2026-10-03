@@ -135,10 +135,13 @@ describe('the migration adds an indexed owner column to every work table', () =>
     }
   });
 
-  it('keeps the documented migrate chain sorted so 0023 runs last', () => {
+  it('keeps the documented migrate chain sorted and 0023 runs before 0024', () => {
     const applied = appliedBy('db:migrate:local');
     expect(applied).toEqual([...applied].sort());
-    expect(applied.at(-1)).toBe(MIGRATION);
+    const idx23 = applied.indexOf(MIGRATION);
+    const idx24 = applied.indexOf('migrations/0024_purchases.sql');
+    expect(idx23).toBeGreaterThanOrEqual(0);
+    expect(idx24).toBeGreaterThan(idx23);
   });
 
   it('registers the migration in both the local and the remote chain', () => {

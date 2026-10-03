@@ -1,0 +1,130 @@
+{
+  "feature": "CMV",
+  "timestamp": "2026-10-03T15:28:03.143Z",
+  "gitRev": "13a4d4a",
+  "command": "npx vitest run --reporter=tap",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 1853,
+  "results": {
+    "AC-401": {
+      "status": "pass",
+      "testName": "@spec:AC-401 — cmvUnit is directCost divided by yieldUnits # time=0.27ms",
+      "method": "tap"
+    },
+    "AC-402": {
+      "status": "pass",
+      "testName": "@spec:AC-402 — cpvUnit adds laborCost to directCost then divides by yieldUnits # time=0.28ms",
+      "method": "tap"
+    },
+    "AC-403": {
+      "status": "pass",
+      "testName": "@spec:AC-403 — linhas mostram apenas a sigla e o valor # time=53.39ms",
+      "method": "tap"
+    },
+    "AC-404": {
+      "status": "pass",
+      "testName": "@spec:AC-404 — cmvUnit includes component ingredient costs multiplied by quantity # time=0.31ms",
+      "method": "tap"
+    },
+    "AC-405": {
+      "status": "pass",
+      "testName": "@spec:AC-405 — empty recipe yields cmvUnit and cpvUnit as 0 (no NaN/Infinity) # time=3.28ms",
+      "method": "tap"
+    },
+    "AC-406": {
+      "status": "pass",
+      "testName": "@spec:AC-406 — yieldUnits zero returns whole-batch cost, no division by zero # time=2.60ms",
+      "method": "tap"
+    },
+    "AC-407": {
+      "status": "pass",
+      "testName": "@spec:AC-407 — cmvUnit changes when ingredient packagePrice changes # time=0.34ms",
+      "method": "tap"
+    },
+    "AC-408": {
+      "status": "pass",
+      "testName": "@spec:AC-408 — formulário mostra CMV e CPV abaixo do Custo total # time=213.20ms",
+      "method": "tap"
+    },
+    "AC-409": {
+      "status": "pass",
+      "testName": "@spec:AC-409 — valores do formulário acompanham a edição da receita # time=102.59ms",
+      "method": "tap"
+    },
+    "AC-410": {
+      "status": "pass",
+      "testName": "@spec:AC-410 — register saves purchase with supplier, date, and items # time=41.42ms",
+      "method": "tap"
+    },
+    "AC-411": {
+      "status": "pass",
+      "testName": "@spec:AC-411 — total value is sum of item values # time=4.94ms",
+      "method": "tap"
+    },
+    "AC-412": {
+      "status": "pass",
+      "testName": "@spec:AC-412 — register gives stock entry and creates movement # time=2.23ms",
+      "method": "tap"
+    },
+    "AC-413": {
+      "status": "pass",
+      "testName": "@spec:AC-413 — future date is rejected # time=6.55ms",
+      "method": "tap"
+    },
+    "AC-414": {
+      "status": "pass",
+      "testName": "@spec:AC-414 — zero quantity or zero price is rejected # time=4.45ms",
+      "method": "tap"
+    },
+    "AC-415": {
+      "status": "pass",
+      "testName": "@spec:AC-415 — listByMonth returns only purchases of that month, sorted # time=43.11ms",
+      "method": "tap"
+    },
+    "AC-416": {
+      "status": "pass",
+      "testName": "@spec:AC-416 — CMV = EI + C - EF # time=2.09ms",
+      "method": "tap"
+    },
+    "AC-417": {
+      "status": "pass",
+      "testName": "@spec:AC-417 — initial stock counts quantity before mid-month movement # time=0.38ms",
+      "method": "tap"
+    },
+    "AC-418": {
+      "status": "pass",
+      "testName": "@spec:AC-418 — purchases from other months are excluded # time=0.30ms",
+      "method": "tap"
+    },
+    "AC-419": {
+      "status": "pass",
+      "testName": "@spec:AC-419 — report shows CPV below CMV # time=1.09ms",
+      "method": "tap"
+    },
+    "AC-420": {
+      "status": "pass",
+      "testName": "@spec:AC-420 — CMV of period is not greater than sum of unit CMV × units produced # time=1.17ms",
+      "method": "tap"
+    },
+    "AC-421": {
+      "status": "pass",
+      "testName": "@spec:AC-421 — menu Ateliê tem item CMV # time=4.91ms",
+      "method": "tap"
+    }
+  },
+  "principles": {
+    "P-004": {
+      "status": "pass",
+      "testName": "@principle:P-004 consent is granular per purpose # time=43.71ms"
+    },
+    "P-005": {
+      "status": "pass",
+      "testName": "@principle:P-005 retention windows are configurable # time=3.27ms"
+    },
+    "P-006": {
+      "status": "pass",
+      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=4.19ms"
+    }
+  }
+}

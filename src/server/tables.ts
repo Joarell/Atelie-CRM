@@ -61,6 +61,15 @@ export const STOCK_MOVEMENTS_SHAPE: TableShape = {
 	jsonFields: [],
 	boolFields: [],
 };
+export const PURCHASES_TABLE = 'purchases';
+export const PURCHASES_SHAPE: TableShape = {
+	columns: [
+		'date', 'id', 'invoice', 'items', 'notes', 'supplier'
+	],
+	numberFields: [],
+	jsonFields: ['items'],
+	boolFields: [],
+};
 export const USERS_TABLE = 'users';
 export const USERS_SHAPE: TableShape = {
 	columns: [
