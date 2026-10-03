@@ -1,6 +1,6 @@
 import type { AppContext } from '../../../state/AppContext';
 import type { CalendarEvent } from '../../../domain/crm';
-import { escapeHtml, uid, todayISO } from '../../../domain/format';
+import { escapeText, uid, todayISO } from '../../../domain/format';
 import { upcomingEvents } from '../../../domain/crmMath';
 import { openModal, closeModal } from '../../Modal';
 import { showToast } from '../../Toast';
@@ -81,19 +81,19 @@ function findType(ctx: AppContext, event: CalendarEvent) {
 function eventRow(ctx: AppContext, event: CalendarEvent): string {
 	const contact = ctx.contacts.getById(event.contactId);
 	const type = findType(ctx, event);
-	const color = escapeHtml(type?.color ?? '');
+	const color = escapeText(type?.color ?? '');
 	const dot = color
 		? `<span class="color-dot" style="background:${color}"></span>`
 		: '';
 	const reminder = event.remindBeforeMin
 		? `<span class="badge">⏰ ${reminderText(event.remindBeforeMin)}</span>`
 		: '';
-	const contactName = contact ? escapeHtml(contact.name) : '—';
-	const typeName = escapeHtml(event.eventType);
+	const contactName = contact ? escapeText(contact.name) : '—';
+	const typeName = escapeText(event.eventType);
 	return `<div class="agenda-row">
 		<div class="agenda-time">${timeRange(event)}</div>
 		<div class="agenda-body">
-			<div class="agenda-title">${dot}${escapeHtml(event.title)}</div>
+			<div class="agenda-title">${dot}${escapeText(event.title)}</div>
 			<div class="agenda-sub">${contactName} · ${typeName} ${reminder}</div>
 		</div>
 		${eventActions(event)}

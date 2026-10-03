@@ -4,7 +4,7 @@ import {
 	formatBRL,
 	formatNumber,
 	uid,
-	escapeHtml,
+	escapeText,
 	escapeAtrib
 } from '../../domain/format';
 import {
@@ -69,7 +69,7 @@ function crudTableHtml(ctx: AppContext): string {
 
 export function columns(): TableColumn<Ingredient>[] {
 	return [
-		{ header: 'Nome', render: (i) => escapeHtml(i.name) },
+		{ header: 'Nome', render: (i) => escapeText(i.name) },
 		{
 			header: 'Preço',
 			render: (i) => formatBRL(i.packagePrice)
@@ -357,7 +357,7 @@ function productRowHtml(p: ParsedProduct): string {
 		<tr>
 			<td><input type="checkbox" class="product-checkbox"
 				data-id="${p.id}" checked></td>
-			<td>${escapeHtml(p.name)}</td>
+			<td>${escapeText(p.name)}</td>
 			<td>${qtyHtml}</td>
 			<td style="text-align:right;">${formatBRL(p.price)}</td>
 		</tr>`;

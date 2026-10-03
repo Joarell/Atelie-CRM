@@ -1,6 +1,9 @@
 import { astro, FetchState } from 'astro/fetch';
 import { cf, finalize } from '@astrojs/cloudflare/fetch';
 import { runRetention } from './server/retentionCron';
+import { runBootAssertion } from './server/boot';
+import { getDb } from './server/context';
+import { json } from './server/http';
 
 // Custom Worker entrypoint. The adapter's default entrypoint
 // (`@astrojs/cloudflare/entrypoints/server`) cannot export a `scheduled`
@@ -14,6 +17,15 @@ export default {
 		const state = new FetchState(request);
 		const asset = await cf(state, env, ctx);
 		if (asset) return asset;
+
+		const boot = await runBootAssertion(getDb());
+		if (!boot.ok) {
+			return json(
+				{ accepted: false, reason: 'boot_failed', detail: boot.error },
+				503
+			);
+		}
+
 		return finalize(state, await astro(state));
 	},
 

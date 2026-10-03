@@ -1,5 +1,5 @@
 import type { AppContext } from '../../state/AppContext';
-import { formatBRL, formatDate, escapeHtml } from '../../domain/format';
+import { formatBRL, formatDate, escapeText } from '../../domain/format';
 import { renderEmptyState } from '../CrudTable';
 import { autoRerender } from '../reactive';
 import type { Ingredient, Order } from '../../domain/types';
@@ -84,7 +84,7 @@ function renderLowStock(ctx: AppContext): string {
 }
 
 function lowStockRow(i: Ingredient): string {
-	const unit = escapeHtml(i.unit);
-	return `<div class="calc-row"><span>${escapeHtml(i.name)}</span>
+	const unit = escapeText(i.unit);
+	return `<div class="calc-row"><span>${escapeText(i.name)}</span>
 		<span class="num soft">${i.stock} / ${i.minStock} ${unit}</span></div>`;
 }

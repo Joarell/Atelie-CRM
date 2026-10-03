@@ -6,5 +6,6 @@ import {
 
 export const { PUT, DELETE } = createItemRoutes(
 	INGREDIENTS_TABLE,
-	INGREDIENTS_SHAPE
+	INGREDIENTS_SHAPE,
+	{ update: 'manager', delete: 'manager' }
 );

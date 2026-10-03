@@ -1,6 +1,6 @@
 import type { AppContext } from '../../../state/AppContext';
 import type { CatalogProduct } from '../../../domain/crm';
-import { escapeHtml, uid } from '../../../domain/format';
+import { escapeText, uid } from '../../../domain/format';
 import { formatPriceCents } from '../../../domain/crmMath';
 import { renderCrudTable, type TableColumn } from '../../CrudTable';
 import { openModal, closeModal } from '../../Modal';
@@ -55,9 +55,9 @@ function columns(): TableColumn<CatalogProduct>[] {
 }
 
 function productCell(p: CatalogProduct): string {
-	const name = escapeHtml(p.name);
+	const name = escapeText(p.name);
 	const about = p.description
-		? `<div class="soft small">${escapeHtml(p.description)}</div>`
+		? `<div class="soft small">${escapeText(p.description)}</div>`
 		: '';
 	return `<div><strong>${name}</strong>${about}</div>`;
 }
@@ -160,7 +160,7 @@ function textareaHtml(description: string): string {
 	return (
 		`<div class="field"><label class="field-label">Descrição</label>` +
 		`<textarea class="input" name="description" rows="3">` +
-		`${escapeHtml(description)}</textarea></div>`
+		`${escapeText(description)}</textarea></div>`
 	);
 }
 

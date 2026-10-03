@@ -1,0 +1,23 @@
+[
+  {
+    "package": "undici",
+    "advisory_id": 1239933,
+    "cve": "GHSA-3wwx-pv8p-q78v",
+    "reason": "Transitive dependency via wrangler -> miniflare; not shipped to production (dev/CI tooling only). Fixed in undici 7.29.1 but blocked by miniflare upgrade chain.",
+    "accepted_by": "Security audit v3"
+  },
+  {
+    "package": "undici",
+    "advisory_id": 1240041,
+    "cve": "GHSA-rfgv-xxqx-mfg5",
+    "reason": "Transitive dependency via wrangler -> miniflare; WebSocket subprotocol DoS. Not shipped to production (dev/CI tooling only).",
+    "accepted_by": "Security audit v3"
+  },
+  {
+    "package": "undici",
+    "advisory_id": 1240050,
+    "cve": "GHSA-w293-vg96-wgc3",
+    "reason": "Transitive dependency via wrangler -> miniflare; TLS cert validation bypass in BalancedPool. Not shipped to production (dev/CI tooling only).",
+    "accepted_by": "Security audit v3"
+  }
+]

@@ -1,7 +1,7 @@
 import type { AppContext } from '../../../state/AppContext';
 import type { Contact, CrmActivity } from '../../../domain/crm';
 import { ACTIVITY } from '../../../domain/crm';
-import { escapeHtml, escapeAtrib, uid } from '../../../domain/format';
+import { escapeText, escapeAtrib, uid } from '../../../domain/format';
 import {
 	openDealsForContact,
 	findPotentialDuplicates,
@@ -84,9 +84,9 @@ function crudTable(ctx: AppContext, rows: Contact[]): string {
 
 function columns(ctx: AppContext): TableColumn<Contact>[] {
 	return [
-		{ header: 'Nome', render: (c) => escapeHtml(c.name) },
-		{ header: 'Telefone', render: (c) => escapeHtml(c.phone) },
-		{ header: 'E-mail', render: (c) => escapeHtml(c.email) },
+		{ header: 'Nome', render: (c) => escapeText(c.name) },
+		{ header: 'Telefone', render: (c) => escapeText(c.phone) },
+		{ header: 'E-mail', render: (c) => escapeText(c.email) },
 		{ header: 'Tags', render: renderTags },
 		{
 			header: 'Em aberto',
@@ -98,7 +98,7 @@ function columns(ctx: AppContext): TableColumn<Contact>[] {
 
 function renderTags(contact: Contact): string {
 	const html = contact.tags
-		.map((tag) => `<span class="chip">${escapeHtml(tag)}</span>`)
+		.map((tag) => `<span class="chip">${escapeText(tag)}</span>`)
 		.join('');
 	return html || '—';
 }
@@ -168,7 +168,7 @@ function dupBlock(groups: Contact[][]): string {
 }
 
 function dupItem(group: Contact[]): string {
-	const title = group.map((c) => escapeHtml(c.name)).join(' · ');
+	const title = group.map((c) => escapeText(c.name)).join(' · ');
 	const chips = group.map((c) => dupChip(c)).join('');
 	const mergeBtn =
 		'<button class="btn btn-ghost btn-sm" data-merge="' +
@@ -183,8 +183,8 @@ function dupItem(group: Contact[]): string {
 }
 
 function dupChip(contact: Contact): string {
-	const name = escapeHtml(contact.name);
-	const phone = escapeHtml(contact.phone || contact.email);
+	const name = escapeText(contact.name);
+	const phone = escapeText(contact.phone || contact.email);
 	const details = `${name} · ${phone}`;
 	return `<span class="chip">${details}</span>`;
 }
@@ -258,7 +258,7 @@ function notesField(notes: string): string {
 	const box =
 		'<div class="field"><label class="field-label">Notas</label>' +
 		'<textarea class="input" name="notes" rows="3">' +
-		`${escapeHtml(notes)}</textarea></div>`;
+		`${escapeText(notes)}</textarea></div>`;
 	return box;
 }
 
@@ -270,7 +270,7 @@ function tagsField(ctx: AppContext, v: ContactInput): string {
 		.map((t) => `<option value="${escapeAtrib(t.name)}"></option>`)
 		.join('');
 	const hint = vocabulary
-		? `<div class="hint">Vocabulário: ${escapeHtml(vocabulary)}</div>`
+		? `<div class="hint">Vocabulário: ${escapeText(vocabulary)}</div>`
 		: '';
 	const open =
 		'<div class="field"><label class="field-label">' +
@@ -318,13 +318,13 @@ function timelineRow(activity: CrmActivity): string {
 
 function activityText(activity: CrmActivity): string {
 	const ev = activity.evidence
-		? ` — ${escapeHtml(activity.evidence)}`
+		? ` — ${escapeText(activity.evidence)}`
 		: '';
-	return `${escapeHtml(activityLabel(activity.action))}${ev}`;
+	return `${escapeText(activityLabel(activity.action))}${ev}`;
 }
 
 function timelineEmpty(name: string): string {
-	const safe = escapeHtml(name);
+	const safe = escapeText(name);
 	return (
 		'<div class="empty-state"><div class="big">Sem histórico</div>' +
 		`<p>Ações sobre ${safe} aparecerão aqui.</p></div>`

@@ -1,0 +1,170 @@
+{
+  "feature": "security-audit-fixes-v3",
+  "timestamp": "2026-10-02T22:56:23.452Z",
+  "gitRev": "2f3aba4",
+  "command": "npx vitest run --reporter=tap",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 1800,
+  "results": {
+    "AC-354": {
+      "status": "pass",
+      "testName": "@spec:AC-354 agent PUT on tags -> 403 # time=93.13ms",
+      "method": "tap"
+    },
+    "AC-355": {
+      "status": "pass",
+      "testName": "@spec:AC-355 documents assignedUserId with an index on all four tables # time=33.81ms",
+      "method": "tap"
+    },
+    "AC-356": {
+      "status": "pass",
+      "testName": "@spec:AC-356 agent cannot PUT message of another agent conversation # time=2.37ms",
+      "method": "tap"
+    },
+    "AC-357": {
+      "status": "pass",
+      "testName": "@spec:AC-357 manager PUT on tags -> 200 # time=3.21ms",
+      "method": "tap"
+    },
+    "AC-358": {
+      "status": "pass",
+      "testName": "@spec:AC-358 contacts has column ownership # time=0.64ms",
+      "method": "tap"
+    },
+    "AC-359": {
+      "status": "pass",
+      "testName": "@spec:AC-359 agent PUT on row with empty owner -> 403 # time=0.84ms",
+      "method": "tap"
+    },
+    "AC-360": {
+      "status": "pass",
+      "testName": "@spec:AC-360 fills calendar_events from createdBy # time=9.05ms",
+      "method": "tap"
+    },
+    "AC-361": {
+      "status": "pass",
+      "testName": "@spec:AC-361 calendar_events creation fills assignedUserId from session # time=1.94ms",
+      "method": "tap"
+    },
+    "AC-362": {
+      "status": "pass",
+      "testName": "@spec:AC-362 does not overwrite an owner that is already filled # time=8.93ms",
+      "method": "tap"
+    },
+    "AC-363": {
+      "status": "pass",
+      "testName": "@spec:AC-363 author field createdBy is immutable on PUT for calendar_events # time=2.11ms",
+      "method": "tap"
+    },
+    "AC-364": {
+      "status": "pass",
+      "testName": "@spec:AC-364 agent cannot PUT text of message from another conversation # time=2.29ms",
+      "method": "tap"
+    },
+    "AC-365": {
+      "status": "pass",
+      "testName": "@spec:AC-365 agent PUT with empty assignedUserId -> 400 # time=2.52ms",
+      "method": "tap"
+    },
+    "AC-366": {
+      "status": "pass",
+      "testName": "@spec:AC-366 viewer PUT on contacts -> 403 # time=2.77ms",
+      "method": "tap"
+    },
+    "AC-367": {
+      "status": "pass",
+      "testName": "@spec:AC-367 treats a usable secret as the trigger to require signatures # time=5.39ms",
+      "method": "tap"
+    },
+    "AC-368": {
+      "status": "pass",
+      "testName": "@spec:AC-368 refuses unsigned events when no usable secret exists # time=0.76ms",
+      "method": "tap"
+    },
+    "AC-369": {
+      "status": "pass",
+      "testName": "@spec:AC-369 accepts unsigned events only via the explicit escape hatch # time=0.61ms",
+      "method": "tap"
+    },
+    "AC-370": {
+      "status": "pass",
+      "testName": "@spec:AC-370 requires the signature out of the box # time=0.33ms",
+      "method": "tap"
+    },
+    "AC-371": {
+      "status": "pass",
+      "testName": "@spec:AC-371 keeps refusing a present-but-wrong signature # time=6.79ms",
+      "method": "tap"
+    },
+    "AC-372": {
+      "status": "pass",
+      "testName": "@spec:AC-372 every credential-bearing path is ignored by git # time=25.38ms",
+      "method": "tap"
+    },
+    "AC-373": {
+      "status": "pass",
+      "testName": "@spec:AC-373 no tracked file carries a real secret literal # time=61.65ms",
+      "method": "tap"
+    },
+    "AC-374": {
+      "status": "pass",
+      "testName": "@spec:AC-374 runbook document exists and is executable # time=0.32ms",
+      "method": "tap"
+    },
+    "AC-375": {
+      "status": "pass",
+      "testName": "@spec:AC-375 boot validates configuration and answers 503 with explicit message # time=34.28ms {",
+      "method": "tap"
+    },
+    "AC-376": {
+      "status": "pass",
+      "testName": "@spec:AC-376 CI gate blocks un-excepted HIGH/CRITICAL advisories # time=16.80ms {",
+      "method": "tap"
+    },
+    "AC-377": {
+      "status": "pass",
+      "testName": "@spec:AC-377 gate script is called from CI workflow # time=0.28ms",
+      "method": "tap"
+    },
+    "AC-378": {
+      "status": "pass",
+      "testName": "@spec:AC-378 audit step does not tolerate failure (no continue-on-error) # time=0.24ms",
+      "method": "tap"
+    },
+    "AC-379": {
+      "status": "pass",
+      "testName": "@spec:AC-379 exception list is versioned and documented # time=6.26ms",
+      "method": "tap"
+    },
+    "AC-380": {
+      "status": "pass",
+      "testName": "@spec:AC-380 un-excepted vulnerability fails the gate # time=1.36ms",
+      "method": "tap"
+    },
+    "AC-381": {
+      "status": "pass",
+      "testName": "@spec:AC-381 @spec:AC-382 CrudTable.ts has no attribute-context escapeHtml/escapeText # time=28.38ms",
+      "method": "tap"
+    },
+    "AC-382": {
+      "status": "pass",
+      "testName": "@spec:AC-381 @spec:AC-382 CrudTable.ts has no attribute-context escapeHtml/escapeText # time=28.38ms",
+      "method": "tap"
+    }
+  },
+  "principles": {
+    "P-004": {
+      "status": "pass",
+      "testName": "@principle:P-004 consent is granular per purpose # time=54.67ms"
+    },
+    "P-005": {
+      "status": "pass",
+      "testName": "@principle:P-005 retention windows are configurable # time=0.95ms"
+    },
+    "P-006": {
+      "status": "pass",
+      "testName": "@principle:P-006 data subject rights: consent can be withdrawn # time=8.68ms"
+    }
+  }
+}

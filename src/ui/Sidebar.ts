@@ -1,5 +1,5 @@
 import type { AppContext } from '../state/AppContext';
-import { escapeHtml } from '../domain/format';
+import { escapeText } from '../domain/format';
 import { icon, type IconName } from './icons';
 
 export interface NavEntry {
@@ -172,9 +172,9 @@ function footHtml(ctx?: AppContext): string {
 		return `<a class="nav-foot-link" href="#/login"` +
 			` data-foot-login>Entrar</a>`;
 	}
-	const initial = escapeHtml((user.name[0] ?? '?').toUpperCase());
-	const name = escapeHtml(user.name);
-	const email = escapeHtml(user.email);
+	const initial = escapeText((user.name[0] ?? '?').toUpperCase());
+	const name = escapeText(user.name);
+	const email = escapeText(user.email);
 	return (
 		'<div class="foot-user"><span class="foot-avatar">' + initial +
 		'</span>\n    <div class="foot-user-meta"><strong>' + name +

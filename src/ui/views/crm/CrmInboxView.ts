@@ -7,7 +7,7 @@ import type {
 } from '../../../domain/crm';
 import type { Order, OrderStatus } from '../../../domain/types';
 import {
-	escapeHtml,
+	escapeText,
 	escapeAtrib,
 	formatBRL,
 	formatDate,
@@ -323,7 +323,7 @@ function dormantRow(item: InboxItem): string {
 	return (
 		`<button class="inbox-item inbox-dormant" data-restore="` +
 		`${item.conversation.id}">
-			<div class="inbox-item-top"><strong>${escapeHtml(name)}</strong>
+			<div class="inbox-item-top"><strong>${escapeText(name)}</strong>
 				<span class="inbox-time">↻ Retomar</span></div>
 			<div class="inbox-item-preview">Adormecida até ${until}</div>
 		</button>`
@@ -410,7 +410,7 @@ function composerHtml(ctx: AppContext, current?: InboxItem): string {
 			value="${composerDelivery}">
 		<label class="field-label" for="composer-notes">Observações</label>
 		<textarea class="input input-sm" id="composer-notes" rows="2"
-			placeholder="Anotações do pedido">${escapeHtml(composerNotes)}</textarea>
+			placeholder="Anotações do pedido">${escapeText(composerNotes)}</textarea>
 		${composerActionsHtml()}
 	</div>`;
 }
@@ -448,7 +448,7 @@ function productOptions(ctx: AppContext): string {
 		.map((p) => {
 			const value = ctx.pricing.productPricing(p).suggestedPrice;
 			const selected = p.id === pickValue ? ' selected' : '';
-			return `<option value="${p.id}"${selected}>${escapeHtml(p.name)}` +
+			return `<option value="${p.id}"${selected}>${escapeText(p.name)}` +
 				` — ${formatBRL(value)}</option>`;
 		})
 		.join('');
@@ -464,7 +464,7 @@ function pickRows(): string {
 function pickRow(pick: OrderPick, index: number): string {
 	const rowTotal = formatBRL(pick.unitPrice * pick.qty);
 	return `<div class="composer-pick">
-			<span class="composer-pick-name">${escapeHtml(pick.productName)}</span>
+			<span class="composer-pick-name">${escapeText(pick.productName)}</span>
 			<div class="composer-qty">
 				<button type="button" class="composer-qty-btn" data-qty-down=
 					"${index}" aria-label="Diminuir">−</button>
@@ -561,10 +561,10 @@ function currentItem(ctx: AppContext): InboxItem | undefined {
 }
 
 function orderCardHtml(order: Order): string {
-	const status = escapeHtml(ORDER_STATUS_LABELS[order.status]);
+	const status = escapeText(ORDER_STATUS_LABELS[order.status]);
 	const tone = orderStatusTone(order.status);
 	const created = formatDate(order.createdAt.slice(0, 10));
-	const items = escapeHtml(orderItemsText(order.lines));
+	const items = escapeText(orderItemsText(order.lines));
 	const delivery = formatDate(order.deliveryDate);
 	const total = formatBRL(orderLinesTotal(order.lines));
 	return `
@@ -598,8 +598,8 @@ function itemRow(item: InboxItem, current?: Conversation): string {
 	const preview = item.lastMessage?.text ?? '';
 	const lastAt = item.lastMessage?.createdAt;
 	const time = shortTime(lastAt ? lastAt : item.conversation.createdAt);
-	const nameHtml = escapeHtml(name);
-	const previewHtml = escapeHtml(preview);
+	const nameHtml = escapeText(name);
+	const previewHtml = escapeText(preview);
 	const active = current?.id === item.conversation.id ? ' active' : '';
 	const title =
 		`<div class="inbox-item-top"><strong>${nameHtml}</strong>` +
@@ -636,13 +636,13 @@ function threadHeadHtml(ctx: AppContext, current: InboxItem): string {
 	const channel = badge(current.conversation.channel);
 	const phoneVal = current.conversation.channelPhone;
 	const phone = phoneVal
-		? `<span class="inbox-phone">${escapeHtml(phoneVal)}</span>`
+		? `<span class="inbox-phone">${escapeText(phoneVal)}</span>`
 		: '';
 	const notes = showNotes ? notesPanel(ctx, current.conversation.id) : '';
 	return `
 		<div class="inbox-thread-head">
 			<div class="inbox-contact">
-				<strong>${escapeHtml(current.contact?.name ?? 'Contato')}</strong>
+				<strong>${escapeText(current.contact?.name ?? 'Contato')}</strong>
 				${channel}
 				${phone}
 			</div>
@@ -708,7 +708,7 @@ function messageRow(m: Message): string {
 	const tick = tickOf(m);
 	return (
 		`<div class="bubble ${side}"><div class="bubble-text">` +
-		`${escapeHtml(m.text)}</div>
+		`${escapeText(m.text)}</div>
 			<div class="bubble-time">${shortTime(m.createdAt)}${tick}</div></div>`
 	);
 }
@@ -749,7 +749,7 @@ function threadComposeHtml(replies: QuickReply[]): string {
 function replyChip(r: QuickReply): string {
 	return (
 		`<button class="chip-btn" data-reply="${escapeAtrib(r.body)}">` +
-		`/${escapeHtml(r.shortcut)}</button>`
+		`/${escapeText(r.shortcut)}</button>`
 	);
 }
 
@@ -778,7 +778,7 @@ function notesList(ctx: AppContext, conversationId: string): string {
 
 function noteRow(n: ConversationNote): string {
 	if (n.id === editingNoteId) return noteEditRow(n);
-	const body = escapeHtml(n.body);
+	const body = escapeText(n.body);
 	return `
 			<div class="note-row"><div class="note-body">${body}</div>
 			<div class="note-meta">${shortTime(n.createdAt)}</div>
@@ -791,7 +791,7 @@ function noteRow(n: ConversationNote): string {
 }
 
 function noteEditRow(n: ConversationNote): string {
-	const body = escapeHtml(n.body);
+	const body = escapeText(n.body);
 	return `
 			<div class="note-row">
 				<form id="note-edit-form" class="note-edit-form">

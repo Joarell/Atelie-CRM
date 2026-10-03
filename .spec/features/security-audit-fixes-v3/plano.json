@@ -1,0 +1,220 @@
+{
+  "runId": "atelie-erp(1)-security-audit-fixes-v3-mur53jn1",
+  "feature": "security-audit-fixes-v3",
+  "agent": "claude",
+  "modo": "paralelo",
+  "paralelizar": [
+    "T-323",
+    "T-324",
+    "T-325",
+    "T-326",
+    "T-327",
+    "T-328",
+    "T-329"
+  ],
+  "modeloForcado": null,
+  "esforcoForcado": null,
+  "geradoEm": "2026-10-02 15:50",
+  "branchTrabalho": "spec/security-audit-fixes-v3",
+  "baseDir": ".spec/features/security-audit-fixes-v3",
+  "specDir": ".spec",
+  "repoName": "atelie-erp(1)",
+  "logsDir": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-v3-logs",
+  "ondas": [
+    [
+      "faixa-1",
+      "faixa-2",
+      "faixa-3"
+    ],
+    [
+      "faixa-4",
+      "faixa-5",
+      "faixa-6"
+    ]
+  ],
+  "faixas": [
+    {
+      "id": "faixa-1",
+      "branch": "spec/security-audit-fixes-v3-faixa-1",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-v3-faixa-1",
+      "tarefas": [
+        {
+          "id": "T-323",
+          "titulo": "Migration: coluna de dono nas tabelas de trabalho + backfill",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "migrations/0023_owner_columns.sql",
+            "package.json"
+          ],
+          "refs": [
+            "US-324",
+            "AC-355",
+            "AC-360",
+            "AC-362"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-2",
+      "branch": "spec/security-audit-fixes-v3-faixa-2",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-v3-faixa-2",
+      "tarefas": [
+        {
+          "id": "T-324",
+          "titulo": "Fábrica de rotas: posse por coluna e por herança, falha fechada",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "src/server/routeFactory.ts",
+            "src/server/tables.ts",
+            "src/pages/api/crm/tags/[id].ts",
+            "src/pages/api/crm/stages/[id].ts",
+            "src/pages/api/crm/pipelines/[id].ts",
+            "src/pages/api/crm/quick-replies/[id].ts",
+            "src/pages/api/crm/appointment-types/[id].ts",
+            "src/pages/api/orders/[id].ts",
+            "src/pages/api/products/[id].ts",
+            "src/pages/api/components/[id].ts",
+            "src/pages/api/ingredients/[id].ts",
+            "src/pages/api/customers/[id].ts",
+            "tests/server/ownership.test.ts"
+          ],
+          "refs": [
+            "US-323",
+            "US-324",
+            "AC-354",
+            "AC-356",
+            "AC-357",
+            "AC-358",
+            "AC-359",
+            "AC-361"
+          ]
+        },
+        {
+          "id": "T-325",
+          "titulo": "Superfície de escrita: campos imutáveis e dono não esvaziável",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "src/server/routeFactory.ts",
+            "src/server/crud.ts",
+            "tests/server/routeFactory.test.ts"
+          ],
+          "refs": [
+            "US-325",
+            "AC-363",
+            "AC-364",
+            "AC-365",
+            "AC-366"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-3",
+      "branch": "spec/security-audit-fixes-v3-faixa-3",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-v3-faixa-3",
+      "tarefas": [
+        {
+          "id": "T-326",
+          "titulo": "Webhook WAHA: seguro por padrão e fail-closed",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "src/server/wahaWebhook.ts",
+            ".dev.vars.example",
+            "tests/server/wahaWebhook.test.ts"
+          ],
+          "refs": [
+            "US-326",
+            "AC-367",
+            "AC-368",
+            "AC-369",
+            "AC-371"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-4",
+      "branch": "spec/security-audit-fixes-v3-faixa-4",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-v3-faixa-4",
+      "tarefas": [
+        {
+          "id": "T-327",
+          "titulo": "Guardas de segredo: check-ignore, hash no versionado e runbook",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "tests/spec-v2/c-settings-secrets.test.ts",
+            "docs/security-audit/ROTAÇÃO-CREDENCIAIS.md"
+          ],
+          "refs": [
+            "US-327",
+            "AC-372",
+            "AC-373",
+            "AC-374"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-5",
+      "branch": "spec/security-audit-fixes-v3-faixa-5",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-v3-faixa-5",
+      "tarefas": [
+        {
+          "id": "T-328",
+          "titulo": "Boot valida configuração e CI ganha gate de auditoria",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "src/worker.ts",
+            "src/server/boot.ts",
+            ".github/workflows/ci.yml",
+            "docs/security-audit/EXCECOES-AUDIT-DEPENDENCIAS.md",
+            "tests/server/boot.test.ts"
+          ],
+          "refs": [
+            "US-328",
+            "US-329",
+            "AC-375",
+            "AC-376",
+            "AC-377",
+            "AC-378",
+            "AC-379",
+            "AC-380"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-6",
+      "branch": "spec/security-audit-fixes-v3-faixa-6",
+      "worktree": "../onp-worktrees/atelie-erp(1)-security-audit-fixes-v3-faixa-6",
+      "tarefas": [
+        {
+          "id": "T-329",
+          "titulo": "Escape com nome que declara o contexto",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "src/domain/format.ts",
+            "tests/domain/format.test.ts",
+            "tests/ui/escapeContext.test.ts"
+          ],
+          "refs": [
+            "US-330",
+            "AC-381",
+            "AC-382"
+          ]
+        }
+      ]
+    }
+  ],
+  "sequenciais": [],
+  "concluidas": [],
+  "avisos": []
+}

@@ -114,7 +114,7 @@ describe('AC-317/318 — the team view gates its buttons by role', () => {
 describe('AC-340/341 — the modal escapes its title at the sink', () => {
   it('@spec:AC-340 openModal escapes options.title', () => {
     expect(source('src/ui/Modal.ts'))
-      .toContain('escapeHtml(options.title)');
+      .toContain('escapeText(options.title)');
   });
 
   it('@spec:AC-341 callers pass raw text because the sink escapes once', () => {
@@ -123,21 +123,21 @@ describe('AC-340/341 — the modal escapes its title at the sink', () => {
     // therefore wrong here; the XSS invariant is what the sink guarantees.
     const stock = source('src/ui/views/StockView.ts');
     expect(stock).toContain('Movimentar: ${ingredient.name}');
-    expect(source('src/ui/Modal.ts')).toContain('escapeHtml');
+    expect(source('src/ui/Modal.ts')).toContain('escapeText');
   });
 });
 
 describe('AC-342/343 — dashboard and login escape user data', () => {
   it('@spec:AC-342 lowStockRow escapes the ingredient name and unit', () => {
     const view = source('src/ui/views/DashboardView.ts');
-    expect(view).toContain('escapeHtml(i.name)');
-    expect(view).toContain('escapeHtml(i.unit)');
+    expect(view).toContain('escapeText(i.name)');
+    expect(view).toContain('escapeText(i.unit)');
   });
 
   it('@spec:AC-343 LoginView escapes the profile name and email', () => {
     const view = source('src/ui/views/LoginView.ts');
-    expect(view).toContain('escapeHtml(me.name)');
-    expect(view).toContain('escapeHtml(me.email)');
+    expect(view).toContain('escapeText(me.name)');
+    expect(view).toContain('escapeText(me.email)');
   });
 });
 
@@ -186,7 +186,7 @@ describe('AC-347/348/350 — one attribute helper, applied by contract', () => {
 describe('AC-349 — the server refuses non-numeric values', () => {
   it('@spec:AC-349 a non-numeric numeric field is rejected before persist', async () => {
     const response = await updateIngredient(serverCtx(
-      { stock: 'abc; DROP TABLE' }, 'ing-1', 'agent'
+      { stock: 'abc; DROP TABLE' }, 'ing-1', 'manager'
     ));
     expect(response.status).toBe(400);
     const body = (await response.json()) as Row;
@@ -196,7 +196,7 @@ describe('AC-349 — the server refuses non-numeric values', () => {
 
   it('@spec:AC-349 a numeric string is still accepted and coerced', async () => {
     const response = await updateIngredient(serverCtx(
-      { stock: '42' }, 'ing-1', 'agent'
+      { stock: '42' }, 'ing-1', 'manager'
     ));
     expect(response.status).toBe(200);
     expect(Number(state.db.rows(INGREDIENTS_TABLE)[0].stock)).toBe(42);

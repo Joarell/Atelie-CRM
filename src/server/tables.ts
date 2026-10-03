@@ -147,8 +147,8 @@ export const QUICK_REPLIES_SHAPE: TableShape = {
 export const CALENDAR_EVENTS_TABLE = 'calendar_events';
 export const CALENDAR_EVENTS_SHAPE: TableShape = {
 	columns: [
-		'contactId', 'createdAt', 'createdBy', 'endsAt', 'eventType', 'id',
-		'remindBeforeMin', 'startsAt', 'title'
+		'assignedUserId', 'contactId', 'createdAt', 'createdBy', 'endsAt',
+		'eventType', 'id', 'remindBeforeMin', 'startsAt', 'title'
 	],
 	numberFields: [
 		'remindBeforeMin'
@@ -195,8 +195,8 @@ export const WEBHOOK_EVENTS_SHAPE: TableShape = {
 export const CATALOG_PRODUCTS_TABLE = 'catalog_products';
 export const CATALOG_PRODUCTS_SHAPE: TableShape = {
 	columns: [
-		'ativo', 'createdAt', 'currency', 'description', 'id', 'name', 'priceCents',
-		'updatedAt'
+		'assignedUserId', 'ativo', 'createdAt', 'currency', 'description',
+		'id', 'name', 'priceCents', 'updatedAt'
 	],
 	numberFields: [
 		'ativo', 'priceCents'
@@ -207,8 +207,8 @@ export const CATALOG_PRODUCTS_SHAPE: TableShape = {
 export const CRM_ACTIVITIES_TABLE = 'crm_lead_activities';
 export const CRM_ACTIVITIES_SHAPE: TableShape = {
 	columns: [
-		'action', 'actorKind', 'actorUserId', 'contactId', 'createdAt', 'dealId',
-		'evidence', 'id'
+		'assignedUserId', 'action', 'actorKind', 'actorUserId', 'contactId',
+		'createdAt', 'dealId', 'evidence', 'id'
 	],
 	jsonFields: [],
 	boolFields: [],
@@ -216,7 +216,8 @@ export const CRM_ACTIVITIES_SHAPE: TableShape = {
 export const CONVERSATION_NOTES_TABLE = 'conversation_notes';
 export const CONVERSATION_NOTES_SHAPE: TableShape = {
 	columns: [
-		'authorUserId', 'body', 'conversationId', 'createdAt', 'id'
+		'assignedUserId', 'authorUserId', 'body', 'conversationId',
+		'createdAt', 'id'
 	],
 	jsonFields: [],
 	boolFields: [],

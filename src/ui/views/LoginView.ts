@@ -2,7 +2,7 @@ import type { AppContext } from '../../state/AppContext';
 import { qs, formValues } from '../dom';
 import { showToast } from '../Toast';
 import { icon } from '../icons';
-import { escapeHtml } from '../../domain/format';
+import { escapeText } from '../../domain/format';
 
 const RETURN_KEY = 'login_return_path';
 
@@ -43,8 +43,8 @@ function drawLoggedIn(
 		`<div class="login-card">${loginBrand()}` +
 		`\n    <h2>Você já está conectado</h2>` +
 		`\n    <p class="soft">Sessão ativa de ` +
-		`<strong>${escapeHtml(me.name)}</strong>` +
-		`\n      (${escapeHtml(me.email)}).</p>` +
+		`<strong>${escapeText(me.name)}</strong>` +
+		`\n      (${escapeText(me.email)}).</p>` +
 		`\n    <button class="btn btn-primary btn-block" id="go-dashboard">` +
 		`\n      Ir para o Painel</button></div>`;
 	qs('#go-dashboard', root).addEventListener('click', () => {

@@ -8,7 +8,7 @@ import {
 	formatBRL,
 	formatNumber,
 	uid,
-	escapeHtml,
+	escapeText,
 	escapeAtrib
 } from '../../domain/format';
 import { renderEmptyState } from '../CrudTable';
@@ -58,9 +58,9 @@ function renderCard(product: Product, ctx: AppContext): string {
 	const pricing = ctx.pricing.productPricing(product);
 	return `<div class="recipe-card">
 		<div class="rc-head"><div class="rc-eyebrow">${
-			escapeHtml(product.category || 'Produto')
+			escapeText(product.category || 'Produto')
 		} · rende ${product.yieldUnits}</div>
-			<div class="rc-title">${escapeHtml(product.name)}</div></div>
+			<div class="rc-title">${escapeText(product.name)}</div></div>
 		<div class="rc-body">
 			<div class="calc-row"><span class="soft">Custo total</span>` +
 			`<span class="num">${formatBRL(pricing.totalCost)}</span></div>
@@ -255,7 +255,7 @@ function referenceOptions(row: ProductItem, ctx: AppContext): string {
 		(item) =>
 			`<option value="${item.id}" ` +
 			`${item.id === row.refId ? 'selected' : ''}>` +
-			`${escapeHtml(item.name)}</option>`
+			`${escapeText(item.name)}</option>`
 	);
 	return `<option value="">Selecione…</option>${opts.join('')}`;
 }
@@ -507,7 +507,7 @@ function buildProductData(
 function textField(name: string, label: string, value: string): string {
 	return `<div class="field"><label class="field-label">${label}</label>
 		<input class="input" name="${name}" value="${
-			escapeHtml(value)
+			escapeAtrib(value)
 		}" required></div>`;
 }
 

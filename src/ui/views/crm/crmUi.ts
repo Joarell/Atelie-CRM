@@ -1,4 +1,4 @@
-import { escapeHtml, escapeAtrib } from '../../../domain/format';
+import { escapeText, escapeAtrib } from '../../../domain/format';
 import { ABC_CLIENT_LABELS, type AbcClass } from '../../../domain/abcCurve';
 
 // Small shared builders used by the CRM views — keeps the per-view files
@@ -91,7 +91,7 @@ function optionHtml(
 	const sel = o.value === selected ? ' selected' : '';
 	return (
 		`<option value="${escapeAtrib(o.value)}"${sel}>` +
-		`${escapeHtml(o.label)}</option>`
+		`${escapeText(o.label)}</option>`
 	);
 }
 
@@ -110,7 +110,7 @@ export function badge(
 	tone: 'neutral' | 'caramel' = 'neutral'
 ): string {
 	const caramel = tone === 'caramel' ? ' badge-caramel' : '';
-	return `<span class="badge${caramel}">${escapeHtml(label)}</span>`;
+	return `<span class="badge${caramel}">${escapeText(label)}</span>`;
 }
 
 export function modalFoot(): string {

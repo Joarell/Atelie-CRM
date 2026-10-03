@@ -1,6 +1,6 @@
 import type { AppContext } from '../../../state/AppContext';
 import type { CrmActivity } from '../../../domain/crm';
-import { escapeHtml } from '../../../domain/format';
+import { escapeText } from '../../../domain/format';
 import { activityLabel } from '../../../domain/crmMath';
 import { autoRerender } from '../../reactive';
 import { qs } from '../../dom';
@@ -91,11 +91,11 @@ function groupedHtml(ctx: AppContext, activities: CrmActivity[]): string {
 
 function activityRow(ctx: AppContext, activity: CrmActivity): string {
 	const contact = ctx.contacts.getById(activity.contactId);
-	const name = contact ? escapeHtml(contact.name) : '—';
+	const name = contact ? escapeText(contact.name) : '—';
 	const evidence = activity.evidence
-		? ` · ${escapeHtml(activity.evidence)}`
+		? ` · ${escapeText(activity.evidence)}`
 		: '';
-	const actionName = escapeHtml(activityLabel(activity.action));
+	const actionName = escapeText(activityLabel(activity.action));
 	return `<div class="agenda-row">
 		<div class="agenda-time">${timeOf(activity.createdAt)}</div>
 		<div class="agenda-body">

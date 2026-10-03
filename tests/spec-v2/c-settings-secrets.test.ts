@@ -262,3 +262,66 @@ describe('AC-334/335/338 — secrets and vendored app stay out of git', () => {
     expect(read('.gitignore')).toContain('DeskcommCRM-RecipeCosting/');
   });
 });
+
+describe('AC-372/373 — mechanical guards for credential hygiene', () => {
+  const CRED_PATHS = ['.dev.vars', '.env'];
+
+  it('@spec:AC-372 every credential-bearing path is ignored by git', () => {
+    for (const path of CRED_PATHS) {
+      let ignored = false;
+      try {
+        git('check-ignore', '-q', path);
+        ignored = true;
+      } catch {
+        ignored = false;
+      }
+      expect([path, ignored]).toEqual([path, true]);
+    }
+  });
+
+  it('@spec:AC-373 no tracked file carries a real secret literal', () => {
+    const tracked = git('ls-files').split('\n').filter(Boolean);
+    const secretNames = [
+      'WAHA_HMAC_SECRET',
+      'WAHA_API_KEY',
+      'WHATSAPP_HOOK_URL',
+      'WHATSAPP_HOOK_EVENTS',
+      'ADMIN_INITIAL_PASSWORD'
+    ];
+    const allowedPatterns = [
+      /=\s*""$/,          // empty assignment: NAME=""
+      /=\s*\$\{[^}]+\}$/  // env reference: NAME=${VAR}
+    ];
+
+    // Files that are expected to contain placeholder/template values (not real secrets)
+    const excludedFiles = new Set([
+      '.dev.vars.example',
+      'waha/.env.example',
+      'docs/whatsapp-waha.md',
+      'tests/spec-v2/c-settings-secrets.test.ts',
+      // spec files may contain redacted/prototype values
+      '.spec/features/security-audit-fixes-v2/tasks.md'
+    ]);
+
+    for (const file of tracked) {
+      if (!TEXT_FILE.test(file)) continue;
+      if (excludedFiles.has(file)) continue;
+      let content = '';
+      try {
+        content = read(file);
+      } catch {
+        continue;
+      }
+      for (const name of secretNames) {
+        const re = new RegExp(`${name}\\s*=\\s*["']([^"']+)["']`, 'g');
+        /** @type {RegExpExecArray | null} */
+        let match;
+        while ((match = re.exec(content)) !== null) {
+          const value = match[1];
+          const isAllowed = allowedPatterns.some((p) => p.test(match[0]));
+          expect([file, name, value, isAllowed]).toEqual([file, name, value, true]);
+        }
+      }
+    }
+  });
+});

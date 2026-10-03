@@ -1,6 +1,6 @@
 import type { AppContext } from '../../state/AppContext';
 import type { Customer } from '../../domain/types';
-import { formatBRL, uid, escapeHtml, escapeAtrib } from '../../domain/format';
+import { formatBRL, uid, escapeText, escapeAtrib } from '../../domain/format';
 import { renderCrudTable, type TableColumn } from '../CrudTable';
 import { openModal, closeModal } from '../Modal';
 import { showToast } from '../Toast';
@@ -40,8 +40,8 @@ function crudTableHtml(ctx: AppContext): string {
 
 function columns(ctx: AppContext): TableColumn<Customer>[] {
 	return [
-		{ header: 'Nome', render: (c) => escapeHtml(c.name) },
-		{ header: 'Telefone', render: (c) => escapeHtml(c.phone) },
+		{ header: 'Nome', render: (c) => escapeText(c.name) },
+		{ header: 'Telefone', render: (c) => escapeText(c.phone) },
 		{
 			header: 'Pedidos',
 			render: (c) => String(ctx.customer.statsFor(c.id).orderCount),
@@ -99,7 +99,7 @@ function formHtml(existing?: Customer): string {
 			textField('email', 'E-mail', v.email, false)
 		}</div>
 		<div class="field"><label class="field-label">Notas</label>` +
-		`<textarea class="input" name="notes" rows="3">${escapeHtml(v.notes)}` +
+		`<textarea class="input" name="notes" rows="3">${escapeText(v.notes)}` +
 		`</textarea></div>
 		<div class="modal-foot" style="padding:16px 0 0;border:none;">
 			<button type="button" class="btn" data-close-modal>Cancelar</button>

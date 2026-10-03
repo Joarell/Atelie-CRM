@@ -7,7 +7,7 @@ import type {
 import {
 	formatBRL,
 	uid,
-	escapeHtml,
+	escapeText,
 	escapeAtrib
 } from '../../domain/format';
 import { renderEmptyState } from '../CrudTable';
@@ -76,7 +76,7 @@ function renderCard(component: RecipeComponent, ctx: AppContext): string {
 		<div class="rc-head"><div class="rc-eyebrow">${
 			TYPE_LABELS[component.type]
 		} · ${component.prepTime} min</div>
-			<div class="rc-title">${escapeHtml(component.name)}</div></div>
+			<div class="rc-title">${escapeText(component.name)}</div></div>
 		<div class="rc-body">${lines}</div>
 		<div class="rc-foot"><span class="soft">Custo total</span><strong>${
 			formatBRL(cost)
@@ -91,7 +91,7 @@ function renderCard(component: RecipeComponent, ctx: AppContext): string {
 function renderCardLine(item: ComponentItem, ctx: AppContext): string {
 	const ingredient = ctx.ingredients.getById(item.ingredientId);
 	const name = ingredient ? ingredient.name : '(ingrediente removido)';
-	return `<div class="rc-ing"><span>${escapeHtml(name)}</span><span>${
+	return `<div class="rc-ing"><span>${escapeText(name)}</span><span>${
 			item.qty
 		} ${ingredient?.unit ?? ''}</span></div>`;
 }
@@ -208,7 +208,7 @@ function ingredientSelect(selectedId: string, ctx: AppContext): string {
 		.map(
 			(i) =>
 				`<option value="${i.id}" ${i.id === selectedId ? 'selected' : ''}>` +
-				`${escapeHtml(i.name)}</option>`
+				`${escapeText(i.name)}</option>`
 		)
 		.join('');
 	return `<select class="input" data-ingredient>` +

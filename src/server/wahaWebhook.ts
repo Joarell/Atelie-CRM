@@ -18,11 +18,16 @@ import { WEBHOOK_EVENTS_TABLE } from './tables';
 export interface WahaWebhookConfig {
 	hmacSecret: string | null;
 	requireSignature: boolean;
+	allowUnsigned: boolean;
 }
 
 export interface WahaWebhookAuth {
 	ok: boolean;
-	reason: 'missing_signature' | 'bad_signature' | 'ok';
+	reason:
+		| 'missing_signature'
+		| 'bad_signature'
+		| 'ok'
+		| 'secret_required';
 	signatureVerified: boolean;
 }
 
@@ -51,9 +56,13 @@ function usableSecret(value: string | null): string | null {
 export function readWahaWebhookConfig(source: unknown): WahaWebhookConfig {
 	const record = source as Record<string, unknown> | null | undefined;
 	const secret = usableSecret(text(record?.WAHA_HMAC_SECRET));
-	const flag = record?.WAHA_WEBHOOK_REQUIRE_SIGNATURE ?? '';
-	const requireSignature = String(flag) === 'true';
-	return { hmacSecret: secret, requireSignature };
+	const requireSignature = flag(record?.WAHA_WEBHOOK_REQUIRE_SIGNATURE);
+	const allowUnsigned = flag(record?.WAHA_WEBHOOK_ALLOW_UNSIGNED);
+	return { hmacSecret: secret, requireSignature, allowUnsigned };
+}
+
+function flag(value: unknown): boolean {
+	return String(value ?? '') === 'true';
 }
 
 export function wahaWebhookSignature(request: Request): string | null {
@@ -63,26 +72,39 @@ export function wahaWebhookSignature(request: Request): string | null {
 	return header && header.trim().length > 0 ? header.trim() : null;
 }
 
-// Fail-closed for anything signed: a signature that is present but wrong is
-// always rejected (there is no legitimate reason to sign wrongly). Unsigned
-// events are accepted unless the operator opts into strict mode.
+// Fail-closed. A signature that is present but wrong is always rejected, and
+// an unsigned event is refused unless the operator opted out explicitly:
+//   - usable secret present -> verify; absent signature is 401, wrong is 401
+//   - no usable secret      -> `secret_required`, so the route answers 503
+//     (a misconfiguration, not a bad signature) unless `allowUnsigned` is set
 export async function authenticateWahaWebhook(
 	request: Request,
 	config: WahaWebhookConfig
 ): Promise<WahaWebhookAuth> {
 	const signature = wahaWebhookSignature(request);
-	if (signature) {
-		if (!config.hmacSecret) return signedDenied();
-		const rawBody = await request.clone().text();
-		const ok = await verifyWahaHmac(rawBody, signature, config.hmacSecret);
-		return ok
-			? { ok: true, reason: 'ok', signatureVerified: true }
-			: signedDenied();
+	if (signature) return verifySigned(request, signature, config);
+	if (!config.hmacSecret && !config.allowUnsigned) {
+		return { ok: false, reason: 'secret_required', signatureVerified: false };
 	}
-	if (config.requireSignature && config.hmacSecret) {
-		return { ok: false, reason: 'missing_signature', signatureVerified: false };
-	}
+	if (config.requireSignature) return missingSignature();
 	return { ok: true, reason: 'ok', signatureVerified: false };
+}
+
+async function verifySigned(
+	request: Request,
+	signature: string,
+	config: WahaWebhookConfig
+): Promise<WahaWebhookAuth> {
+	if (!config.hmacSecret) return signedDenied();
+	const rawBody = await request.clone().text();
+	const ok = await verifyWahaHmac(rawBody, signature, config.hmacSecret);
+	return ok
+		? { ok: true, reason: 'ok', signatureVerified: true }
+		: signedDenied();
+}
+
+function missingSignature(): WahaWebhookAuth {
+	return { ok: false, reason: 'missing_signature', signatureVerified: false };
 }
 
 export async function verifyWahaHmac(

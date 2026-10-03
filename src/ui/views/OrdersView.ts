@@ -9,7 +9,7 @@ import {
 	formatBRL,
 	formatDate,
 	todayISO,
-	escapeHtml
+	escapeText
 } from '../../domain/format';
 import {
 	orderItemsText
@@ -77,7 +77,7 @@ function columnHtml(ctx: AppContext, column: KanbanColumn): string {
 	return `<div class="kanban-col kanban-col--${column.status}" ` +
 		`data-status="${column.status}">
 		<div class="kanban-head"><span class="kanban-title">` +
-		`${escapeHtml(column.label)}</span>
+		`${escapeText(column.label)}</span>
 			<span class="kanban-meta">${column.count} · ` +
 		`${formatBRL(column.total)}</span></div>
 		<div class="kanban-cards">${cards || empty}</div>
@@ -87,8 +87,8 @@ function columnHtml(ctx: AppContext, column: KanbanColumn): string {
 function cardHtml(ctx: AppContext, order: Order): string {
 	return `<div class="deal-card board-card" draggable="true" ` +
 		`data-order="${order.id}">
-		<div class="deal-title">${escapeHtml(order.customerName)}</div>
-		<div class="deal-sub">${escapeHtml(orderItemsText(order.lines))}</div>
+		<div class="deal-title">${escapeText(order.customerName)}</div>
+		<div class="deal-sub">${escapeText(orderItemsText(order.lines))}</div>
 		<div class="deal-value">${formatBRL(ctx.order.orderTotal(order))}</div>
 		<div class="deal-actions">
 			${paymentBadge(order)}
@@ -270,7 +270,7 @@ function customerSelect(ctx: AppContext): string {
 		.map(
 			(c) =>
 				`<option value="${c.id}">` +
-				`${escapeHtml(c.name)}</option>`
+				`${escapeText(c.name)}</option>`
 		)
 		.join('');
 	return `<div class="field"><label class="field-label">Cliente</label>` +
@@ -311,7 +311,7 @@ function productSelect(selectedId: string, ctx: AppContext): string {
 			(p) =>
 				`<option value="${p.id}" ` +
 				`${p.id === selectedId ? 'selected' : ''}>` +
-				`${escapeHtml(p.name)}</option>`
+				`${escapeText(p.name)}</option>`
 		)
 		.join('');
 	return `<select class="input" data-product>${opts}</select>`;

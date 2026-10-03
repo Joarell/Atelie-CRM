@@ -59,17 +59,35 @@ async function checkRole(
 	return requireRank(context, minimum);
 }
 
-// Entidades que têm dono - mapeamento de tabela para campo de dono
-const OWNER_FIELDS: Record<string, string> = {
-	contacts: 'assignedUserId',
-	conversations: 'assignedUserId',
-	deals: 'assignedUserId',
-	tasks: 'assigneeUserId',
-	// Adicionar mais conforme necessário
+// Modelo de posse discriminado: ou a tabela tem a coluna de dono,
+// ou herda do pai (messages -> conversations).
+type OwnershipMap = {
+	kind: 'column';
+	field: string;
+} | {
+	kind: 'via';
+	table: string;
+	field: string;
+};
+
+const OWNERSHIP: Record<string, OwnershipMap> = {
+	contacts: { kind: 'column', field: 'assignedUserId' },
+	conversations: { kind: 'column', field: 'assignedUserId' },
+	deals: { kind: 'column', field: 'assignedUserId' },
+	tasks: { kind: 'column', field: 'assigneeUserId' },
+	calendar_events: { kind: 'column', field: 'assignedUserId' },
+	catalog_products: { kind: 'column', field: 'assignedUserId' },
+	crm_lead_activities: { kind: 'column', field: 'assignedUserId' },
+	conversation_notes: { kind: 'column', field: 'assignedUserId' },
+	// messages nao tem coluna propria; herda a posse da conversa
+	messages: { kind: 'via', table: 'conversations', field: 'assignedUserId' },
 };
 
 type LocalUser = { user?: { id?: string; role?: Role } };
 
+// Lookup do dono: ou coluna direta, ou via tabela pai.
+// Falha fechada: se a coluna de dono estiver vazia (ou nao existir),
+// o agent ve 403. Manager/admin sempre passam.
 async function checkOwnership(
 	db: Database,
 	table: string,
@@ -78,25 +96,48 @@ async function checkOwnership(
 	userId: string,
 	userRole: Role
 ): Promise<Response | null> {
-	const ownerField = OWNER_FIELDS[table];
-	if (!ownerField) return null; // Sem campo de dono, permite
+	const om = OWNERSHIP[table];
+	if (!om) return null; // tabela sem dono definido, permite
 
-	const entity = await getEntity(db, table, shape, id);
-	if (!entity) return notFound();
+	const ownerId = await resolveOwnerId(db, table, shape, id, om);
+	if (!ownerId) {
+		// Dono vazio: fail-closed para agent/viewer
+		if (userRole === 'manager' || userRole === 'admin') return null;
+		return json({ error: 'nao_autorizado' }, 403);
+	}
 
-	const ownerId = (entity as Record<string, unknown>)[ownerField] as
-		string | undefined;
-	if (!ownerId) return null; // Sem dono definido, permite
-
-	// Manager e admin podem acessar qualquer registro
+	// Manager e admin passam
 	if (userRole === 'manager' || userRole === 'admin') return null;
 
-	// Verifica se o usuário é o dono
 	if (ownerId !== userId) {
 		return json({ error: 'nao_autorizado' }, 403);
 	}
 
 	return null;
+}
+
+async function resolveOwnerId(
+	db: Database,
+	table: string,
+	shape: TableShape,
+	id: string,
+	om: OwnershipMap
+): Promise<string | undefined> {
+	if (om.kind === 'column') {
+		const entity = await getEntity(db, table, shape, id);
+		if (!entity) return undefined;
+		return (entity as Record<string, unknown>)[om.field] as string | undefined;
+	}
+	// heranca: messages -> conversations
+	const entity = await getEntity(db, table, shape, id);
+	if (!entity) return undefined;
+	const parentId = (entity as Record<string, unknown>)[
+		om.table === 'conversations' ? 'conversationId' : om.field
+	] as string | undefined;
+	if (!parentId) return undefined;
+	const parent = await getEntity(db, om.table, shape, parentId);
+	if (!parent) return undefined;
+	return (parent as Record<string, unknown>)[om.field] as string | undefined;
 }
 
 function ownerOf(context: APIContext): Owner | Response {
@@ -123,6 +164,24 @@ async function guardItemWrite(
 	);
 }
 
+// Campos que nunca podem ser alterados no PUT. A chave e o nome da tabela.
+const IMMUTABLE_FIELDS: Record<string, string[]> = {
+	contacts: ['createdBy', 'createdAt'],
+	deals: ['createdBy', 'createdAt'],
+	tasks: ['createdBy', 'createdAt'],
+	calendar_events: ['createdBy', 'createdAt'],
+	catalog_products: ['createdBy', 'createdAt'],
+	crm_lead_activities: ['actorUserId', 'createdAt'],
+	conversation_notes: ['authorUserId', 'createdAt'],
+	conversations: ['assignedUserId', 'createdAt', 'createdBy'],
+	// messages: imutaveis p/ integracao de chat (apenas autoria)
+	messages: [
+		'text', 'fromMe', 'direction', 'conversationId',
+		'createdAt', 'createdBy'
+	],
+	quick_replies: ['createdBy', 'createdAt'],
+};
+
 function refuseInvalid(
 	shape: TableShape,
 	patch: Record<string, unknown>
@@ -130,6 +189,36 @@ function refuseInvalid(
 	const invalid = numericProblems(patch, shape);
 	if (invalid.length === 0) return null;
 	return json({ error: 'campo_numerico_invalido', fields: invalid }, 400);
+}
+
+function refuseImmutable(
+	table: string,
+	patch: Record<string, unknown>
+): Response | null {
+	const immut = IMMUTABLE_FIELDS[table] ?? [];
+	const forbidden = Object.keys(patch).filter((k) => immut.includes(k));
+	if (forbidden.length === 0) return null;
+	return json(
+		{ error: 'campo_imutavel', fields: forbidden },
+		400
+	);
+}
+
+function refuseEmptyOwner(
+	table: string,
+	patch: Record<string, unknown>
+): Response | null {
+	const om = OWNERSHIP[table];
+	if (!om) return null;
+	const field = om.kind === 'column' ? om.field : null;
+	if (!field) return null;
+	if (patch[field] === '') {
+		return json(
+			{ error: 'dono_vazio', field },
+			400
+		);
+	}
+	return null;
 }
 
 function listHandler(
@@ -155,6 +244,15 @@ function createHandler(
 		const entity = withNewId(await context.request.json() as Body);
 		const invalid = refuseInvalid(shape, entity);
 		if (invalid) return invalid;
+		// Deriva o dono da sessao quando a tabela tem coluna de dono
+		const om = OWNERSHIP[table];
+		if (om && om.kind === 'column') {
+			const locals = context.locals as LocalUser | undefined;
+			const userId = locals?.user?.id;
+			if (userId && !entity[om.field]) {
+				(entity as Record<string, unknown>)[om.field] = userId;
+			}
+		}
 		const db = getDb();
 		const saved = await insertEntity(db, table, shape, entity);
 		await auditCreate(db, context, table, entity.id);
@@ -176,8 +274,13 @@ function updateHandler(
 		const patch = (await context.request.json()) as {
 			id?: string;
 		} & Record<string, unknown>;
+		// Validacoes de superficie de escrita
 		const invalid = refuseInvalid(shape, patch);
 		if (invalid) return invalid;
+		const imm = refuseImmutable(table, patch);
+		if (imm) return imm;
+		const empty = refuseEmptyOwner(table, patch);
+		if (empty) return empty;
 		const saved = await updateEntity(
 			getDb(), table, shape, context.params.id!, patch
 		);

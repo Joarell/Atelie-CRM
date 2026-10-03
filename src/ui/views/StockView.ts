@@ -5,7 +5,7 @@ import type {
 	StockMovementType,
 	Unit
 } from '../../domain/types';
-import { formatNumber, escapeHtml, formatDate } from '../../domain/format';
+import { formatNumber, escapeText, formatDate } from '../../domain/format';
 import {
 	renderCrudTable,
 	renderEmptyState,
@@ -84,7 +84,7 @@ export function groupIngredientsByName(
 
 export function columns(): TableColumn<GroupedIngredient>[] {
 	return [
-		{ header: 'Ingrediente', render: (i) => escapeHtml(i.name) },
+		{ header: 'Ingrediente', render: (i) => escapeText(i.name) },
 		{
 			header: 'Estoque atual',
 			render: (i) => `${formatNumber(i.stock)} ${i.unit}`,
@@ -149,8 +149,8 @@ function renderHistoryRow(m: StockMovement): string {
 	const badge = m.type === 'entrada' ? 'badge-sage' : 'badge-berry';
 	const delta = m.type === 'entrada' ? '+' : '-';
 	return (
-		`<div class="calc-row"><span>${date} · ${escapeHtml(m.ingredientName)} ` +
-		`· ${escapeHtml(m.note)}</span>
+		`<div class="calc-row"><span>${date} · ${escapeText(m.ingredientName)} ` +
+		`· ${escapeText(m.note)}</span>
 		<span class="badge ${badge}">${delta}${m.qty}</span></div>`
 	);
 }

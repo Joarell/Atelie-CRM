@@ -1,6 +1,6 @@
 import type { AppContext } from '../../../state/AppContext';
 import type { Role, User } from '../../../domain/crm';
-import { escapeHtml, uid } from '../../../domain/format';
+import { escapeText, uid } from '../../../domain/format';
 import { renderCrudTable, type TableColumn } from '../../CrudTable';
 import { openModal, closeModal } from '../../Modal';
 import { showToast } from '../../Toast';
@@ -70,8 +70,8 @@ function sessionBar(ctx: AppContext, me: User | null): string {
 }
 
 function sessionBarLoggedIn(me: User): string {
-	const name = escapeHtml(me.name);
-	const email = escapeHtml(me.email);
+	const name = escapeText(me.name);
+	const email = escapeText(me.email);
 	const role = ROLE_LABELS[me.role];
 	return (
 		`<div class="session-bar"><div><strong>${name}</strong>` +
@@ -98,9 +98,9 @@ function sessionBarLoggedOut(): string {
 
 function columns(): TableColumn<User>[] {
 	return [
-		{ header: 'Nome', render: (u) => escapeHtml(u.name) },
-		{ header: 'E-mail', render: (u) => escapeHtml(u.email) },
-		{ header: 'Papel', render: (u) => escapeHtml(ROLE_LABELS[u.role]) }
+		{ header: 'Nome', render: (u) => escapeText(u.name) },
+		{ header: 'E-mail', render: (u) => escapeText(u.email) },
+		{ header: 'Papel', render: (u) => escapeText(ROLE_LABELS[u.role]) }
 	];
 }
 

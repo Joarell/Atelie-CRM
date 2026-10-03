@@ -12,7 +12,8 @@ const state = vi.hoisted(() => ({
     'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90' as
     | string
     | undefined,
-  requireSignature: 'true' as string | undefined
+  requireSignature: 'true' as string | undefined,
+  allowUnsigned: 'false' as string | undefined
 }));
 
 vi.mock('cloudflare:workers', () => ({
@@ -25,6 +26,9 @@ vi.mock('cloudflare:workers', () => ({
     },
     get WAHA_WEBHOOK_REQUIRE_SIGNATURE() {
       return state.requireSignature;
+    },
+    get WAHA_WEBHOOK_ALLOW_UNSIGNED() {
+      return state.allowUnsigned;
     }
   }
 }));
@@ -64,13 +68,29 @@ describe('/api/whatsapp/webhook', () => {
     vi.clearAllMocks();
   });
 
-  it('is open when no secret is configured (local/dev mirrors)', async () => {
+  it('@spec:AC-368 answers 503 when no usable secret is configured', async () => {
     state.hmacSecret = undefined;
     state.requireSignature = undefined;
     const response = await POST(context(BODY));
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({
+      accepted: false,
+      reason: 'secret_required'
+    });
+    expect(state.db.rows('webhook_events')).toHaveLength(0);
+    expect(state.db.rows('messages')).toHaveLength(0);
+  });
+
+  it('@spec:AC-369 accepts unsigned events when the escape hatch is on', async () => {
+    state.hmacSecret = undefined;
+    state.requireSignature = undefined;
+    state.allowUnsigned = 'true';
+    const response = await POST(context(BODY));
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ accepted: true, hmacVerified: false });
-    expect(state.db.rows('webhook_events')).toHaveLength(1);
+    expect(await response.json()).toMatchObject({
+      accepted: true,
+      hmacVerified: false
+    });
     expect(state.db.rows('messages')).toHaveLength(1);
   });
 

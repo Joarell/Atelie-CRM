@@ -1,6 +1,6 @@
 import type { AppContext } from '../../../state/AppContext';
 import type { Tag } from '../../../domain/crm';
-import { escapeHtml, escapeAtrib, uid } from '../../../domain/format';
+import { escapeText, escapeAtrib, uid } from '../../../domain/format';
 import { renderCrudTable, type TableColumn } from '../../CrudTable';
 import { openModal, closeModal } from '../../Modal';
 import { showToast } from '../../Toast';
@@ -89,7 +89,7 @@ function situacaoCell(t: Tag): string {
 function renderTag(tag: Tag): string {
 	return (
 		`<span class="chip chip-${escapeAtrib(tag.color)}">` +
-		`${escapeHtml(tag.name)}</span>`
+		`${escapeText(tag.name)}</span>`
 	);
 }
 

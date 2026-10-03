@@ -1,6 +1,6 @@
 import type { AppContext } from '../../../state/AppContext';
 import type { Task } from '../../../domain/crm';
-import { escapeHtml, uid, todayISO } from '../../../domain/format';
+import { escapeText, uid, todayISO } from '../../../domain/format';
 import { renderCrudTable, type TableColumn } from '../../CrudTable';
 import { openModal, closeModal } from '../../Modal';
 import { showToast } from '../../Toast';
@@ -74,7 +74,7 @@ function doneInput(t: Task): string {
 function titleCell(t: Task): string {
 	return (
 		`<span class="${t.done ? 'strike' : ''}">` +
-		`${escapeHtml(t.title)}</span>`
+		`${escapeText(t.title)}</span>`
 	);
 }
 
@@ -87,12 +87,12 @@ function dueCell(t: Task): string {
 
 function contactCell(ctx: AppContext, t: Task): string {
 	const name = ctx.contacts.getById(t.contactId)?.name ?? '—';
-	return escapeHtml(name);
+	return escapeText(name);
 }
 
 function assigneeCell(ctx: AppContext, t: Task): string {
 	const name = ctx.users.getById(t.assigneeUserId)?.name ?? '—';
-	return escapeHtml(name);
+	return escapeText(name);
 }
 
 function editBtn(id: string): string {

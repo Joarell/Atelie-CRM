@@ -28,8 +28,18 @@ WAHA_SESSION_NAME="default"
 #     para falhar fechado na ausência de assinatura.
 WHATSAPP_HOOK_URL="http://host.containers.internal:4322/api/whatsapp/webhook"
 WHATSAPP_HOOK_EVENTS=""
-# Um segredo de uso unico por ambiente: `openssl rand -hex 32`.
-# Vazio DESLIGA a verificacao de assinatura; um segredo curto (<32) tambem e
-# recusado e o receiver falha fechado. Copie este arquivo e troque o valor.
+# Um segredo de uso unico por ambiente: `openssl rand -hex 32` (64 hex).
+# Cole aqui o mesmo valor de `WAHA_HMAC_SECRET` que o engine usa como
+# `hmac.key`. VAZIO = o receiver RECUSA toda mensagem sem assinatura com 503
+# (`secret_required`), porque nao ha como verificar. Um segredo curto (<32),
+# um placeholder conhecido, ou o valor de exemplo acima tambem contam como
+# "sem segredo utilizavel" e tambem falham fechado. Copie este arquivo (.dev.vars)
+# e troque o valor — nunca comite o .dev.vars.
 WAHA_HMAC_SECRET=""
-WAHA_WEBHOOK_REQUIRE_SIGNATURE=""
+# "true" = exige assinatura; sem o header x-webhook-hmac a mensagem e recusada
+# com 401. Estado seguro por padrao.
+WAHA_WEBHOOK_REQUIRE_SIGNATURE="true"
+# Escape hatch EXPLICITO para desenvolvimento local sem segredo. "true" aceita
+# mensagem SEM assinatura quando nao ha segredo utilizavel. NUNCA em producao:
+# em producao deixe "false" para que a configuracao ausente responda 503.
+WAHA_WEBHOOK_ALLOW_UNSIGNED="false"

@@ -1,7 +1,7 @@
 import type { AppContext } from '../../../state/AppContext';
 import type { WahaSessionState } from '../../../repositories/WahaApiRepository';
 import type { Conversation } from '../../../domain/crm';
-import { escapeHtml, escapeAtrib } from '../../../domain/format';
+import { escapeText, escapeAtrib } from '../../../domain/format';
 import {
 	composeTargets,
 	whatsappConversationFor
@@ -262,10 +262,10 @@ function sessionCard(state: WahaSessionState | null | undefined): string {
 		session?.status === 'WORKING' ||
 		state.health?.session?.status === 'WORKING';
 	const qr = session?.qr && session.qr.length ? session.qr : null;
-	const name = escapeHtml(session?.name ?? 'default');
+	const name = escapeText(session?.name ?? 'default');
 	const statusLabel = working
 		? 'WORKING'
-		: escapeHtml(session?.status ?? 'parada');
+		: escapeText(session?.status ?? 'parada');
 	const ch = badge(statusLabel);
 	const qrArea = qr ? qrHtml(qr) : pairingHint(session?.status);
 	return `<div class="card" style="padding:16px 18px;margin-top:16px;">
@@ -305,7 +305,7 @@ function pairingHint(status: string | undefined): string {
 }
 
 function qrHtml(qr: string): string {
-	// `src` e' contexto de atributo: aspas nao podem passar. escapeHtml
+	// `src` e' contexto de atributo: aspas nao podem passar. escapeAtrib
 	// (textContent->innerHTML) escapa & < > mas NAO " nem ', entao o helper
 	// errado aqui permitia fechar o atributo e injetar markup.
 	const safe = escapeAtrib(qr);
@@ -355,7 +355,7 @@ function conversationSelect(
 function optHtml(o: { value: string; label: string }): string {
 	return (
 		`<option value="${escapeAtrib(o.value)}">` +
-		`${escapeHtml(o.label)}</option>`
+		`${escapeText(o.label)}</option>`
 	);
 }
 

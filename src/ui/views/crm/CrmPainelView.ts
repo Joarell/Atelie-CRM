@@ -3,7 +3,7 @@ import {
 	formatPriceCents,
 	upcomingEvents as upcomingEventsOf
 } from '../../../domain/crmMath';
-import { todayISO, escapeHtml } from '../../../domain/format';
+import { todayISO, escapeText } from '../../../domain/format';
 import { autoRerender } from '../../reactive';
 import { section, kpiCard } from './crmUi';
 
@@ -88,8 +88,8 @@ function emptyInbox(): string {
 }
 
 function convRow(item: PainelItem): string {
-	const name = escapeHtml(item.contact?.name ?? 'Contato');
-	const text = escapeHtml(item.lastMessage?.text ?? '');
+	const name = escapeText(item.contact?.name ?? 'Contato');
+	const text = escapeText(item.lastMessage?.text ?? '');
 	const time = shortTime(item.conversation.lastMessageAt);
 	return (
 		`<a class="calc-row" href="#/inbox">
@@ -118,8 +118,8 @@ function eventRow(
 	ctx: AppContext,
 	e: PainelEvent
 ): string {
-	const title = escapeHtml(e.title);
-	const name = escapeHtml(ctx.contacts.getById(e.contactId)?.name ?? '');
+	const title = escapeText(e.title);
+	const name = escapeText(ctx.contacts.getById(e.contactId)?.name ?? '');
 	const time = dayTime(e.startsAt);
 	return (
 		`<div class="calc-row">` +

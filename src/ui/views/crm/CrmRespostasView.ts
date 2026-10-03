@@ -1,6 +1,6 @@
 import type { AppContext } from '../../../state/AppContext';
 import type { QuickReply } from '../../../domain/crm';
-import { escapeHtml, uid } from '../../../domain/format';
+import { escapeText, uid } from '../../../domain/format';
 import { renderCrudTable, type TableColumn } from '../../CrudTable';
 import { openModal, closeModal } from '../../Modal';
 import { showToast } from '../../Toast';
@@ -47,18 +47,18 @@ function tableHtml(ctx: AppContext): string {
 
 function columns(): TableColumn<QuickReply>[] {
 	return [
-		{ header: 'Título', render: (r) => escapeHtml(r.title) },
+		{ header: 'Título', render: (r) => escapeText(r.title) },
 		{ header: 'Atalho', render: shortcutCell },
 		{ header: 'Mensagem', render: bodyCell }
 	];
 }
 
 function shortcutCell(r: QuickReply): string {
-	return `<code class="shortcut">/${escapeHtml(r.shortcut)}</code>`;
+	return `<code class="shortcut">/${escapeText(r.shortcut)}</code>`;
 }
 
 function bodyCell(r: QuickReply): string {
-	return `<span class="soft">${escapeHtml(r.body)}</span>`;
+	return `<span class="soft">${escapeText(r.body)}</span>`;
 }
 
 function editBtn(id: string): string {
@@ -115,7 +115,7 @@ function messageField(body: string): string {
 	return (
 		`<div class="field"><label class="field-label">Mensagem</label>` +
 		`<textarea class="input" name="body" rows="4" required>` +
-		`${escapeHtml(body)}</textarea></div>`
+		`${escapeText(body)}</textarea></div>`
 	);
 }
 

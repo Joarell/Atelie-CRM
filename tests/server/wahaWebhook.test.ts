@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   authenticateWahaWebhook,
   handleWahaWebhook,
@@ -43,12 +44,16 @@ describe('readWahaWebhookConfig refuses weak secrets', () => {
       readWahaWebhookConfig({
         WAHA_HMAC_SECRET: 'gere-um-segredo-por-ambiente-openssl-rand-hex-32'
       })
-    ).toEqual({ hmacSecret: null, requireSignature: false });
+    ).toEqual({
+      hmacSecret: null,
+      requireSignature: false,
+      allowUnsigned: false
+    });
   });
 
   it('rejects a short secret (< 32 bytes)', () => {
     expect(readWahaWebhookConfig({ WAHA_HMAC_SECRET: 's3cret' }))
-      .toEqual({ hmacSecret: null, requireSignature: false });
+      .toEqual({ hmacSecret: null, requireSignature: false, allowUnsigned: false });
   });
 
   it('rejects common placeholders regardless of case/padding', () => {
@@ -62,7 +67,7 @@ describe('readWahaWebhookConfig refuses weak secrets', () => {
     const signature = await sign(BODY, SECRET);
     const ok = await authenticateWahaWebhook(
       request(BODY, signature),
-      { hmacSecret: null, requireSignature: false }
+      { hmacSecret: null, requireSignature: false, allowUnsigned: false }
     );
     expect(ok.ok).toBe(false);
     expect(ok.signatureVerified).toBe(false);
@@ -71,35 +76,107 @@ describe('readWahaWebhookConfig refuses weak secrets', () => {
 
 describe('readWahaWebhookConfig / authenticateWahaWebhook', () => {
   it('reads the secret and strict mode off by default', () => {
-    expect(readWahaWebhookConfig({})).toEqual({ hmacSecret: null, requireSignature: false });
-    expect(readWahaWebhookConfig({ WAHA_HMAC_SECRET: SECRET })).toEqual({ hmacSecret: SECRET, requireSignature: false });
+    expect(readWahaWebhookConfig({})).toEqual({
+      hmacSecret: null,
+      requireSignature: false,
+      allowUnsigned: false
+    });
+    expect(readWahaWebhookConfig({ WAHA_HMAC_SECRET: SECRET })).toEqual({
+      hmacSecret: SECRET,
+      requireSignature: false,
+      allowUnsigned: false
+    });
     expect(readWahaWebhookConfig({ WAHA_HMAC_SECRET: SECRET, WAHA_WEBHOOK_REQUIRE_SIGNATURE: 'true' })).toEqual({
       hmacSecret: SECRET,
-      requireSignature: true
+      requireSignature: true,
+      allowUnsigned: false
     });
   });
 
-  it('accepts unsigned events when no secret is set (open setup)', async () => {
-    const auth = await authenticateWahaWebhook(request(BODY), { hmacSecret: null, requireSignature: false });
+  it('@spec:AC-367 treats a usable secret as the trigger to require signatures', async () => {
+    const auth = await authenticateWahaWebhook(request(BODY), {
+      hmacSecret: SECRET,
+      requireSignature: true,
+      allowUnsigned: false
+    });
+    expect(auth).toEqual({
+      ok: false,
+      reason: 'missing_signature',
+      signatureVerified: false
+    });
+  });
+
+  it('@spec:AC-368 refuses unsigned events when no usable secret exists', async () => {
+    const auth = await authenticateWahaWebhook(request(BODY), {
+      hmacSecret: null,
+      requireSignature: true,
+      allowUnsigned: false
+    });
+    expect(auth).toEqual({
+      ok: false,
+      reason: 'secret_required',
+      signatureVerified: false
+    });
+  });
+
+  it('@spec:AC-368 fails closed even when strict mode was left off', async () => {
+    const auth = await authenticateWahaWebhook(request(BODY), {
+      hmacSecret: null,
+      requireSignature: false,
+      allowUnsigned: false
+    });
+    expect(auth.ok).toBe(false);
+    expect(auth.reason).toBe('secret_required');
+  });
+
+  it('@spec:AC-369 accepts unsigned events only via the explicit escape hatch', async () => {
+    const auth = await authenticateWahaWebhook(request(BODY), {
+      hmacSecret: null,
+      requireSignature: false,
+      allowUnsigned: true
+    });
     expect(auth).toEqual({ ok: true, reason: 'ok', signatureVerified: false });
   });
 
+  it('@spec:AC-369 still verifies a real signature under the escape hatch', async () => {
+    const good = await sign(BODY, SECRET);
+    const auth = await authenticateWahaWebhook(request(BODY, good), {
+      hmacSecret: SECRET,
+      requireSignature: true,
+      allowUnsigned: true
+    });
+    expect(auth).toEqual({ ok: true, reason: 'ok', signatureVerified: true });
+  });
+
+  it('@spec:AC-371 keeps refusing a present-but-wrong signature', async () => {
+    const auth = await authenticateWahaWebhook(request(BODY, 'deadbeef'), {
+      hmacSecret: SECRET,
+      requireSignature: true,
+      allowUnsigned: false
+    });
+    expect(auth).toEqual({
+      ok: false,
+      reason: 'bad_signature',
+      signatureVerified: false
+    });
+  });
+
   it('refuses unsigned events in strict mode', async () => {
-    const auth = await authenticateWahaWebhook(request(BODY), { hmacSecret: 's', requireSignature: true });
+    const auth = await authenticateWahaWebhook(request(BODY), { hmacSecret: 's', requireSignature: true, allowUnsigned: false });
     expect(auth).toEqual({ ok: false, reason: 'missing_signature', signatureVerified: false });
   });
 
   it('accepts a correct signature and rejects a wrong one', async () => {
     const good = await sign(BODY, SECRET);
-    const ok = await authenticateWahaWebhook(request(BODY, good), { hmacSecret: SECRET, requireSignature: true });
+    const ok = await authenticateWahaWebhook(request(BODY, good), { hmacSecret: SECRET, requireSignature: true, allowUnsigned: false });
     expect(ok).toEqual({ ok: true, reason: 'ok', signatureVerified: true });
 
-    const bad = await authenticateWahaWebhook(request(BODY, 'deadbeef'), { hmacSecret: SECRET, requireSignature: true });
+    const bad = await authenticateWahaWebhook(request(BODY, 'deadbeef'), { hmacSecret: SECRET, requireSignature: true, allowUnsigned: false });
     expect(bad).toEqual({ ok: false, reason: 'bad_signature', signatureVerified: false });
   });
 
   it('rejects a signature even when no secret is configured', async () => {
-    const auth = await authenticateWahaWebhook(request(BODY, 'anything'), { hmacSecret: null, requireSignature: true });
+    const auth = await authenticateWahaWebhook(request(BODY, 'anything'), { hmacSecret: null, requireSignature: true, allowUnsigned: false });
     expect(auth).toEqual({ ok: false, reason: 'bad_signature', signatureVerified: false });
   });
 
@@ -108,6 +185,44 @@ describe('readWahaWebhookConfig / authenticateWahaWebhook', () => {
     expect(await verifyWahaHmac(BODY, signature.toUpperCase(), SECRET)).toBe(true);
     expect(await verifyWahaHmac(BODY + 'x', signature, SECRET)).toBe(false);
     expect(await verifyWahaHmac(BODY, signature, 'other')).toBe(false);
+  });
+});
+
+describe('the environment template ships the secure default', () => {
+  const template = readFileSync('.dev.vars.example', 'utf8');
+
+  function templateValue(key: string): string {
+    const match = new RegExp(`^${key}="(.*)"$`, 'm').exec(template);
+    return match?.[1] ?? '';
+  }
+
+  it('@spec:AC-370 requires the signature out of the box', () => {
+    expect(templateValue('WAHA_WEBHOOK_REQUIRE_SIGNATURE')).toBe('true');
+  });
+
+  it('@spec:AC-370 keeps the unsigned escape hatch off out of the box', () => {
+    expect(templateValue('WAHA_WEBHOOK_ALLOW_UNSIGNED')).toBe('false');
+  });
+
+  it('@spec:AC-370 ships no secret value in the template', () => {
+    expect(templateValue('WAHA_HMAC_SECRET')).toBe('');
+  });
+
+  it('@spec:AC-370 template config refuses an unsigned event', async () => {
+    const config = readWahaWebhookConfig({
+      WAHA_HMAC_SECRET: templateValue('WAHA_HMAC_SECRET'),
+      WAHA_WEBHOOK_REQUIRE_SIGNATURE: templateValue(
+        'WAHA_WEBHOOK_REQUIRE_SIGNATURE'
+      ),
+      WAHA_WEBHOOK_ALLOW_UNSIGNED: templateValue('WAHA_WEBHOOK_ALLOW_UNSIGNED')
+    });
+    const auth = await authenticateWahaWebhook(request(BODY), config);
+    expect(auth.ok).toBe(false);
+    expect(auth.reason).toBe('secret_required');
+  });
+
+  it('@spec:AC-369 documents that the escape hatch is local-only', () => {
+    expect(template).toContain('NUNCA em producao');
   });
 });
 

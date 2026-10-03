@@ -1,6 +1,6 @@
 import type { AppContext } from '../../../state/AppContext';
 import type { Deal, Pipeline, Stage, Contact } from '../../../domain/crm';
-import { escapeHtml, escapeAtrib } from '../../../domain/format';
+import { escapeText, escapeAtrib } from '../../../domain/format';
 import { formatPriceCents } from '../../../domain/crmMath';
 import { openModal, closeModal } from '../../Modal';
 import { showToast } from '../../Toast';
@@ -98,11 +98,11 @@ function noRiskBlock(): string {
 }
 
 function riskItem(ctx: AppContext, item: RiskDeal): string {
-	const subName = item.contact ? escapeHtml(item.contact.name) : '—';
+	const subName = item.contact ? escapeText(item.contact.name) : '—';
 	const sub = `${subName} · ${formatPriceCents(item.deal.valueCents)}`;
 	return `
 			<div class="risk-item" data-deal-id="${item.deal.id}">
-				<div class="risk-title">${escapeHtml(item.deal.title)}</div>
+				<div class="risk-title">${escapeText(item.deal.title)}</div>
 				<div class="risk-sub">${sub}</div>
 			</div>`;
 }
@@ -110,7 +110,7 @@ function riskItem(ctx: AppContext, item: RiskDeal): string {
 function renderColumn(ctx: AppContext, stage: Stage): string {
 	const deals = ctx.crm.dealsInStage(stage.id);
 	const total = ctx.crm.stageTotal(stage.id);
-	const name = escapeHtml(stage.name);
+	const name = escapeText(stage.name);
 	const meta = `${deals.length} · ${formatPriceCents(total)}`;
 	const cards = deals
 		.map((deal) => renderCard(ctx, deal, stage))
@@ -125,9 +125,9 @@ function renderColumn(ctx: AppContext, stage: Stage): string {
 
 function renderCard(ctx: AppContext, deal: Deal, current: Stage): string {
 	const contact = ctx.contacts.getById(deal.contactId);
-	const contactName = contact ? escapeHtml(contact.name) : '—';
+	const contactName = contact ? escapeText(contact.name) : '—';
 	return `<div class="deal-card" data-deal-id="${deal.id}">
-		<div class="deal-title">${escapeHtml(deal.title)}</div>
+		<div class="deal-title">${escapeText(deal.title)}</div>
 		<div class="deal-sub">${contactName}</div>
 		<div class="deal-value">${formatPriceCents(deal.valueCents)}</div>
 		<div class="deal-actions">
@@ -161,7 +161,7 @@ function optionTag(o: SelectOption, selected: string): string {
 	const sel = o.value === selected ? ' selected' : '';
 	return (
 		`<option value="${escapeAtrib(o.value)}"${sel}>` +
-		`${escapeHtml(o.label)}</option>`
+		`${escapeText(o.label)}</option>`
 	);
 }
 

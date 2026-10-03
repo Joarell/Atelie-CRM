@@ -5,5 +5,6 @@ import {
 } from '../../../../server/tables';
 export const { PUT, DELETE } = createItemRoutes(
 	QUICK_REPLIES_TABLE,
-	QUICK_REPLIES_SHAPE
+	QUICK_REPLIES_SHAPE,
+	{ update: 'manager', delete: 'manager' }
 );
