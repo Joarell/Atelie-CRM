@@ -186,32 +186,57 @@ function updateItem(items: any[], index: number, patch: any): void {
 
 async function handleSubmit(event: Event, ctx: AppContext, items: any[], existing?: any, draft?: any): Promise<void> {
 	event.preventDefault();
-	const values = formValues(event.target as HTMLFormElement);
-	const purchaseDraft = buildPurchaseDraft(values, items, ctx);
-	if (purchaseDraft.items.length === 0) {
+	const form = event.target as HTMLFormElement;
+	const values = formValues(form);
+	
+	// Read item values directly from DOM (more reliable than closure items array)
+	const itemRows = form.querySelectorAll('[data-row]');
+	const draftItems: any[] = [];
+	for (const row of itemRows) {
+		const ingredientSelect = row.querySelector('[data-ingredient]') as HTMLSelectElement;
+		const qtyInput = row.querySelector('[data-qty]') as HTMLInputElement;
+		const packageSizeInput = row.querySelector('[data-packageSize]') as HTMLInputElement;
+		const packagePriceInput = row.querySelector('[data-packagePrice]') as HTMLInputElement;
+		
+		const ingredientId = ingredientSelect?.value;
+		const qty = Number(qtyInput?.value);
+		const packageSize = Number(packageSizeInput?.value);
+		const packagePrice = Number(packagePriceInput?.value);
+		
+		if (ingredientId && qty > 0 && packageSize > 0 && packagePrice > 0) {
+			draftItems.push({
+				ingredientId,
+				ingredientName: ctx.ingredients.getById(ingredientId)?.name || '',
+				qty,
+				packageSize,
+				packagePrice
+			});
+		}
+	}
+	
+	// Validate date not in future
+	const today = new Date().toISOString().slice(0, 10);
+	if (values.date > today) {
+		showToast('A data da compra não pode ser futura');
+		return;
+	}
+	
+	if (draftItems.length === 0) {
 		showToast('Adicione pelo menos um item válido');
 		return;
 	}
-	await savePurchase(ctx, existing, purchaseDraft);
-	closeModal();
-	showToast('Compra salva');
-}
-
-function buildPurchaseDraft(values: any, items: any[], ctx: AppContext): any {
-	const validItems = items.filter((i) => i.ingredientId && i.qty > 0 && i.packageSize > 0 && i.packagePrice > 0);
-	return {
+	
+	const purchaseDraft = {
 		supplier: values.supplier,
 		invoice: values.invoice,
 		date: values.date,
-		items: validItems.map((i) => ({
-			ingredientId: i.ingredientId,
-			ingredientName: ctx.ingredients.getById(i.ingredientId)?.name || '',
-			qty: i.qty,
-			packageSize: i.packageSize,
-			packagePrice: i.packagePrice
-		})),
+		items: draftItems,
 		notes: values.notes || ''
 	};
+	
+	await savePurchase(ctx, existing, purchaseDraft);
+	closeModal();
+	showToast('Compra salva');
 }
 
 async function savePurchase(ctx: AppContext, existing: any, draft: any): Promise<void> {
