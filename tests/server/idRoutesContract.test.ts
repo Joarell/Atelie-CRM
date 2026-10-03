@@ -31,6 +31,7 @@ const EXPECTED = [
   '/api/ingredients/[id]',
   '/api/orders/[id]',
   '/api/products/[id]',
+  '/api/purchases/[id]',
   '/api/users/[id]'
 ];
 
@@ -66,8 +67,8 @@ describe('id route inventory', () => {
     expect(idRoutesOnDisk()).toEqual(EXPECTED);
   });
 
-  it('@spec:AC-140 the reviewed list is exactly the 20 routes', () => {
-    expect(EXPECTED).toHaveLength(20);
+  it('@spec:AC-140 the reviewed list is exactly the 21 routes', () => {
+    expect(EXPECTED).toHaveLength(21);
   });
 
   it('@spec:AC-140 no listed route is missing from the code', () => {
