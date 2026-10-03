@@ -79,9 +79,19 @@ export interface ProductPricing {
 	markupValue: number;
 	suggestedPrice: number;
 	unitPrice: number;
+	// CMV (custo da mercadoria vendida) is the material cost of ONE unit:
+	// directCost spread over the yield. CPV (custo do produto vendido) adds
+	// the production labour. Neither carries fixed or variable expenses.
+	cmvUnit: number;
+	cpvUnit: number;
 	profit: number;
 	profitPercent: number;
 }
+
+type BatchParts = Omit<
+	ProductPricing,
+	'unitPrice' | 'cmvUnit' | 'cpvUnit' | 'profit' | 'profitPercent'
+>;
 
 // Everything needed to price a product now lives on the product itself
 // (labor, fixed expenses, variable %, markup %) — no external settings
@@ -113,15 +123,19 @@ export function calculateProductPricing(
 }
 
 function buildPricingResult(
-	parts: Omit<ProductPricing, 'unitPrice' | 'profit' | 'profitPercent'>,
+	parts: BatchParts,
 	yieldUnits: number
 ): ProductPricing {
-	const unitPrice = yieldUnits
-		? parts.suggestedPrice / yieldUnits
-		: parts.suggestedPrice;
+	const unitPrice = perUnit(parts.suggestedPrice, yieldUnits);
+	const cmvUnit = perUnit(parts.directCost, yieldUnits);
+	const cpvUnit = perUnit(parts.directCost + parts.laborCost, yieldUnits);
 	const profit = parts.suggestedPrice - parts.totalCost;
 	const profitPercent = parts.suggestedPrice
 		? (parts.markupValue / parts.suggestedPrice) * 100
 		: 0;
-	return { ...parts, unitPrice, profit, profitPercent };
+	return { ...parts, unitPrice, cmvUnit, cpvUnit, profit, profitPercent };
+}
+
+function perUnit(batchCost: number, yieldUnits: number): number {
+	return yieldUnits ? batchCost / yieldUnits : batchCost;
 }
