@@ -184,18 +184,21 @@ describe('PurchasesView — registro e listagem de compras', () => {
 		const root = document.createElement('div');
 		const unsubscribe = renderPurchasesView(root, ctx);
 
-		// Usa o mês atual e o mês anterior para o teste
-		const currentMonth = new Date().toISOString().slice(0, 7);
-		const prevMonth = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 7);
+		// Usa datas garantidamente no passado para evitar validação de data futura
+		const today = new Date();
+		const currentMonth = today.toISOString().slice(0, 7);
+		const currentDay = today.getDate().toString().padStart(2, '0');
+		const prevMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+		const prevMonth = prevMonthDate.toISOString().slice(0, 7);
 		
-		// Registra compras no mês atual e mês anterior via service
+		// Registra compras no mês atual (dias passados) e mês anterior via service
 		await ctx.purchasesService.register({
-			supplier: 'A', invoice: '1', date: `${currentMonth}-05`,
+			supplier: 'A', invoice: '1', date: `${currentMonth}-${(today.getDate() - 2).toString().padStart(2, '0')}`,
 			items: [{ ingredientId: 'flour', ingredientName: 'Farinha', qty: 100, packageSize: 1000, packagePrice: 10 }],
 			notes: ''
 		});
 		await ctx.purchasesService.register({
-			supplier: 'B', invoice: '2', date: `${currentMonth}-15`,
+			supplier: 'B', invoice: '2', date: `${currentMonth}-${(today.getDate() - 1).toString().padStart(2, '0')}`,
 			items: [{ ingredientId: 'sugar', ingredientName: 'Açúcar', qty: 100, packageSize: 1000, packagePrice: 8 }],
 			notes: ''
 		});
