@@ -19,7 +19,7 @@
     "db:seed:local": "wrangler d1 execute atelie_erp_db --local --file=./migrations/0002_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0004_crm_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0006_crm_seed_features.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0008_order_history_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0010_inbox_orders_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0011_inbox_orders_chart_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0012_inbox_month_chart_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0013_abc_curve_seed.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0021_seed_admin_flag.sql && wrangler d1 execute atelie_erp_db --local --file=./migrations/0025_purchases_seed.sql",
     "db:seed:remote": "bun run scripts/generate-admin-seed.ts && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0002_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0004_crm_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0006_crm_seed_features.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0008_order_history_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0010_inbox_orders_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0011_inbox_orders_chart_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0012_inbox_month_chart_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0013_abc_curve_seed.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0021_seed_admin_flag.sql && wrangler d1 execute atelie_erp_db --remote --file=./migrations/0025_purchases_seed.sql",
     "admin:bootstrap": "bun run scripts/bootstrap-admin.ts",
-    "waha:online": "vitest run tests/server/wahaOnline.test.ts",
+    "waha:online": "vitest run tests/server/wahaOnline.test.ts tests/server/whatsappSessionRoute.online.test.ts",
     "waha:egress": "bun run scripts/waha-smoke.ts",
     "waha:up": "podman-compose -f waha/docker-compose.waha.yml --env-file waha/.env up -d",
     "waha:down": "podman-compose -f waha/docker-compose.waha.yml --env-file waha/.env down",
@@ -35,7 +35,6 @@
     "vite": "^8.3.2"
   },
   "devDependencies": {
-    "eventsource": "^5.1.2",
     "happy-dom": "^20.14.5",
     "typescript": "~6.0.3",
     "vitest": "^5.0.3",

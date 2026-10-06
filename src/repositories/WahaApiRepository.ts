@@ -3,11 +3,12 @@ import type { WahaHealth, WahaSessionSnapshot } from "../domain/whatsapp";
 import type { WahaWebhookReadiness } from "../domain/wahaWebhookConfig";
 
 // Non-collection repository for the WAHA connection surface: session
-// lifecycle (status/QR, start, stop) and the outbound send. The lifecycle
-// routes are intentionally public on the server so the pair QR is reachable
-// before login; only the send still requires an app session, so it keeps the
-// bearer token — supplied through a tiny callback — and maps a 401 to a
-// dedicated auth signal instead of blaming the engine.
+// lifecycle (status/QR, start, stop) and the outbound send. All of it sits
+// BEHIND the middleware session guard — AC-119 pulled the session route out of
+// `PUBLIC_PATHS`, and AC-127 blocks the whole API until a first-access
+// password rotation — so the pairing QR needs an admin session by design.
+// Only the send maps its 401 to a dedicated auth signal instead of blaming
+// the engine, and keeps the bearer token — supplied through a tiny callback.
 export interface WahaSessionState {
 	configured: boolean;
 	health: WahaHealth | null;
@@ -118,5 +119,10 @@ async function messageFrom(response: Response): Promise<string> {
 };
 
 function webhookNotConfigured(): WahaWebhookReadiness {
-	return { configured: false, registered: false };
+	return {
+		configured: false,
+		registered: false,
+		acceptable: false,
+		refusal: null,
+	};
 }

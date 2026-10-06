@@ -43,6 +43,43 @@ export const WAHA_DETAIL_CREDENTIAL_REFUSED =
 export const WAHA_DETAIL_SESSION_NOT_FOUND = "sessao_inexistente";
 export const WAHA_DETAIL_SESSION_NOT_WORKING = "sessao_sem_conexao";
 
+// Why a load of the WhatsApp snapshot failed. The WhatsApp view used to treat
+// every failure as the same thing and print "WAHA inacessível", so a 403 from
+// the auth middleware — a seeded admin that still has to rotate its password,
+// with a perfectly healthy engine behind it — was reported as a dead motor.
+// These reasons mean "the caller may not read this", never "the motor is
+// unreachable", so the UI can tell the operator to fix the login instead.
+// `forbidden` is split out because re-logging in and rotating a password can
+// NEVER fix it: the session is valid, the role simply may not manage WhatsApp.
+export type WahaLoadFailure =
+	| "inaccessible"
+	| "unauthenticated"
+	| "forbidden";
+
+// Must stay in sync with the refusal codes the app emits elsewhere:
+// `requireRole` answers `papel_insuficiente` (403) to any logged-in non-admin
+// on this admin-only route, and the send route answers `nao_autorizado` (403).
+// Both were missing here, so a healthy engine behind a valid session was
+// reported as "WAHA inacessível". Lowercased: the match normalizes.
+const WAHA_AUTH_FAILURE_REASONS = [
+	"troca_de_senha_obrigatoria",
+	"nao_autenticado",
+	"credenciais_invalidas",
+	"waha_autenticacao",
+	"error 401",
+	"error 403"
+];
+
+const WAHA_ROLE_FAILURE_REASONS = ["papel_insuficiente", "nao_autorizado"];
+
+export function classifyWahaLoadFailure(reason: string): WahaLoadFailure {
+	const normalized = reason.trim().toLowerCase();
+	if (WAHA_ROLE_FAILURE_REASONS.includes(normalized)) return "forbidden";
+	return WAHA_AUTH_FAILURE_REASONS.includes(normalized)
+		? "unauthenticated"
+		: "inaccessible";
+}
+
 export interface WahaServerIdentity {
 	version: string | null;
 	engine: string | null;

@@ -41,7 +41,10 @@ describe('WahaApiRepository', () => {
     stubFetch(() => jsonResponse({ configured: false }, 503));
     await expect(repo.session()).resolves.toEqual({
       configured: false, health: null, session: null,
-      webhook: { configured: false, registered: false }
+      webhook: {
+        configured: false, registered: false,
+        acceptable: false, refusal: null
+      }
     });
   });
 
@@ -51,11 +54,15 @@ describe('WahaApiRepository', () => {
         configured: true,
         health: { healthy: true },
         session: { name: 'default', status: 'WORKING' },
-        webhook: { configured: true, registered: true }
+        webhook: {
+          configured: true, registered: true,
+          acceptable: true, refusal: null
+        }
       })
     );
     expect((await repo.session()).webhook).toEqual({
-      configured: true, registered: true
+      configured: true, registered: true,
+      acceptable: true, refusal: null
     });
   });
 

@@ -12,6 +12,7 @@ import { getDb } from '../../../server/context';
 import { requireRole } from '../../../server/authz';
 import { json } from '../../../server/http';
 import { readWahaConfig, WahaClient, WahaError } from '../../../server/waha';
+import { readWahaWebhookConfig } from '../../../server/wahaWebhook';
 import { mirrorWahaSessionState } from '../../../server/wahaIngest';
 import type { Role } from '../../../domain/crm';
 
@@ -35,16 +36,29 @@ function wahaWebhooksFromEnv(source: unknown): WahaEngineWebhook[] | undefined {
 // Work (status WORKING) is not enough for a message to reach the app: the
 // engine must also hold the app's webhook. Replies carry `webhook` readiness
 // so the view can flag a session that runs but delivers nothing — the exact
-// failure here when `WHATSAPP_HOOK_URL` is absent from the env.
+// failure here when `WHATSAPP_HOOK_URL` is absent from the env. Readiness also
+// carries whether the receiver will take a delivery at all, because a session
+// can be perfectly registered and still be refused on every POST.
 function wahaWebhookReadiness(env: unknown, webhooks: WahaEngineWebhook[]) {
-	return webhookReadiness(readWahaWebhookSettings(env), webhooks);
+	const receiver = readWahaWebhookConfig(env);
+	const accepts = receiver.hmacSecret !== null || receiver.allowUnsigned;
+	return webhookReadiness(
+		readWahaWebhookSettings(env),
+		webhooks,
+		accepts
+	);
 }
 
 const WAHA_NOT_CONFIGURED_BODY = {
 	configured: false,
 	health: null,
 	session: null,
-	webhook: { configured: false, registered: false }
+	webhook: {
+		configured: false,
+		registered: false,
+		acceptable: false,
+		refusal: null
+	}
 };
 
 export const GET: APIRoute = async (context) => {
@@ -56,11 +70,30 @@ export const GET: APIRoute = async (context) => {
 
 	const client = new WahaClient(config);
 	const health = await client.checkConnection();
-	const session = await sessionWithQr(client, config.session, health.session);
+	// Auto-heal FAILED sessions on GET so the menu shows a QR without clicking Start
+	let session: WahaSessionSnapshot;
+	if (health.session?.status === 'FAILED') {
+		try {
+			const started = await startWithFreshQr(
+				client,
+				config.session,
+				wahaWebhooksFromEnv(env)
+			);
+			session = await syncWebhook(client, config.session, started);
+		} catch (error) {
+			session = await sessionWithQr(
+				client,
+				config.session,
+				health.session
+			);
+		}
+	} else {
+		session = await sessionWithQr(client, config.session, health.session);
+	}
 	await mirrorWahaSessionState(db, session.name, session.status);
 	return json({
 		configured: true,
-		health,
+		health: health.session?.status === 'FAILED' ? await client.checkConnection() : health,
 		session,
 		webhook: wahaWebhookReadiness(env, session.webhooks ?? [])
 	});
@@ -143,18 +176,37 @@ async function attachQr(
 
 const QR_WAIT_ATTEMPTS = 12;
 const QR_WAIT_INTERVAL_MS = 250;
+// Wall-clock ceiling for the WHOLE wait, on top of the attempt cap: an attempt
+// costs two engine round-trips and each is bounded only by the 15s client
+// timeout, while NOWEB's `GET /auth/qr` itself blocks ~10s server-side
+// (`SessionManagerCore.waitUntilStatus`) and answers 422 until the session is
+// in SCAN_QR_CODE. The attempt cap alone therefore admitted ~12 x (15s + 15s +
+// 0.25s) ≈ 6 minutes of hanging for one tap. 5s is ~5x the ~1s a live engine
+// takes to reach SCAN_QR_CODE (so the happy path never pays for it) and caps
+// the loop in seconds; the in-flight round-trip is left to the client timeout,
+// which is the ceiling that aborts an individual call.
+const QR_WAIT_BUDGET_MS = 5_000;
+
+// Gates the NEXT attempt only, and never the fallback read after the loop: a
+// QR that shows up on the last permitted round-trip must still reach the view.
+function budgetExpired(startedAt: number): boolean {
+	return Date.now() - startedAt >= QR_WAIT_BUDGET_MS;
+}
 
 // NOWEB answers /start while still connecting (STARTING); the QR only exists
-// once the engine reaches SCAN_QR_CODE. Wait (bounded) so a single tap on
-// "Iniciar sessão" returns the QR, not an empty STARTING card.
+// once the engine reaches SCAN_QR_CODE. Wait — bounded by BOTH the attempt cap
+// and a wall-clock budget — so a single tap on "Iniciar sessão" returns the QR,
+// not an empty STARTING card, and can never hang for minutes.
 async function waitForScanQr(
 	client: WahaClient,
 	snapshot: WahaSessionSnapshot
 ): Promise<WahaSessionSnapshot> {
+	const startedAt = Date.now();
 	let current = snapshot;
 	const pollable =
 		current.status === 'STARTING' || current.status === 'SCAN_QR_CODE';
 	for (let i = 0; pollable && i < QR_WAIT_ATTEMPTS; i++) {
+		if (budgetExpired(startedAt)) break;
 		const withQr = await attachQr(client, current);
 		if (withQr.qr) return withQr;
 		await sleep(QR_WAIT_INTERVAL_MS);
@@ -245,7 +297,11 @@ async function sessionWithQr(
 	} catch {
 		session = { name: fallback.name, status: fallback.status };
 	}
-	return attachQr(client, session);
+	// Same bounded wait POST uses: NOWEB stays STARTING for a moment before it
+	// reaches SCAN_QR_CODE, and a single-shot read returned that STARTING
+	// snapshot with no QR — which made "Atualizar" wipe the QR that "Iniciar
+	// sessão" had just delivered (its follow-up refresh overwrote it).
+	return waitForScanQr(client, session);
 }
 
 function safeWahaError(error: unknown): string {

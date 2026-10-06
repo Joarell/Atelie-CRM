@@ -62,10 +62,13 @@ describe('LoginView (#/login)', () => {
     const root = mount(ctx);
     qs<HTMLInputElement>('input[name=email]', root).value = 'a@b.c';
     qs<HTMLInputElement>('input[name=password]', root).value = 'segredo';
-    qs('form', root).dispatchEvent(
-      new Event('submit', { bubbles: true, cancelable: true })
-    );
+    const event = new Event('submit', { bubbles: true, cancelable: true });
+    qs('form', root).dispatchEvent(event);
     await flush();
+    // `defaultPrevented` e o que impede o submit nativo: sem ele o browser
+    // navega, e a pagina recarregada depois disso abre o aviso de
+    // resubmissao de formulario do Chrome.
+    expect(event.defaultPrevented).toBe(true);
     expect(login).toHaveBeenCalledWith('a@b.c', 'segredo');
     expect(window.location.hash).toBe('#/');
   });

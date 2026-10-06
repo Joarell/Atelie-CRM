@@ -22,7 +22,8 @@ import { renderCrmAtividadesView } from "./ui/views/crm/CrmAtividadesView";
 import { renderCrmEtiquetasView } from "./ui/views/crm/CrmEtiquetasView";
 import { renderCrmWhatsAppView } from "./ui/views/crm/CrmWhatsAppView";
 import { renderLoginView } from "./ui/views/LoginView";
-import { qs } from "./ui/dom";
+import { blockNativeSubmit, qs } from "./ui/dom";
+import { clearToast } from "./ui/Toast";
 import { initMode, mountThemeToggle } from "./ui/theme";
 import {
 	mountFreshness, menuKeyFor, setActiveMenu, markDataChanged
@@ -76,6 +77,7 @@ async function boot(): Promise<void> {
 	// reload, so a page coming up without BaseLayout's inline script still
 	// honors what the user picked. Idempotent when the script already ran.
 	initMode();
+	blockNativeSubmit();
 	const app = qs<HTMLElement>("#app");
 	app.innerHTML = loadingHtml();
 	const ctx = new AppContext();
@@ -152,6 +154,7 @@ function buildActivator(
 	const activate = (path: string): void => {
 		const resolved = legacyResolve(path);
 		disposeCurrentView?.();
+		clearToast();
 		renderNav(app, ctx, resolved);
 		qs("#page-title").textContent = titleFor(resolved);
 		setActiveMenu(menuKeyFor(resolved));

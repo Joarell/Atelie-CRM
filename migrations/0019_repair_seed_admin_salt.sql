@@ -5,7 +5,8 @@
 -- 0004_crm_seed.sql gravava o hash de "admin123" com o sal fixo
 -- "deskcomm-seed-v1". O par (senha, sal) era um credencial de administrador
 -- reproduzivel por qualquer pessoa com o repositorio. O seed nao grava mais senha
--- (ver 0004_crm_seed.sql) e 0023_admin_bootstrap cria o primeiro admin, entao
--- aqui resta apenas garantir a coluna para as senhas escritas a partir de agora.
+-- (ver 0004_crm_seed.sql) e `npm run admin:bootstrap` cria o primeiro admin,
+-- entao aqui resta apenas garantir a coluna para as senhas escritas a partir de
+-- agora.
 
 ALTER TABLE users ADD COLUMN passwordSalt TEXT NOT NULL DEFAULT '';

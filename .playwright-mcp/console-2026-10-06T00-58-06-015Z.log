@@ -1,0 +1,231 @@
+[  259599ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:4322/#/whatsapp:0
+[  266327ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:4322/favicon.ico:0
+[  266436ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  266437ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  266470ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:2683
+[  266490ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:4322/@vite/client:0
+[  266491ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:4322/@id/astro/runtime/client/dev-toolbar/entrypoint.js:0
+[  266492ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:4322/src/styles/global.css:0
+[  266492ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:4322/home/joarell/atelie-erp(1)/src/pages/index.astro?astro&type=script&index=0&lang.ts:0
+[  266589ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:4322/icon-192.png:0
+[  266593ms] [WARNING] Error while trying to use the following icon from the Manifest: http://localhost:4322/icon-192.png (Download error or resource isn't a valid image) @ http://localhost:4322/#/whatsapp:0
+[  283636ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/whatsapp/session:0
+[  333900ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/:0
+[  333900ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/:0
+[  333904ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/:2683
+[  335283ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/components:0
+[  335294ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/ingredients:0
+[  335296ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/products:0
+[  335303ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/customers:0
+[  335304ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/stock-movements:0
+[  335306ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/orders:0
+[  335647ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/deals:0
+[  335705ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/contacts:0
+[  335757ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/pipelines:0
+[  335768ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/stages:0
+[  335842ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/users:0
+[  335872ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/settings:0
+[  336221ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/tasks:0
+[  336223ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/quick-replies:0
+[  336233ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/calendar-events:0
+[  336236ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/conversations:0
+[  336240ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/messages:0
+[  336285ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/catalog-products:0
+[  336716ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/conversation-notes:0
+[  336759ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/activities:0
+[  336768ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/tags:0
+[  336774ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/appointment-types:0
+[  351018ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  351018ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  351029ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:2683
+[  352283ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/ingredients:0
+[  352289ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/components:0
+[  352289ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/orders:0
+[  352296ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/stock-movements:0
+[  352305ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/products:0
+[  352319ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/customers:0
+[  352999ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/settings:0
+[  353011ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/stages:0
+[  353011ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/users:0
+[  353024ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/contacts:0
+[  353025ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/pipelines:0
+[  353253ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  353255ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  353264ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:2683
+[  354188ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/ingredients:0
+[  354188ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/stock-movements:0
+[  354192ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/products:0
+[  354192ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/components:0
+[  354202ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/customers:0
+[  354204ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/orders:0
+[  354636ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/settings:0
+[  354651ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/stages:0
+[  354652ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/users:0
+[  354659ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/contacts:0
+[  354660ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/pipelines:0
+[  354675ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/deals:0
+[  355254ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/tasks:0
+[  355264ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/quick-replies:0
+[  355276ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/calendar-events:0
+[  355281ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/messages:0
+[  355289ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/conversations:0
+[  355298ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/catalog-products:0
+[  355854ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/conversation-notes:0
+[  355865ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/activities:0
+[  355886ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/tags:0
+[  355905ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/appointment-types:0
+[  356334ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/whatsapp/session:0
+[  356390ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/events?since=1791248641933:0
+[  376585ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  376585ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  376598ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:2683
+[  377646ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/ingredients:0
+[  377650ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/components:0
+[  377657ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/customers:0
+[  377657ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/products:0
+[  377657ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/orders:0
+[  377664ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/stock-movements:0
+[  378063ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/settings:0
+[  378065ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/users:0
+[  378076ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/stages:0
+[  378076ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/contacts:0
+[  378077ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/pipelines:0
+[  378091ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/deals:0
+[  378577ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/tasks:0
+[  378589ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/quick-replies:0
+[  378598ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/calendar-events:0
+[  378598ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/messages:0
+[  378607ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/catalog-products:0
+[  378607ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/conversations:0
+[  378989ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/conversation-notes:0
+[  379003ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/activities:0
+[  379003ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/tags:0
+[  379060ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/appointment-types:0
+[  379366ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/whatsapp/session:0
+[  379382ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/events?since=1791248665086:0
+[  403071ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/whatsapp/session:0
+[  435871ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  435871ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  435878ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:2683
+[  487225ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  487225ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  487230ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:2683
+[  492921ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  492921ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  492927ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:2683
+[  538535ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  538535ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  538543ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:2683
+[  613867ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  613867ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  613878ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:2683
+[  625864ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  625864ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  625916ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:2683
+[  657319ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/login:0
+[  657320ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/login:0
+[  657333ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/login:2683
+[  658563ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/ingredients:0
+[  658571ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/components:0
+[  658632ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/products:0
+[  658641ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/customers:0
+[  658642ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/stock-movements:0
+[  658658ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/orders:0
+[  658966ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/settings:0
+[  659005ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/users:0
+[  659013ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/pipelines:0
+[  659020ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/contacts:0
+[  659020ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/stages:0
+[  659032ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/deals:0
+[  659368ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/tasks:0
+[  659368ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/conversations:0
+[  659430ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/quick-replies:0
+[  659438ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/calendar-events:0
+[  659445ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/catalog-products:0
+[  659454ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/messages:0
+[  659869ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/conversation-notes:0
+[  659878ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/activities:0
+[  659944ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:4322/api/auth/me:0
+[  659947ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/tags:0
+[  659962ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/appointment-types:0
+[  660975ms] [ERROR] Failed to load resource: the server responded with a status of 429 (Too Many Requests) @ http://localhost:4322/api/auth/login:0
+[  670370ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/login:0
+[  670370ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/login:0
+[  670385ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/login:2683
+[  671555ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/ingredients:0
+[  671576ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/components:0
+[  671652ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/products:0
+[  671652ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/orders:0
+[  671667ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/customers:0
+[  671674ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/stock-movements:0
+[  672192ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/settings:0
+[  672205ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/users:0
+[  672205ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/deals:0
+[  672267ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/contacts:0
+[  672267ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/pipelines:0
+[  672281ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/stages:0
+[  673038ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/tasks:0
+[  673040ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/quick-replies:0
+[  673059ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/calendar-events:0
+[  673094ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/catalog-products:0
+[  673102ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/conversations:0
+[  673107ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/messages:0
+[  673594ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/activities:0
+[  673600ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/conversation-notes:0
+[  673603ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/tags:0
+[  673606ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/appointment-types:0
+[  673621ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:4322/api/auth/me:0
+[  674527ms] [ERROR] Failed to load resource: the server responded with a status of 429 (Too Many Requests) @ http://localhost:4322/api/auth/login:0
+[  700304ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/login:0
+[  700304ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/login:0
+[  700317ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/login:2683
+[  701604ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/ingredients:0
+[  701607ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/components:0
+[  701623ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/products:0
+[  701623ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/customers:0
+[  701638ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/stock-movements:0
+[  701654ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/orders:0
+[  702142ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/users:0
+[  702157ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/settings:0
+[  702202ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/pipelines:0
+[  702210ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/deals:0
+[  702221ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/contacts:0
+[  702242ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/stages:0
+[  702998ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/tasks:0
+[  703008ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/quick-replies:0
+[  703028ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/calendar-events:0
+[  703070ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/messages:0
+[  703081ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/conversations:0
+[  703092ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/catalog-products:0
+[  703702ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/activities:0
+[  703710ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/conversation-notes:0
+[  703752ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/tags:0
+[  703761ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/appointment-types:0
+[  703767ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:4322/api/auth/me:0
+[  724991ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  724995ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[  725009ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:2683
+[  726119ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/ingredients:0
+[  726137ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/components:0
+[  726143ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/products:0
+[  726148ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/customers:0
+[  726156ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/orders:0
+[  726178ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/stock-movements:0
+[  726787ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/pipelines:0
+[  726790ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/settings:0
+[  726914ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/stages:0
+[  726919ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/users:0
+[  726937ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/deals:0
+[  726938ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/contacts:0
+[  727559ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/tasks:0
+[  727583ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/messages:0
+[  727739ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/quick-replies:0
+[  727750ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/calendar-events:0
+[  727767ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/conversations:0
+[  727769ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/catalog-products:0
+[  728313ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/activities:0
+[  728390ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/conversation-notes:0
+[  728396ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/appointment-types:0
+[  728409ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/tags:0
+[  728959ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/whatsapp/session:0
+[  729036ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/events?since=1791249014553:0

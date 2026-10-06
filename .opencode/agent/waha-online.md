@@ -9,8 +9,10 @@ weakens the offline battery. Every command below keeps `check`/`check:tests`
 GREEN by construction.
 
 ## Gate
-- Run `npx vitest run tests/server/wahaOnline.test.ts` (alias `npm run waha:online`).
-- The file skips cleanly when `readWahaConfig` returns null (engine not
+- Run `npm run waha:online` (= `npx vitest run tests/server/wahaOnline.test.ts
+  tests/server/whatsappSessionRoute.online.test.ts`): the client tier AND the
+  `/api/whatsapp/session` route tier, which is what catches webhook drift.
+- The files skip cleanly when `readWahaConfig` returns null (engine not
   configured), so the battery stays GREEN when the engine is absent.
 
 ## Bring the engine up (real engine, real docker compose)

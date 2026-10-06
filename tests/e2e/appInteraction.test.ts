@@ -108,7 +108,11 @@ function stubFetch(): void {
   });
 }
 
-async function waitFor(check: () => void, ms = 4000): Promise<void> {
+async function waitFor(
+  check: () => void,
+  label = 'condicao',
+  ms = 4000
+): Promise<void> {
   const start = Date.now();
   for (;;) {
     try {
@@ -116,8 +120,12 @@ async function waitFor(check: () => void, ms = 4000): Promise<void> {
       return;
     } catch {
       if (Date.now() - start > ms) {
-        const dom = document.querySelector('#app')?.innerHTML ?? '';
-        throw new Error(`waitFor timeout. #app: ${dom.slice(0, 500)}`);
+        const app = document.querySelector('#app')?.innerHTML ?? '';
+        const view = document.querySelector('#view-root')?.innerHTML ?? '';
+        throw new Error(
+          `waitFor timeout em "${label}". #app: ${app.slice(0, 300)}\n` +
+            `#view-root: ${view.slice(0, 300)}`
+        );
       }
       await new Promise((res) => setTimeout(res, 10));
     }
@@ -151,7 +159,7 @@ describe('app interaction (real main.ts + real API routes)', () => {
   it('boots the shell and lets the user log in end to end', async () => {
     await waitFor(() => {
       if (!app().querySelector('.app-shell')) throw new Error('no shell');
-    });
+    }, 'shell montado');
 
     expect(
       document.querySelector<HTMLElement>('#page-title')?.textContent
@@ -170,7 +178,7 @@ describe('app interaction (real main.ts + real API routes)', () => {
     window.dispatchEvent(new Event('hashchange'));
     await waitFor(() => {
       if (!document.querySelector('#login-email')) throw new Error('no form');
-    });
+    }, 'form de login');
 
     const emailInput = document.querySelector<HTMLInputElement>(
       '#login-email'
@@ -183,9 +191,15 @@ describe('app interaction (real main.ts + real API routes)', () => {
     const form = document.querySelector<HTMLFormElement>('form');
     form?.dispatchEvent(new Event('submit', { bubbles: true }));
 
+    // A sessao persistida e o sinal duravel de "login concluded". Esperar pelo
+    // `.toast` seria uma corrida: o login mostra o toast e logo em seguida troca
+    // o hash, e `activate()` chama `clearToast()` (src/main.ts), que apaga o
+    // `.toast-wrap` antes do proximo poll — o teste falhava ~1 em 8 vezes.
     await waitFor(() => {
-      if (!document.querySelector('.toast')) throw new Error('no toast');
-    });
+      if (!localStorage.getItem('crm_user')) {
+        throw new Error('sessao ainda nao persistida');
+      }
+    }, 'sessao persistida apos login');
     expect(sessionStorage.getItem('login_return_path')).toBeNull();
     expect(localStorage.getItem('crm_user')).toBeTruthy();
     expect(localStorage.getItem('crm_token')).toBeNull();
@@ -206,6 +220,44 @@ describe('app interaction (real main.ts + real API routes)', () => {
     expect(
       JSON.parse(localStorage.getItem('crm_user') as string)
     ).not.toHaveProperty('passwordHash');
+  });
+
+  // O aviso de resubmissao do Chrome aparecia em TODO refresh e em TODO menu,
+  // porque o roteamento e por hash: cada menu cria uma entrada de historico
+  // apontando para o mesmo documento, entao um unico submit nativo que
+  // escapasse contaminava todas as rotas. Este teste prova, no app de verdade
+  // (com o boot real de src/main.ts), que nenhum submit chega a virar
+  // navegacao POST.
+  it('cancela qualquer submit nativo apos o boot, em qualquer rota', async () => {
+    await waitFor(() => {
+      if (!document.querySelector('.app-shell')) throw new Error('no shell');
+    });
+
+    const routes = [
+      '#/', '#/login', '#/vendas/funil', '#/vendas/inbox',
+      '#/vendas/contatos', '#/vendas/equipe', '#/atelie/painel',
+      '#/atelie/ingredientes', '#/atelie/componentes', '#/atelie/produtos',
+      '#/atelie/estoque', '#/atelie/pedidos', '#/atelie/clientes',
+      '#/atelie/configuracoes'
+    ];
+    for (const route of routes) {
+      window.location.hash = route;
+      window.dispatchEvent(new Event('hashchange'));
+      // `#view-root` existe desde o boot, entao checa-lo sozinho passaria sem
+      // esperar a rota renderizar — e o teste alegaria cobrir as rotas sem
+      // nunca ter montado nenhuma. Exigir um filho garante que a view abriu.
+      await waitFor(() => {
+        const root = document.querySelector('#view-root');
+        if (!root?.firstElementChild) throw new Error('view nao renderizou');
+      }, `view montada em ${route}`);
+      // Um form sem handler, como o de uma view que ainda nao anexou o bind.
+      const orphan = document.createElement('form');
+      orphan.innerHTML = '<button type="submit">Enviar</button>';
+      document.querySelector('#view-root')?.appendChild(orphan);
+      const event = new Event('submit', { bubbles: true, cancelable: true });
+      orphan.dispatchEvent(event);
+      expect(event.defaultPrevented).toBe(true);
+    }
   });
 });
 

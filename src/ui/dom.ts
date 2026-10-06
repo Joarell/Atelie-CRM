@@ -62,6 +62,24 @@ export function formValues(form: HTMLFormElement): Record<string, string> {
 	return values;
 }
 
+// Nenhum form deste app submete de verdade: todos gravam por `fetch` e cada
+// view ja chama `preventDefault()`. Este guard cobre o handler que nao anexou
+// (view nova, `innerHTML` trocado, erro antes do bind): sem ele o browser faz o
+// submit nativo, a pagina vira documento POST e TODO refresh posterior abre o
+// aviso de "a pagina que voce esta vendo usou informacoes que voce digitou" —
+// e como o roteamento e por hash, cada menu cria entrada de historico nova
+// apontando para o MESMO documento, levando o aviso junto.
+//
+// `capture: true` e deliberado: `preventDefault()` cancela so a acao padrao,
+// entao o handler da view continua executando e o `fetch` segue intacto.
+export function blockNativeSubmit(target: Document = document): void {
+	target.addEventListener(
+		'submit',
+		(event) => { event.preventDefault(); },
+		true
+	);
+}
+
 //havia dois helpers de atributo divergentes (`escapeAtrib` em domain/format e
 // este aqui so com aspas duplas), e o consumidor do `src/` acabava escolhendo o
 // errado. Agora existe um so, reexportado do modulo que escapa `& < > " '`.

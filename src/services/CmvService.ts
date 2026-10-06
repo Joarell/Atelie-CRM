@@ -44,7 +44,9 @@ export class CmvService {
 
 		const unitCost = (ing: Ingredient) => ing.packagePrice / ing.packageSize;
 
-		const initialStock = stockValueAt(allIngredients, allMovements, start, unitCost);
+		const initialStock = stockValueAt(
+			allIngredients, allMovements, start, unitCost
+		);
 		const finalStock = stockValueAt(allIngredients, allMovements, end, unitCost);
 		const purchasesValue = purchasesTotal(allPurchases, month);
 		const cmv = cmvOfPeriod(initialStock, purchasesValue, finalStock);

@@ -50,10 +50,37 @@ export interface WahaEngineWebhook {
 	};
 }
 
-// The app's desired webhook from env. `WHATSAPP_HOOK_URL` is mandatory (no URL,
-// nothing to register); `WHATSAPP_HOOK_EVENTS` overrides the curated default;
-// `WAHA_HMAC_SECRET` is reused as the engine's hmac key — it must be the same
-// plaintext the receiver verifies against.
+// A secret has to have real strength. "Non-empty" once accepted the literal
+// instruction text `gere-um-segredo-por-ambiente-openssl-rand-hex-32` as if it
+// were a key, and any short guessable string passed too.
+const WAHA_HMAC_MIN_BYTES = 32;
+const WAHA_HMAC_PLACEHOLDERS = new Set([
+	"gere-um-segredo-por-ambiente-openssl-rand-hex-32",
+	"dev_plaintext_change_me",
+	"invalid_change_me",
+	"change-me",
+	"secret",
+]);
+
+// ONE validity rule for `WAHA_HMAC_SECRET`, shared by both of its readers: the
+// registration side (which key the engine is told to sign with) and the
+// receiver side in `src/server/wahaWebhook.ts` (which key it will accept).
+// While these disagreed, a weak-but-non-empty secret made the app register that
+// unusable key on the engine and then refuse every delivery the engine signed —
+// a silent total ingress failure that still reported `registered: true`.
+export function usableWahaHmacSecret(value: unknown): string | null {
+	const secret = text(value);
+	if (!secret) return null;
+	if (WAHA_HMAC_PLACEHOLDERS.has(secret.toLowerCase())) return null;
+	return secret.length >= WAHA_HMAC_MIN_BYTES ? secret : null;
+}
+
+// The app's desired webhook from env. `WHATSAPP_HOOK_URL` is mandatory (no
+// URL, nothing to register); `WHATSAPP_HOOK_EVENTS` overrides the curated
+// default; `WAHA_HMAC_SECRET` is reused as the engine's hmac key — it must
+// be the same plaintext the receiver verifies against. A secret the receiver
+// would refuse is treated as absent, so the engine is never asked to sign
+// with a key that can never be verified.
 export function readWahaWebhookSettings(
 	source: unknown,
 ): WahaWebhookSettings | null {
@@ -61,7 +88,7 @@ export function readWahaWebhookSettings(
 	const url = text(record?.WHATSAPP_HOOK_URL);
 	if (!url) return null;
 	const events = parseWahaWebhookEvents(record?.WHATSAPP_HOOK_EVENTS);
-	const hmacKey = text(record?.WAHA_HMAC_SECRET);
+	const hmacKey = usableWahaHmacSecret(record?.WAHA_HMAC_SECRET);
 	return hmacKey
 		? { url, events, hmacKey }
 		: { url, events };
@@ -158,23 +185,45 @@ export function wahaWebhookNeedsRegistration(
 }
 
 // Delivery-readiness report surfaced by the session routes and the WhatsApp
-// view. Works (status WORKING) is not enough: with no `WHATSAPP_HOOK_URL` there
-// is nothing to register and no message reaches the receiver, even from a brand
-// new number. `registered` reflects what the engine actually holds, so a
-// session created before this env existed stays visibly unregistered.
+// view. `registered` is NOT enough on its own: it only says the engine holds
+// our webhook, while the receiver may still reject every delivery it sends.
+// That exact split — registered, yet refused with 503 `secret_required` on
+// every POST — looks perfectly healthy from the engine side and silently
+// drops every message, so `acceptable` reports whether the receiver can
+// actually take what the engine sends. `registered` reflects what the engine
+// really holds, so a session created before this env existed stays visibly
+// unregistered.
+export type WahaWebhookRefusal = "secret_required";
+
 export interface WahaWebhookReadiness {
 	configured: boolean;
 	registered: boolean;
+	acceptable: boolean;
+	refusal: WahaWebhookRefusal | null;
 }
 
+// `accepts` is the receiver's posture: it can verify a signature, or the
+// operator explicitly allowed unsigned deliveries. When it can do neither, the
+// receiver answers 503 to everything and nothing is ever archived.
 export function webhookReadiness(
 	settings: WahaWebhookSettings | null,
 	registered: WahaEngineWebhook[],
+	accepts: boolean,
 ): WahaWebhookReadiness {
-	if (!settings) return { configured: false, registered: false };
+	if (!settings) {
+		return {
+			configured: false,
+			registered: false,
+			acceptable: false,
+			refusal: null,
+		};
+	}
+	const ready = !wahaWebhookNeedsRegistration(registered, settings);
 	return {
 		configured: true,
-		registered: !wahaWebhookNeedsRegistration(registered, settings),
+		registered: ready,
+		acceptable: accepts,
+		refusal: accepts ? null : "secret_required",
 	};
 }
 

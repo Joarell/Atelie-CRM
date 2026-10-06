@@ -14,7 +14,7 @@ const state = vi.hoisted(() => ({
   wahaKey: 'plaintext-local' as string | undefined,
   wahaSession: 'default' as string | undefined,
   hookUrl: 'https://app.test/api/whatsapp/webhook' as string | undefined,
-  hookHmac: 'sec' as string | undefined
+  hookHmac: 'test-secret-0123456789abcdef0123456789' as string | undefined
 }));
 
 vi.mock('cloudflare:workers', () => ({
@@ -113,7 +113,7 @@ describe('/api/whatsapp/webhook-config', () => {
     state.wahaKey = 'plaintext-local';
     state.wahaSession = 'default';
     state.hookUrl = 'https://app.test/api/whatsapp/webhook';
-    state.hookHmac = 'sec';
+    state.hookHmac = 'test-secret-0123456789abcdef0123456789';
   });
 
   afterEach(() => {

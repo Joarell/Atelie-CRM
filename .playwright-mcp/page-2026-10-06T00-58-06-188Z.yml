@@ -1,0 +1,103 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]: DeskcommCRM
+          - generic [ref=e9]: Vendas · Equipe · Ateliê
+        - generic [ref=e10]:
+          - button "Vendas" [expanded] [ref=e11] [cursor=pointer]
+          - list [ref=e16]:
+            - listitem [ref=e17]:
+              - link "Painel" [ref=e18] [cursor=pointer]:
+                - /url: "#/"
+            - listitem [ref=e25]:
+              - link "Contatos" [ref=e26] [cursor=pointer]:
+                - /url: "#/contatos"
+            - listitem [ref=e31]:
+              - link "Inbox" [ref=e32] [cursor=pointer]:
+                - /url: "#/inbox"
+            - listitem [ref=e36]:
+              - link "Funil" [ref=e37] [cursor=pointer]:
+                - /url: "#/funil"
+            - listitem [ref=e41]:
+              - link "Atividades" [ref=e42] [cursor=pointer]:
+                - /url: "#/atividades"
+            - listitem [ref=e47]:
+              - link "Tarefas" [ref=e48] [cursor=pointer]:
+                - /url: "#/tarefas"
+            - listitem [ref=e53]:
+              - link "Agenda" [ref=e54] [cursor=pointer]:
+                - /url: "#/agenda"
+            - listitem [ref=e60]:
+              - link "Catálogo" [ref=e61] [cursor=pointer]:
+                - /url: "#/catalogo"
+            - listitem [ref=e66]:
+              - link "Respostas" [ref=e67] [cursor=pointer]:
+                - /url: "#/respostas"
+            - listitem [ref=e71]:
+              - link "Etiquetas" [ref=e72] [cursor=pointer]:
+                - /url: "#/etiquetas"
+            - listitem [ref=e77]:
+              - link "Equipe" [ref=e78] [cursor=pointer]:
+                - /url: "#/equipe"
+            - listitem [ref=e85]:
+              - link "WhatsApp" [ref=e86] [cursor=pointer]:
+                - /url: "#/whatsapp"
+        - generic [ref=e91]:
+          - button "Ateliê" [expanded] [ref=e92] [cursor=pointer]
+          - list [ref=e97]:
+            - listitem [ref=e98]:
+              - link "Painel" [ref=e99] [cursor=pointer]:
+                - /url: "#/atelie/painel"
+            - listitem [ref=e103]:
+              - link "Ingredientes" [ref=e104] [cursor=pointer]:
+                - /url: "#/atelie/ingredientes"
+            - listitem [ref=e108]:
+              - link "Componentes" [ref=e109] [cursor=pointer]:
+                - /url: "#/atelie/components"
+            - listitem [ref=e115]:
+              - link "Produtos" [ref=e116] [cursor=pointer]:
+                - /url: "#/atelie/produtos"
+            - listitem [ref=e121]:
+              - link "Estoque" [ref=e122] [cursor=pointer]:
+                - /url: "#/atelie/estoque"
+            - listitem [ref=e127]:
+              - link "Pedidos" [ref=e128] [cursor=pointer]:
+                - /url: "#/atelie/pedidos"
+            - listitem [ref=e134]:
+              - link "Clientes" [ref=e135] [cursor=pointer]:
+                - /url: "#/atelie/clientes"
+            - listitem [ref=e141]:
+              - link "CMV" [ref=e142] [cursor=pointer]:
+                - /url: "#/atelie/cmv"
+            - listitem [ref=e146]:
+              - link "Configurações" [ref=e147] [cursor=pointer]:
+                - /url: "#/atelie/configuracoes"
+        - link "Entrar" [ref=e154] [cursor=pointer]:
+          - /url: "#/login"
+    - generic [ref=e155]:
+      - generic [ref=e156]:
+        - heading "Painel" [level=1] [ref=e157]
+        - generic [ref=e158]: Atualizado às 21:58:06
+        - 'button "Alternar tema (atual: Claro)" [ref=e160] [cursor=pointer]': ☀
+      - generic [ref=e162]:
+        - generic [ref=e169]:
+          - strong [ref=e170]: Ateliê
+          - generic [ref=e171]: Vendas · Equipe · Ateliê
+        - heading "Entrar no Ateliê" [level=2] [ref=e172]
+        - paragraph [ref=e173]: Use seu e-mail de equipe para continuar.
+        - generic [ref=e174]:
+          - generic [ref=e175]:
+            - generic [ref=e176]: E-mail
+            - textbox "E-mail" [ref=e177]
+          - generic [ref=e178]:
+            - generic [ref=e179]: Senha
+            - textbox "Senha" [ref=e180]
+          - alert [ref=e181]
+          - button "Entrar" [ref=e182] [cursor=pointer]
+  - generic [ref=e185]:
+    - button [ref=e186]
+    - button [ref=e192]
+    - button [ref=e196]
+    - button [ref=e201]

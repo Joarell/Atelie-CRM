@@ -177,6 +177,24 @@ describe('readWahaWebhookConfig / authenticateWahaWebhook', () => {
 
   it('rejects a signature even when no secret is configured', async () => {
     const auth = await authenticateWahaWebhook(request(BODY, 'anything'), { hmacSecret: null, requireSignature: true, allowUnsigned: false });
+    expect(auth).toEqual({ ok: false, reason: 'secret_required', signatureVerified: false });
+  });
+
+  it('blames the missing env, not the sender, when no secret can verify a signature', async () => {
+    // With no key loaded the receiver cannot judge ANY signature, so a present
+    // one must report `secret_required` (503) exactly like an absent one does —
+    // not `bad_signature` (401), which blames the engine for the app's own gap.
+    const config = { hmacSecret: null, requireSignature: true, allowUnsigned: false };
+    const withSignature = await authenticateWahaWebhook(request(BODY, 'deadbeef'), config);
+    const withoutSignature = await authenticateWahaWebhook(request(BODY), config);
+    expect(withSignature.reason).toBe('secret_required');
+    expect(withoutSignature.reason).toBe('secret_required');
+  });
+
+  it('still calls a genuinely wrong signature bad_signature once a secret exists', async () => {
+    // The change above must not soften the real check: with a key loaded, a
+    // wrong signature is still the sender's fault and still 401.
+    const auth = await authenticateWahaWebhook(request(BODY, 'deadbeef'), { hmacSecret: SECRET, requireSignature: true, allowUnsigned: false });
     expect(auth).toEqual({ ok: false, reason: 'bad_signature', signatureVerified: false });
   });
 

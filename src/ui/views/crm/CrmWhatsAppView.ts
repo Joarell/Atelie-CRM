@@ -3,15 +3,19 @@ import type { WahaSessionState } from '../../../repositories/WahaApiRepository';
 import type { Conversation } from '../../../domain/crm';
 import { escapeText, escapeAtrib } from '../../../domain/format';
 import {
+	classifyWahaLoadFailure,
 	composeTargets,
 	whatsappConversationFor
 } from '../../../domain/whatsapp';
+import type { WahaLoadFailure } from '../../../domain/whatsapp';
 import { autoRerender } from '../../reactive';
+import { startRealtimeRefresh } from '../../realtimeRefresh';
 import { qs } from '../../dom';
 import { showToast } from '../../Toast';
 import { section, kpiCard, badge } from './crmUi';
 
 let status: WahaSessionState | null | undefined;
+let loadFailure: WahaLoadFailure | null = null;
 let busy = false;
 let refresh: (() => void) | null = null;
 let lastSnapshot = '';
@@ -19,14 +23,18 @@ let lastSnapshot = '';
 // Shared EventSource for real-time session status updates
 let eventSource: EventSource | null = null;
 
+let pairingPollStop: (() => void) | null = null;
+
 export function renderCrmWhatsAppView(
 	root: HTMLElement,
 	ctx: AppContext
 ): () => void {
 	lastSnapshot = '';
 	status = undefined;
+	stopPairingPoll();
 	refresh = async () => {
 		await loadAndMaybeRender(root, ctx);
+		syncPairingPoll();
 	};
 	void refresh();
 	const disposeSSE = startSSE(ctx);
@@ -38,7 +46,41 @@ export function renderCrmWhatsAppView(
 	return () => {
 		disposeSSE();
 		dispose();
+		stopPairingPoll();
 	};
+}
+
+// While a session waits to be paired the WAHA engine ROTATES the pairing QR
+// (measured: two GET /auth/qr 20s apart, status still SCAN_QR_CODE, two
+// different images) and emits NO event for it, so nothing redraws the stale
+// code and the operator's scan just fails. DO NOT "clean this up": it is the
+// one narrow exception to the rule at startSSE (realtime replaced general
+// interval polling and that still stands for messages/conversations) — a
+// pairing QR is the only state WAHA mutates silently. Bounded to the
+// awaiting-a-scan statuses and stopped on WORKING/FAILED/STOPPED or teardown.
+const PAIRING_POLL_MS = 5000;
+
+function awaitingScan(): boolean {
+	const s = status?.session?.status ?? status?.health?.session?.status;
+	return s === 'SCAN_QR_CODE' || s === 'STARTING';
+}
+
+function syncPairingPoll(): void {
+	if (awaitingScan()) startPairingPoll();
+	else stopPairingPoll();
+}
+
+function startPairingPoll(): void {
+	if (pairingPollStop) return;
+	pairingPollStop = startRealtimeRefresh(async () => {
+		await refresh?.();
+	}, PAIRING_POLL_MS);
+}
+
+function stopPairingPoll(): void {
+	if (!pairingPollStop) return;
+	pairingPollStop();
+	pairingPollStop = null;
 }
 
 function rerenderFor(root: HTMLElement, ctx: AppContext): () => void {
@@ -56,8 +98,12 @@ async function loadAndMaybeRender(
 		if (key === lastSnapshot) return;
 		lastSnapshot = key;
 		status = next;
+		loadFailure = null;
 	} catch (error) {
+		const reason = error instanceof Error ? error.message : String(error);
+		loadFailure = classifyWahaLoadFailure(reason);
 		status = null;
+		lastSnapshot = '';
 	}
 	draw(root, ctx);
 }
@@ -128,7 +174,10 @@ function draw(root: HTMLElement, ctx: AppContext): void {
 	const draft = draftText(root);
 	const state = status;
 	const statusArea = statusCards(state);
-	const banner = state && ingressWarning(state);
+	// `state && …` yields the falsy state itself, so interpolating it wrote the
+	// literal "null" (failed load) or "undefined" (first paint) into the page.
+	// There is no ingress to report before a snapshot exists — render nothing.
+	const banner = state ? ingressWarning(state) : '';
 	const compose = ctx.auth.isAuthenticated() ? composeCard(ctx) : loginHint();
 	root.innerHTML = `
 		${pageHead()}
@@ -144,24 +193,50 @@ function draw(root: HTMLElement, ctx: AppContext): void {
 // the app's webhook too. When it is absent (or the env has no WHATSAPP_HOOK_URL
 // to register at all) every message, including from a brand-new contact, is
 // silently dropped by the engine — surfaced here instead of a healthy card.
+// Registration alone is still not enough: a receiver that refuses every
+// delivery (no usable secret while a signature is required) drops them just as
+// silently, so that refusal outranks the "registered" all-clear.
 function ingressWarning(state: WahaSessionState): string {
 	const hook = state.webhook;
-	const reachable = state.health?.reachable === true;
-	const authenticated = state.health?.authenticated === true;
-	if (hook.registered || !reachable || !authenticated) return '';
-	const headline = hook.configured
-		? 'Webhook não registrado no motor'
-		: 'Webhook não configurado';
-	const detail = hook.configured
-		? 'A sessão roda, mas o engine não tem a inscrição do app: nenhuma' +
-			' mensagem nova chega ao CRM (nem de contatos novos). Re-registre' +
-			' com PUT /api/whatsapp/webhook-config ou reabra a sessão.'
-		: 'Falta WHATSAPP_HOOK_URL no ambiente: a sessão inicia, mas nenhuma' +
-			' mensagem chega. Defina o URL do receiver (dev: ' +
-			'host.containers.internal:4322) e reabra a sessão.';
+	if (state.health?.reachable !== true) return '';
+	if (state.health?.authenticated !== true) return '';
+	if (hook.refusal) return refusedBanner();
+	if (hook.registered) return '';
+	return hook.configured ? unregisteredBanner() : missingHookUrlBanner();
+}
+
+function banner(headline: string, detail: string): string {
 	return (
 		`<div class="warn-banner" style="margin-top:16px;">` +
 		`<strong>${headline}</strong> · ${detail}</div>`
+	);
+}
+
+function unregisteredBanner(): string {
+	return banner(
+		'Webhook não registrado no motor',
+		'A sessão roda, mas o engine não tem a inscrição do app: nenhuma' +
+			' mensagem nova chega ao CRM (nem de contatos novos). Re-registre' +
+			' com PUT /api/whatsapp/webhook-config ou reabra a sessão.'
+	);
+}
+
+function missingHookUrlBanner(): string {
+	return banner(
+		'Webhook não configurado',
+		'Falta WHATSAPP_HOOK_URL no ambiente: a sessão inicia, mas nenhuma' +
+			' mensagem chega. Defina o URL do receiver (dev: ' +
+			'host.containers.internal:4322) e reabra a sessão.'
+	);
+}
+
+function refusedBanner(): string {
+	return banner(
+		'Webhook recusado pelo app',
+		'A inscrição está no motor, mas o app recusa toda entrega com 503' +
+			' (secret_required): nenhuma mensagem chega e nada é arquivado.' +
+			' Defina WAHA_HMAC_SECRET com o mesmo valor no app e no motor' +
+			' (mínimo 32 caracteres) e reabra a sessão.'
 	);
 }
 
@@ -200,12 +275,21 @@ function statusCards(state: WahaSessionState | null | undefined): string {
 		return consultingCard();
 	}
 	if (state === null) {
-		return unreachableCard();
+		return refusalCard();
 	}
 	if (!state.configured) {
 		return notConfiguredCard();
 	}
 	return liveCards(state);
+}
+
+// A role refusal is neither a dead motor nor an expired login: re-logging in
+// and rotating a password cannot fix it, so it must not borrow that advice.
+// Each cause names its own fix, or the operator chases the wrong one.
+function refusalCard(): string {
+	if (loadFailure === 'unauthenticated') return loginRequiredCard();
+	if (loadFailure === 'forbidden') return roleDeniedCard();
+	return unreachableCard();
 }
 
 function consultingCard(): string {
@@ -224,8 +308,32 @@ function unreachableCard(): string {
 	);
 }
 
-function notConfiguredCard(): string {
+// Rendered when the caller's ROLE may not manage WhatsApp. Distinct from
+// `loginRequiredCard` on purpose: the session is valid, so the "log in again"
+// / "rotate the password" advice there can never work here.
+function roleDeniedCard(): string {
 	return (
+		`<div class="card empty-state" style="grid-column:1/-1;">
+			<div class="big">Acesso restrito</div>
+			<p>Seu papel no painel não permite gerenciar o WhatsApp. ` +
+		'Peça a um administrador para parear o número.</p></div>'
+	);
+}
+
+// Rendered when the snapshot could not be READ, not when the motor is down:
+// the API refused the caller (expired login, or a seeded password still owing
+// its first rotation) while the engine itself stayed healthy the whole time.
+function loginRequiredCard(): string {
+	return (
+		`<div class="card empty-state" style="grid-column:1/-1;">
+			<div class="big">Login pendente</div>
+			<p>O app recusou a leitura do WhatsApp porque a sessão do painel ` +
+		'não está válida. Faça login novamente — ou troque a senha do ' +
+		'primeiro acesso — e clique ↻ Atualizar.</p></div>'
+	);
+}
+
+function notConfiguredCard(): string {	return (
 		`<div class="card empty-state" style="grid-column:1/-1;">
 			<div class="big">WAHA não configurado</div>
 			<p>Defina WAHA_API_BASE_URL e WAHA_API_KEY no Worker ` +
@@ -267,7 +375,7 @@ function sessionCard(state: WahaSessionState | null | undefined): string {
 		? 'WORKING'
 		: escapeText(session?.status ?? 'parada');
 	const ch = badge(statusLabel);
-	const qrArea = qr ? qrHtml(qr) : pairingHint(session?.status);
+	const qrArea = qrAreaFor(qr, working ? 'WORKING' : session?.status);
 	return `<div class="card" style="padding:16px 18px;margin-top:16px;">
 		<div class="field" style="margin-bottom:12px;">
 			<label class="field-label">Sessão ${name} · ${ch}</label>
@@ -294,14 +402,33 @@ function stopButton(disabled: string): string {
 	);
 }
 
+function qrAreaFor(qr: string | null, status: string | undefined): string {
+	return qr ? qrHtml(qr) : pairingHint(status);
+}
+
 function pairingHint(status: string | undefined): string {
-	const text =
-		status === 'STARTING'
-			? 'Aguardando o QR de pareamento…'
-			: status === 'SCAN_QR_CODE'
-				? 'O QR ainda não chegou — atualize em instantes.'
-				: 'Aperte "Iniciar sessão" para o QR de pareamento aparecer aqui.';
-	return `<p style="margin:0;">${text}</p>`;
+	return `<p style="margin:0;">${pairingText(status)}</p>`;
+}
+
+// The hint is derived from the SAME `working` flag that disables "Iniciar
+// sessão". It used to read the raw snapshot status and had no WORKING branch,
+// so an already-paired session fell through to "press Iniciar sessão" — an
+// instruction to click a button that is disabled, for a QR that can never
+// arrive because the pairing already succeeded.
+function pairingText(status: string | undefined): string {
+	if (status === 'WORKING') {
+		return 'Sessão pareada e conectada — este pareamento não usa QR.';
+	}
+	if (status === 'STARTING') {
+		return 'Aguardando o QR de pareamento…';
+	}
+	if (status === 'SCAN_QR_CODE') {
+		return 'O QR ainda não chegou — atualize em instantes.';
+	}
+	if (status === 'FAILED') {
+		return 'A sessão falhou ao parear. Reinicie a sessão para tentar de novo.';
+	}
+	return 'Aperte "Iniciar sessão" para o QR de pareamento aparecer aqui.';
 }
 
 function qrHtml(qr: string): string {

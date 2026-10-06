@@ -4,7 +4,15 @@
 --
 -- A flag do admin de seed nao e mais ligada aqui. O par (senha "admin123", sal
 -- "deskcomm-seed-v1") deixou de existir — 0004_crm_seed.sql nao grava mais senha e
--- 0023_admin_bootstrap cria o primeiro admin com senha aleatoria de uso unico,
--- ja com `mustChangePassword = 1`. Nao ha mais linha `seed-user-admin` para marcar.
+-- `npm run admin:bootstrap` cria o primeiro admin com senha aleatoria de uso
+-- unico, ja com `mustChangePassword = 1`. Nao ha linha `seed-user-admin` para
+-- marcar.
+--
+-- O `SELECT 1` e' obrigatorio, nao decorativo: `wrangler d1 execute --file`
+-- rejeita um arquivo sem nenhuma declaracao executavel ("SQL code did not
+-- contain a statement") e os scripts `db:migrate:*` / `db:seed:*` sao encadeados
+-- com `&&`. Sem esta linha o seed aborta em 0021 e 0022/0023/0024/0025 nunca
+-- rodam — foi exatamente o que quebrou o bootstrap do banco local. Ele nao
+-- escreve nada: existe so para que o arquivo seja um arquivo valido.
 
--- (nenhuma escrita: a coluna ja nasce com DEFAULT 0 em 0020)
+SELECT 1;

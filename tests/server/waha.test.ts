@@ -190,7 +190,33 @@ describe('WahaClient — transport contract', () => {
     const qr = await new WahaClient(CONFIG, { fetch }).getSessionQr('default');
     expect(qr).toBe('data:image/png;base64,AAA=');
     expect(calls[0].url).toBe('http://waha.test/api/default/auth/qr');
-    expect(headersOf(calls[0])['Accept']).toBe('application/json');
+    expect(headersOf(calls[0])['Accept']).toBe('image/png, application/json');
+  });
+
+  // The real NOWEB engine answers /auth/qr with `Content-Type: image/png` and
+  // the raw PNG bytes — not the JSON envelope above. Parsed as JSON that body
+  // fails, wahaQrDataUrl() returns null and the QR never reaches the view.
+  it('getSessionQr encodes a raw image/png body into a data URL', async () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const { fetch } = recordingFetch(() => new Response(png, {
+      status: 200,
+      headers: { 'content-type': 'image/png' }
+    }));
+    const expected = `data:image/png;base64,${btoa(String.fromCharCode(...png))}`;
+    const qr = await new WahaClient(CONFIG, { fetch }).getSessionQr('default');
+    expect(qr).toBe(expected);
+  });
+
+  it('getSessionQr still throws on a body that is neither image nor JSON', async () => {
+    const { fetch } = recordingFetch(() => new Response('not a qr', {
+      status: 200,
+      headers: { 'content-type': 'text/plain' }
+    }));
+    const error = (await new WahaClient(CONFIG, { fetch })
+      .getSessionQr('default')
+      .catch((e: unknown) => e)) as WahaError;
+    expect(error).toBeInstanceOf(WahaError);
+    expect(error.message).toBe('waha_qr_200');
   });
 
   it('getSessionQr is null when the engine has no QR yet (404)', async () => {

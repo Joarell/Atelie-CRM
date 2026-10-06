@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { renderPurchasesView } from '../../src/ui/views/PurchasesView';
+import { qsIf } from '../../src/ui/dom';
 import { InMemoryRepository } from '../helpers/inMemoryRepository';
 import { PurchasesService } from '../../src/services/PurchasesService';
 import { StockService } from '../../src/services/StockService';
@@ -73,7 +74,7 @@ describe('PurchasesView — registro e listagem de compras', () => {
 		const addItemBtn = modal.querySelector('#add-item') as HTMLButtonElement;
 		addItemBtn!.click();
 
-		const ingredientSelect = modal.querySelector('[data-ingredient]') as HTMLSelectElement;
+		const ingredientSelect = qsIf<HTMLSelectElement>('[data-ingredient]', modal);
 		const qtyInput = modal.querySelector('[data-qty]') as HTMLInputElement;
 		const packageSizeInput = modal.querySelector('[data-packageSize]') as HTMLInputElement;
 		const packagePriceInput = modal.querySelector('[data-packagePrice]') as HTMLInputElement;
@@ -117,7 +118,7 @@ describe('PurchasesView — registro e listagem de compras', () => {
 		const addItemBtn = modal.querySelector('#add-item') as HTMLButtonElement;
 		addItemBtn!.click();
 
-		const ingredientSelect = modal.querySelector('[data-ingredient]') as HTMLSelectElement;
+		const ingredientSelect = qsIf<HTMLSelectElement>('[data-ingredient]', modal);
 		const qtyInput = modal.querySelector('[data-qty]') as HTMLInputElement;
 		const packageSizeInput = modal.querySelector('[data-packageSize]') as HTMLInputElement;
 		const packagePriceInput = modal.querySelector('[data-packagePrice]') as HTMLInputElement;
@@ -158,7 +159,7 @@ describe('PurchasesView — registro e listagem de compras', () => {
 		const addItemBtn = modal.querySelector('#add-item') as HTMLButtonElement;
 		addItemBtn!.click();
 
-		const ingredientSelect = modal.querySelector('[data-ingredient]') as HTMLSelectElement;
+		const ingredientSelect = qsIf<HTMLSelectElement>('[data-ingredient]', modal);
 		const qtyInput = modal.querySelector('[data-qty]') as HTMLInputElement;
 		const packageSizeInput = modal.querySelector('[data-packageSize]') as HTMLInputElement;
 		const packagePriceInput = modal.querySelector('[data-packagePrice]') as HTMLInputElement;

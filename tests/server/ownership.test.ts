@@ -200,7 +200,7 @@ describe('AC-354: tables without owner column require manager to write', () => {
 			state.db = FakeD1.with(t.table, [t.row]);
 			const res = await t.PUT(putRequest({ name: 'X' }, t.row.id, 'agent'));
 			expect(res.status).toBe(403);
-			const body = await res.json();
+			const body = (await res.json()) as Record<string, any>;
 			expect(body.error).toBe('papel_insuficiente');
 		});
 
@@ -209,7 +209,7 @@ describe('AC-354: tables without owner column require manager to write', () => {
 			const del = new Request('http://localhost/api/test', { method: 'DELETE' });
 			const res = await t.DELETE(itemContext(del, t.row.id, 'agent'));
 			expect(res.status).toBe(403);
-			const body = await res.json();
+			const body = (await res.json()) as Record<string, any>;
 			expect(body.error).toBe('papel_insuficiente');
 		});
 
@@ -238,7 +238,7 @@ describe('AC-356: message inherits conversation ownership', () => {
 		});
 		const res = await messagesPUT(msgContext({ text: 'hacked' }, 'agent'));
 		expect(res.status).toBe(403);
-		const body = await res.json();
+		const body = (await res.json()) as Record<string, any>;
 		expect(body.error).toBe('nao_autorizado');
 		// Original text unchanged
 		expect(state.db.rows('messages')[0].text).toBe('Oi');
@@ -285,7 +285,7 @@ describe('AC-359: empty owner blocks agent', () => {
 		state.db = FakeD1.with('contacts', [{ ...contact, assignedUserId: '' }]);
 		const res = await contactsPUT(putRequest({ name: 'X' }, 'c1', 'agent'));
 		expect(res.status).toBe(403);
-		const body = await res.json();
+		const body = (await res.json()) as Record<string, any>;
 		expect(body.error).toBe('nao_autorizado');
 	});
 
@@ -311,7 +311,7 @@ describe('AC-361: creation derives owner from session', () => {
 			state.db = FakeD1.empty();
 			const res = await t.POST(putRequest(t.row, 'agent'));
 			expect(res.status).toBe(201);
-			const saved = await res.json();
+			const saved = (await res.json()) as Record<string, any>;
 			expect(saved.assignedUserId).toBe('u1');
 		});
 	}
@@ -324,7 +324,7 @@ describe('AC-363: authorship fields are immutable on PUT', () => {
 		state.db = FakeD1.with('calendar_events', [{ ...calEvent, assignedUserId: 'u1', createdBy: 'u1' }]);
 		const res = await calPUT(putRequest({ createdBy: 'u2' }, 'e1', 'agent'));
 		expect(res.status).toBe(400);
-		const body = await res.json();
+		const body = (await res.json()) as Record<string, any>;
 		expect(body.error).toBe('campo_imutavel');
 		expect(body.fields).toContain('createdBy');
 	});
@@ -333,7 +333,7 @@ describe('AC-363: authorship fields are immutable on PUT', () => {
 		state.db = FakeD1.with('crm_lead_activities', [{ ...activity, assignedUserId: 'u1', actorUserId: 'u1' }]);
 		const res = await actPUT(putRequest({ actorUserId: 'u2' }, 'a1', 'agent'));
 		expect(res.status).toBe(400);
-		const body = await res.json();
+		const body = (await res.json()) as Record<string, any>;
 		expect(body.error).toBe('campo_imutavel');
 		expect(body.fields).toContain('actorUserId');
 	});
@@ -342,7 +342,7 @@ describe('AC-363: authorship fields are immutable on PUT', () => {
 		state.db = FakeD1.with('conversation_notes', [{ ...note, assignedUserId: 'u1', authorUserId: 'u1' }]);
 		const res = await notesPUT(putRequest({ authorUserId: 'u2' }, 'n1', 'agent'));
 		expect(res.status).toBe(400);
-		const body = await res.json();
+		const body = (await res.json()) as Record<string, any>;
 		expect(body.error).toBe('campo_imutavel');
 		expect(body.fields).toContain('authorUserId');
 	});
@@ -358,7 +358,7 @@ describe('AC-364: message cannot be rewritten', () => {
 		});
 		const res = await messagesPUT(msgContext({ text: 'hacked' }, 'agent'));
 		expect(res.status).toBe(403);
-		const body = await res.json();
+		const body = (await res.json()) as Record<string, any>;
 		expect(body.error).toBe('nao_autorizado');
 		// Original text unchanged
 		expect(state.db.rows('messages')[0].text).toBe('Oi');
@@ -373,7 +373,7 @@ describe('AC-364: message cannot be rewritten', () => {
 		});
 		const res = await messagesPUT(msgContext({ fromMe: false, direction: 'inbound', conversationId: 'other' }, 'agent'));
 		expect(res.status).toBe(400);
-		const body = await res.json();
+		const body = (await res.json()) as Record<string, any>;
 		expect(body.error).toBe('campo_imutavel');
 		expect(body.fields).toContain('fromMe');
 	});
@@ -386,7 +386,7 @@ describe('AC-365: owner cannot be empty on PUT', () => {
 		state.db = FakeD1.with('calendar_events', [{ ...calEvent, assignedUserId: 'u1' }]);
 		const res = await calPUT(putRequest({ assignedUserId: '' }, 'e1', 'agent'));
 		expect(res.status).toBe(400);
-		const body = await res.json();
+		const body = (await res.json()) as Record<string, any>;
 		expect(body.error).toBe('dono_vazio');
 	});
 
@@ -394,7 +394,7 @@ describe('AC-365: owner cannot be empty on PUT', () => {
 		state.db = FakeD1.with('catalog_products', [{ ...catProd, assignedUserId: 'u1' }]);
 		const res = await catPUT(putRequest({ assignedUserId: '' }, 'p1', 'agent'));
 		expect(res.status).toBe(400);
-		const body = await res.json();
+		const body = (await res.json()) as Record<string, any>;
 		expect(body.error).toBe('dono_vazio');
 	});
 });
@@ -406,7 +406,7 @@ describe('AC-366: viewer continues without write', () => {
 		state.db = FakeD1.with('contacts', [{ ...contact, assignedUserId: 'u1' }]);
 		const res = await contactsPUT(putRequest({ name: 'X' }, 'c1', 'viewer'));
 		expect(res.status).toBe(403);
-		const body = await res.json();
+		const body = (await res.json()) as Record<string, any>;
 		expect(body.error).toBe('papel_insuficiente');
 	});
 

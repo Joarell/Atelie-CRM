@@ -314,11 +314,11 @@ describe('AC-372/373 — mechanical guards for credential hygiene', () => {
       }
       for (const name of secretNames) {
         const re = new RegExp(`${name}\\s*=\\s*["']([^"']+)["']`, 'g');
-        /** @type {RegExpExecArray | null} */
-        let match;
+        let match: RegExpExecArray | null;
         while ((match = re.exec(content)) !== null) {
-          const value = match[1];
-          const isAllowed = allowedPatterns.some((p) => p.test(match[0]));
+          const found = match;
+          const value = found[1];
+          const isAllowed = allowedPatterns.some((p) => p.test(found[0]));
           expect([file, name, value, isAllowed]).toEqual([file, name, value, true]);
         }
       }

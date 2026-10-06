@@ -12,7 +12,8 @@ const state = vi.hoisted(() => ({
   wahaKey: 'plaintext-local' as string | undefined,
   wahaSession: 'default' as string | undefined,
   wahaHookUrl: 'https://app.test/api/whatsapp/webhook' as string | undefined,
-  wahaHookSecret: 'sec' as string | undefined
+  wahaHookSecret: 'test-secret-0123456789abcdef0123456789' as
+    string | undefined
 }));
 
 vi.mock('cloudflare:workers', () => ({
@@ -79,7 +80,9 @@ function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 }
 
-function stubWaha(handler: (url: string, init: RequestInit) => Response) {
+function stubWaha(
+  handler: (url: string, init: RequestInit) => Response | Promise<Response>
+) {
   const calls: Array<{ url: string; init: RequestInit }> = [];
   const impl = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
@@ -115,7 +118,7 @@ describe('/api/whatsapp/session', () => {
     state.wahaKey = 'plaintext-local';
     state.wahaSession = 'default';
     state.wahaHookUrl = 'https://app.test/api/whatsapp/webhook';
-    state.wahaHookSecret = 'sec';
+    state.wahaHookSecret = 'test-secret-0123456789abcdef0123456789';
   });
 
   afterEach(() => {
@@ -175,7 +178,10 @@ describe('/api/whatsapp/session', () => {
     expect(body).toMatchObject({
       configured: true,
       session: { name: 'default', status: 'WORKING' },
-      webhook: { configured: true, registered: true }
+      webhook: {
+        configured: true, registered: true,
+        acceptable: true, refusal: null
+      }
     });
     // version probe + health session + QR-bearing refetch
     expect(calls.map((c) => c.url)).toEqual([
@@ -255,9 +261,15 @@ describe('/api/whatsapp/session', () => {
     state.wahaUrl = undefined;
     const response = await GET(context('GET'));
     expect(response.status).toBe(503);
+    // All four readiness fields are named, so a fallback that drops the
+    // verdict fails here: the 503 body used to omit `acceptable`/`refusal`
+    // while the 200 path carried them.
     expect(await response.json()).toMatchObject({
       configured: false,
-      webhook: { configured: false, registered: false }
+      webhook: {
+        configured: false, registered: false,
+        acceptable: false, refusal: null
+      }
     });
   });
 
@@ -267,7 +279,10 @@ describe('/api/whatsapp/session', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
       session: { name: 'default', status: 'WORKING' },
-      webhook: { configured: true, registered: true }
+      webhook: {
+        configured: true, registered: true,
+        acceptable: true, refusal: null
+      }
     });
     // connection probe (version + session) precedes the start
     expect(calls.map((c) => c.url)).toEqual([
@@ -286,13 +301,19 @@ describe('/api/whatsapp/session', () => {
     expect(getResponse.status).toBe(200);
     expect(await getResponse.json()).toMatchObject({
       configured: true,
-      webhook: { configured: false, registered: false }
+      webhook: {
+        configured: false, registered: false,
+        acceptable: false, refusal: null
+      }
     });
     const postResponse = await POST(context('POST'));
     expect(postResponse.status).toBe(200);
     expect(await postResponse.json()).toMatchObject({
       session: { name: 'default', status: 'WORKING' },
-      webhook: { configured: false, registered: false }
+      webhook: {
+        configured: false, registered: false,
+        acceptable: false, refusal: null
+      }
     });
     expect(calls.some((c) => c.url.endsWith('/start'))).toBe(true);
   });
@@ -540,5 +561,199 @@ describe('/api/whatsapp/session', () => {
     expect(await response.json()).toMatchObject({ ok: true });
     expect(calls[0].url).toBe('http://waha.test/api/sessions/default/stop');
     expect(state.db.rows(WAHA_SESSIONS_TABLE)[0]).toMatchObject({ name: 'default', status: 'STOPPED' });
+  });
+});
+describe('/api/whatsapp/session — GET waits for the pairing QR', () => {
+  beforeEach(() => {
+    state.db = authedDb();
+    state.wahaUrl = 'http://waha.test';
+    state.wahaKey = 'plaintext-local';
+    state.wahaSession = 'default';
+    state.wahaHookUrl = 'https://app.test/api/whatsapp/webhook';
+    state.wahaHookSecret = 'test-secret-0123456789abcdef0123456789';
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  // The engine sits in STARTING for a moment before reaching SCAN_QR_CODE.
+  // GET used to read once and hand that QR-less snapshot back, so pressing
+  // "Atualizar" showed no QR — and worse, the refresh that "Iniciar sessão"
+  // triggers in its `finally` overwrote the good QR POST had just delivered.
+  it('GET polls past STARTING and returns the QR', async () => {
+    let reads = 0;
+    const calls = stubWaha((url) => {
+      if (url.endsWith('/api/server/version')) {
+        return jsonResponse({ version: '2026.7.2', engine: 'NOWEB', tier: 'CORE' });
+      }
+      if (url.endsWith('/auth/qr')) {
+        return jsonResponse({ mimetype: 'image/png', data: 'AAA=' });
+      }
+      reads += 1;
+      return jsonResponse({
+        name: 'default',
+        status: reads <= 3 ? 'STARTING' : 'SCAN_QR_CODE'
+      });
+    });
+    const response = await GET(context('GET'));
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      session: { status: string; qr?: string };
+    };
+    expect(body.session.status).toBe('SCAN_QR_CODE');
+    expect(body.session.qr).toBe('data:image/png;base64,AAA=');
+    expect(reads).toBeGreaterThan(3);
+    expect(calls.map((c) => c.url)).toContain(
+      'http://waha.test/api/default/auth/qr'
+    );
+  });
+
+  // The wait must stay bounded to the states that can actually produce a QR:
+  // a healthy paired session answers on the first read, with no extra polling
+  // and no call to the QR endpoint.
+  it('GET não faz polling extra quando a sessão já está WORKING', async () => {
+    let reads = 0;
+    const calls = stubWaha((url) => {
+      if (url.endsWith('/api/server/version')) {
+        return jsonResponse({ version: '2026.7.2', engine: 'NOWEB', tier: 'CORE' });
+      }
+      reads += 1;
+      return jsonResponse({ name: 'default', status: 'WORKING' });
+    });
+    const response = await GET(context('GET'));
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { session: { status: string } };
+    expect(body.session.status).toBe('WORKING');
+    expect(reads).toBe(2);
+    expect(calls.map((c) => c.url)).not.toContain(
+      'http://waha.test/api/default/auth/qr'
+    );
+  });
+});
+
+// The QR wait was bounded by ATTEMPTS alone, and every attempt spends TWO
+// engine round-trips whose only ceiling is the 15s client timeout. Against the
+// real engine — where `/auth/qr` blocks ~10s server-side and answers 422 until
+// the session is in SCAN_QR_CODE — one tap could hang for
+// ~12 x (15s + 15s + 0.25s) ≈ 6 minutes. These two lock the wall-clock budget
+// that bounds it, on a fake clock: no live engine is involved.
+describe('/api/whatsapp/session — a espera do QR tem teto de relógio', () => {
+  // Mirrors of the production constants in src/pages/api/whatsapp/session.ts.
+  const BUDGET_MS = 5_000;
+  const ATTEMPTS = 12;
+  // What the attempt-only wait costs: every attempt plus the fallback read.
+  const READS_WITHOUT_BUDGET = ATTEMPTS + 1;
+  // Seconds-scale round-trips are the PREMISE: an instant stub spends no budget
+  // at all, the attempt cap always wins, and the deadline stays unobservable.
+  // 2s mirrors the real `/auth/qr` refusing for ~10s.
+  const SLOW_READ_MS = 2_000;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    state.db = authedDb();
+    state.wahaUrl = 'http://waha.test';
+    state.wahaKey = 'plaintext-local';
+    state.wahaSession = 'default';
+    state.wahaHookUrl = 'https://app.test/api/whatsapp/webhook';
+    state.wahaHookSecret = 'test-secret-0123456789abcdef0123456789';
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  // Fake-clock sleep: how the stub engine "spends" time inside a read.
+  function slowRead(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, SLOW_READ_MS));
+  }
+
+  // A session stuck in SCAN_QR_CODE, answering the QR endpoint only via onQr.
+  function stuckEngine(onQr: () => Promise<Response>) {
+    return stubWaha(async (url) => {
+      if (url.endsWith('/api/server/version')) {
+        return jsonResponse({
+          version: '2026.7.2',
+          engine: 'NOWEB',
+          tier: 'CORE'
+        });
+      }
+      if (url.endsWith('/auth/qr')) return onQr();
+      return jsonResponse({ name: 'default', status: 'SCAN_QR_CODE' });
+    });
+  }
+
+  // Runs the route on the fake clock. The leading `0` drains the microtask
+  // chain WITHOUT moving the clock, so the wait starts at elapsed zero; the
+  // steps then release each poll interval until the route answers (or not).
+  async function settleOnFakeClock(pending: Promise<unknown>): Promise<boolean> {
+    let done = false;
+    const mark = (): void => {
+      done = true;
+    };
+    void pending.then(mark, mark);
+    await vi.advanceTimersByTimeAsync(0);
+    for (let step = 0; step < 120 && !done; step++) {
+      await vi.advanceTimersByTimeAsync(1_000);
+    }
+    return done;
+  }
+
+  it('GET para no orcamento em vez de gastar todas as tentativas', async () => {
+    let qrReads = 0;
+    stuckEngine(async () => {
+      qrReads += 1;
+      await slowRead();
+      return jsonResponse({ message: 'Session is not in SCAN_QR_CODE' }, 422);
+    });
+    const pending = Promise.resolve(GET(context('GET')));
+    expect(await settleOnFakeClock(pending)).toBe(true);
+    const response = await pending;
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      session: { status: string; qr?: string };
+    };
+    expect(body.session).toEqual({ name: 'default', status: 'SCAN_QR_CODE' });
+    // Bounded by the wall clock: 5s / (2s QR read + 250ms poll) = 3 rounds,
+    // plus the fallback read. Without the budget all 12 attempts ran.
+    expect(qrReads).toBeLessThan(READS_WITHOUT_BUDGET);
+    expect(qrReads).toBe(4);
+  });
+
+  it('GET ainda entrega o QR que so existe com o orcamento esgotado', async () => {
+    // The engine only grows a QR after a whole budget has elapsed — which is
+    // exactly the read the deadline must NOT skip: `break` out of the loop
+    // still falls through to the final `attachQr`, so the pair QR ships.
+    let qrReads = 0;
+    let waited = 0;
+    stuckEngine(async () => {
+      qrReads += 1;
+      if (qrReads === 1) waited = Date.now();
+      const elapsed = Date.now() - waited;
+      await slowRead();
+      return elapsed >= BUDGET_MS
+        ? jsonResponse({ mimetype: 'image/png', data: 'AAA=' })
+        : jsonResponse({ message: 'Session is not in SCAN_QR_CODE' }, 422);
+    });
+    const pending = Promise.resolve(GET(context('GET')));
+    expect(await settleOnFakeClock(pending)).toBe(true);
+    const response = await pending;
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      session: { status: string; qr?: string };
+    };
+    expect(body.session).toEqual({
+      name: 'default',
+      status: 'SCAN_QR_CODE',
+      qr: 'data:image/png;base64,AAA='
+    });
+    // The QR came from the fallback read (4th), not from a poll inside the
+    // loop: a `return current` on timeout would drop it and answer 3 reads.
+    expect(qrReads).toBe(4);
+    expect(state.db.rows(WAHA_SESSIONS_TABLE)[0]).toMatchObject({
+      name: 'default',
+      status: 'SCAN_QR_CODE'
+    });
   });
 });

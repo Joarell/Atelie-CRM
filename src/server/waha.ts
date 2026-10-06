@@ -200,11 +200,18 @@ export class WahaClient {
 	/** The pairing QR as a data URL, or null when the engine has none yet. */
 	async getSessionQr(name: string): Promise<string | null> {
 		const res = await this.request(qrPath(name), {
-			headers: { Accept: 'application/json' }
+			headers: { Accept: 'image/png, application/json' }
 		});
 		if (res.status === 404) return null;
 		if (!res.ok) throw new WahaError('qr', res.status);
-		const qr = wahaQrDataUrl(await body(res));
+		const mime = (res.headers.get('content-type') ?? '')
+			.split(';')[0]
+			.trim()
+			.toLowerCase();
+		const bytes = new Uint8Array(await res.arrayBuffer());
+		const qr = mime.startsWith('image/')
+			? binaryDataUrl(mime, bytes)
+			: wahaQrDataUrl(jsonOf(bytes));
 		if (!qr) throw new WahaError('qr', res.status);
 		return qr;
 	}
@@ -314,6 +321,26 @@ function post(): RequestInit {
 
 async function body(res: Response): Promise<unknown> {
 	return res.json().catch(() => null);
+}
+
+// WAHA's NOWEB engine answers /auth/qr with the raw PNG bytes and
+// `Content-Type: image/png`, not the `{ mimetype, data }` envelope other
+// builds send. Read as JSON that body fails to parse, wahaQrDataUrl() returns
+// null, and the QR silently disappears behind the pairing hint — so the bytes
+// are base64-encoded here instead. The body is read once and routed by its
+// content type, because a consumed body cannot be re-parsed as JSON.
+function binaryDataUrl(mime: string, bytes: Uint8Array): string {
+	let binary = '';
+	for (const byte of bytes) binary += String.fromCharCode(byte);
+	return `data:${mime};base64,${btoa(binary)}`;
+}
+
+function jsonOf(bytes: Uint8Array): unknown {
+	try {
+		return JSON.parse(new TextDecoder().decode(bytes));
+	} catch {
+		return null;
+	}
 }
 
 function isTimeout(error: unknown): boolean {

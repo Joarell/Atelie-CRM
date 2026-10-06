@@ -5,14 +5,19 @@ import {
   asSingleMessageStream,
   readWahaWebhookSettings,
   sessionWebhookFor,
+  usableWahaHmacSecret,
   wahaSessionWebhooks,
   wahaWebhookNeedsRegistration,
   webhookReadiness
 } from '../../src/domain/wahaWebhookConfig';
 
+// Meets the receiver's bar (>= 32 bytes, not a known placeholder), so the
+// registration side and the verifying side agree — which is the whole point.
+const STRONG_SECRET = 'test-secret-0123456789abcdef0123456789';
+
 const settings = readWahaWebhookSettings({
   WHATSAPP_HOOK_URL: 'https://app.test/api/whatsapp/webhook',
-  WAHA_HMAC_SECRET: 'secret'
+  WAHA_HMAC_SECRET: STRONG_SECRET
 })!;
 
 describe('the registered message stream stays single', () => {
@@ -45,11 +50,51 @@ describe('readWahaWebhookSettings', () => {
     expect(readWahaWebhookSettings({ WAHA_HMAC_SECRET: 's' })).toBeNull();
   });
 
+  // The two readers of WAHA_HMAC_SECRET disagreed: this side took any non-empty
+  // string, the receiver demanded a strong one. A weak secret therefore got
+  // registered on the engine as the signing key and then refused on arrival —
+  // every delivery 503'd, nothing was archived, and readiness still said
+  // `registered: true`. These pin the registration side to the receiver's bar.
+  it('never registers an hmac key the receiver would refuse', () => {
+    const weak = [
+      'secret',
+      'change-me',
+      'dev_plaintext_change_me',
+      'gere-um-segredo-por-ambiente-openssl-rand-hex-32',
+      'too-short-but-not-a-placeholder'
+    ];
+    for (const value of weak) {
+      const read = readWahaWebhookSettings({
+        WHATSAPP_HOOK_URL: 'https://app.test/x',
+        WAHA_HMAC_SECRET: value
+      });
+      expect(read?.hmacKey, value).toBeUndefined();
+      expect(sessionWebhookFor(read!).hmac, value).toBeUndefined();
+    }
+  });
+
+  it('registers the hmac key when the secret is strong enough', () => {
+    expect(usableWahaHmacSecret(STRONG_SECRET)).toBe(STRONG_SECRET);
+    expect(usableWahaHmacSecret('  ' + STRONG_SECRET + '  '))
+      .toBe(STRONG_SECRET);
+  });
+
+  it('refuses a secret the receiver would reject, symmetrically', () => {
+    expect(usableWahaHmacSecret('')).toBeNull();
+    expect(usableWahaHmacSecret(undefined)).toBeNull();
+    expect(usableWahaHmacSecret('secret')).toBeNull();
+    expect(usableWahaHmacSecret('a'.repeat(31))).toBeNull();
+    expect(usableWahaHmacSecret('a'.repeat(32))).toBe('a'.repeat(32));
+  });
+
   it('uses the curated event set and the HMAC secret', () => {
     expect(readWahaWebhookSettings({
       WHATSAPP_HOOK_URL: 'https://app.test/x'
     })).toEqual({ url: 'https://app.test/x', events: [...WAHA_WEBHOOK_DEFAULT_EVENTS] });
-    expect(settings).toMatchObject({ url: 'https://app.test/api/whatsapp/webhook', hmacKey: 'secret' });
+    expect(settings).toMatchObject({
+      url: 'https://app.test/api/whatsapp/webhook',
+      hmacKey: STRONG_SECRET
+    });
   });
 
   it('parses the comma-separated override, trims and normalizes', () => {
@@ -141,24 +186,53 @@ describe('wahaWebhookNeedsRegistration — the idempotency guard', () => {
 
 describe('webhookReadiness — delivery works only when registered', () => {
   it('is unconfigured without a WHATSAPP_HOOK_URL', () => {
-    expect(webhookReadiness(null, [])).toEqual({
+    expect(webhookReadiness(null, [], true)).toEqual({
       configured: false,
-      registered: false
+      registered: false,
+      acceptable: false,
+      refusal: null
     });
   });
 
   it('registered when the engine echoes the app webhook', () => {
     const registered = [sessionWebhookFor(settings)];
-    expect(webhookReadiness(settings, registered)).toEqual({
+    expect(webhookReadiness(settings, registered, true)).toEqual({
       configured: true,
-      registered: true
+      registered: true,
+      acceptable: true,
+      refusal: null
     });
   });
 
   it('WORKING but unregistered when the engine holds nothing', () => {
-    expect(webhookReadiness(settings, [])).toEqual({
+    expect(webhookReadiness(settings, [], true)).toEqual({
       configured: true,
-      registered: false
+      registered: false,
+      acceptable: true,
+      refusal: null
+    });
+  });
+
+  // The bug this exists for: the engine holds the webhook and the session is
+  // WORKING, yet the receiver answers 503 `secret_required` to every delivery,
+  // so nothing is ever archived. Reporting only `registered: true` here is what
+  // made a total ingress failure look like a healthy card.
+  it('registered but NOT acceptable when the receiver refuses everything', () => {
+    const registered = [sessionWebhookFor(settings)];
+    expect(webhookReadiness(settings, registered, false)).toEqual({
+      configured: true,
+      registered: true,
+      acceptable: false,
+      refusal: 'secret_required'
+    });
+  });
+
+  it('names the refusal even when the webhook was never registered', () => {
+    expect(webhookReadiness(settings, [], false)).toEqual({
+      configured: true,
+      registered: false,
+      acceptable: false,
+      refusal: 'secret_required'
     });
   });
 });

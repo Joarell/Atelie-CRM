@@ -7,6 +7,7 @@ import {
   WAHA_DETAIL_UNREACHABLE,
   WAHA_HEALTHY_STATUS,
   WAHA_QR_MAX_LENGTH,
+  classifyWahaLoadFailure,
   describeWahaServer,
   parseWahaSession,
   toWahaHealth,
@@ -141,5 +142,47 @@ describe('wahaQrDataUrl', () => {
   it('rejects an oversized QR instead of dragging MBs into the DOM', () => {
     const big = 'a'.repeat(WAHA_QR_MAX_LENGTH + 1);
     expect(wahaQrDataUrl({ mimetype: 'image/png', data: big })).toBeNull();
+  });
+});
+
+describe('classifyWahaLoadFailure', () => {
+  it('reads every refusal reason as an auth problem, not a dead motor', () => {
+    const auth = [
+      'troca_de_senha_obrigatoria',
+      'nao_autenticado',
+      'credenciais_invalidas',
+      'waha_autenticacao',
+      'Error 401',
+      'Error 403',
+      '  Error 403  '
+    ];
+    for (const reason of auth) {
+      expect(classifyWahaLoadFailure(reason), reason).toBe('unauthenticated');
+    }
+  });
+
+  it('separates a valid session with an insufficient role from a dead login', () => {
+    // requireRole answers `papel_insuficiente` on the admin-only session route
+    // and the send route answers `nao_autorizado`. Re-logging in cannot fix
+    // either, so they must not borrow the login-pending advice.
+    const role = ['papel_insuficiente', 'nao_autorizado', '  PAPEL_INSUFICIENTE  '];
+    for (const reason of role) {
+      expect(classifyWahaLoadFailure(reason), reason).toBe('forbidden');
+    }
+  });
+
+  it('keeps real transport failures on the unreachable card', () => {
+    const down = [
+      'fetch failed',
+      'TypeError: fetch failed',
+      'Error 500',
+      'Error 502',
+      'waha_inacessivel',
+      'papel_desconhecido',
+      ''
+    ];
+    for (const reason of down) {
+      expect(classifyWahaLoadFailure(reason), reason).toBe('inaccessible');
+    }
   });
 });

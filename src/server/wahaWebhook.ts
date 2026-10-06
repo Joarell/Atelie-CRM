@@ -4,6 +4,7 @@ import {
 	parseWahaEnvelope,
 	routeWahaEvent
 } from '../domain/wahaWebhook';
+import { usableWahaHmacSecret } from '../domain/wahaWebhookConfig';
 import { dispatchWahaEvent } from './wahaIngest';
 import { WEBHOOK_EVENTS_TABLE } from './tables';
 
@@ -31,31 +32,15 @@ export interface WahaWebhookAuth {
 	signatureVerified: boolean;
 }
 
-// O segredo tem que ter forca de verdade. "Nao vazio" acceptava o texto de
-// instrucao `gere-um-segredo-por-ambiente-openssl-rand-hex-32` como se fosse
-// uma chave, e um segredo curto e adivinhavel passava do mesmo jeito — o
-// unico criterio de validade era `text()`. Placeholders conhecidos e chaves
-// curtas sao recusados, e um segredo recusado DEIXA A VERIFICACAO DESLIGADA
-// (fail-closed, nunca fail-open).
-const HMAC_MIN_BYTES = 32;
-const PLACEHOLDER_SECRETS = new Set([
-	'gere-um-segredo-por-ambiente-openssl-rand-hex-32',
-	'dev_plaintext_change_me',
-	'INVALID_CHANGE_ME',
-	'change-me',
-	'secret',
-]);
-
-function usableSecret(value: string | null): string | null {
-	if (!value) return null;
-	if (PLACEHOLDER_SECRETS.has(value.trim().toLowerCase())) return null;
-	if (value.length < HMAC_MIN_BYTES) return null;
-	return value;
-}
-
+// The secret's validity rule (minimum strength, placeholder rejection) lives in
+// the domain module because BOTH readers of `WAHA_HMAC_SECRET` must agree on
+// it: this receiver, and `readWahaWebhookSettings`, which tells the engine
+// which key to sign with. Disagreement here means the app registers a key it
+// then refuses, and every delivery 503s forever. A refused secret leaves
+// verification OFF (fail-closed, never fail-open).
 export function readWahaWebhookConfig(source: unknown): WahaWebhookConfig {
 	const record = source as Record<string, unknown> | null | undefined;
-	const secret = usableSecret(text(record?.WAHA_HMAC_SECRET));
+	const secret = usableWahaHmacSecret(record?.WAHA_HMAC_SECRET);
 	const requireSignature = flag(record?.WAHA_WEBHOOK_REQUIRE_SIGNATURE);
 	const allowUnsigned = flag(record?.WAHA_WEBHOOK_ALLOW_UNSIGNED);
 	return { hmacSecret: secret, requireSignature, allowUnsigned };
@@ -77,6 +62,9 @@ export function wahaWebhookSignature(request: Request): string | null {
 //   - usable secret present -> verify; absent signature is 401, wrong is 401
 //   - no usable secret      -> `secret_required`, so the route answers 503
 //     (a misconfiguration, not a bad signature) unless `allowUnsigned` is set
+// The no-secret answer is the same whether or not a signature was sent: with no
+// key loaded the receiver cannot judge any signature, so reporting a PRESENT
+// one as `bad_signature` blamed the sender for the app's own missing env.
 export async function authenticateWahaWebhook(
 	request: Request,
 	config: WahaWebhookConfig
@@ -95,7 +83,7 @@ async function verifySigned(
 	signature: string,
 	config: WahaWebhookConfig
 ): Promise<WahaWebhookAuth> {
-	if (!config.hmacSecret) return signedDenied();
+	if (!config.hmacSecret) return secretRequired();
 	const rawBody = await request.clone().text();
 	const ok = await verifyWahaHmac(rawBody, signature, config.hmacSecret);
 	return ok
@@ -176,6 +164,13 @@ function signedDenied(): WahaWebhookAuth {
 	return { ok: false, reason: 'bad_signature', signatureVerified: false };
 }
 
+// Returned when there is no usable secret to verify against, so the app
+// answers 503 (`secret_required`) instead of accusing the sender of a bad
+// signature it never had the key to check.
+function secretRequired(): WahaWebhookAuth {
+	return { ok: false, reason: 'secret_required', signatureVerified: false };
+}
+
 async function archiveWahaEvent(
 	db: Database,
 	event: string,
@@ -203,10 +198,4 @@ function constantTimeEqual(a: string, b: string): boolean {
 	let diff = 0;
 	for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
 	return diff === 0;
-}
-
-function text(value: unknown): string | null {
-	if (typeof value !== 'string') return null;
-	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : null;
 }

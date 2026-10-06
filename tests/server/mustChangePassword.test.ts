@@ -123,6 +123,14 @@ describe('AC-125 the seed admin is born flagged', () => {
     expect(script).toContain('mustChangePassword');
   });
 
+  // O comando rodava sob `bun`, que nao tem o runtime `cloudflare:workers`: o
+  // import estatico quebrava o processo e nao havia jeito de criar o admin.
+  it('@spec:AC-125 admin:bootstrap runs outside the Worker runtime', () => {
+    const script = readFileSync('scripts/bootstrap-admin.ts', 'utf8');
+    expect(script).not.toMatch(/from 'cloudflare:workers'/);
+    expect(script).toContain('getPlatformProxy');
+  });
+
   it.each(['db:seed:local', 'db:seed:remote'])(
     '@spec:AC-125 %s re-runs 0021 after the seed inserts the row',
     (script) => {

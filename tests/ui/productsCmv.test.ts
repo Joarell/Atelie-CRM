@@ -48,7 +48,7 @@ function makeCtx() {
 			movements: { getAll: () => movements.getAll(), getById: (id: string) => movements.getById(id), subscribe: (cb: () => void) => { cb(); return () => {}; } },
 			purchases: { getAll: () => purchases.getAll(), getById: (id: string) => purchases.getById(id), subscribe: (cb: () => void) => { cb(); return () => {}; } },
 			settings: { get: () => ({ salary: 2400, daysPerMonth: 24, hoursPerDay: 8, rent: 800, energy: 250, water: 90, internet: 120, office: 60, mei: 76, variablePercent: 10, defaultMarkupPercent: 70 }), subscribe: (cb: () => void) => { cb(); return () => {}; } },
-			pricing: { productPricing: (p: Product) => pricing.productPricing(p), productDirectCost: (p: Product) => pricing.productDirectCost(p, (id) => ingredients.getById(id), (id) => components.getById(id)), componentCost: (c: RecipeComponent) => pricing.componentCost(c), subscribe: (cb: () => void) => { cb(); return () => {}; } },
+			pricing: { productPricing: (p: Product) => pricing.productPricing(p), productDirectCost: (p: Product) => pricing.productDirectCost(p), componentCost: (c: RecipeComponent) => pricing.componentCost(c), subscribe: (cb: () => void) => { cb(); return () => {}; } },
 			stock: { subscribe: (cb: () => void) => { cb(); return () => {}; } },
 			cmv: { subscribe: (cb: () => void) => { cb(); return () => {}; } }
 		},

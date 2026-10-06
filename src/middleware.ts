@@ -43,11 +43,23 @@ const SECURITY_HEADERS: Record<string, string> = {
 	'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
 };
 
-function applySecurityHeaders(response: Response): Response {
+// O shell HTML e a sessao autenticada: se o browser puder restaura-lo depois
+// de um POST, ele reapresenta a pagina com o aviso de "a pagina que voce esta
+// vendo usou informacoes que voce digitou" ao recarregar. `no-store` tira o
+// documento das duas trilhas (restore e bfcache). As navegacoes ja sao
+// networkFirst no service worker e a precache lista so assets, entao nada
+// aqui prejudica o PWA.
+const DOCUMENT_CACHE_CONTROL = 'no-store, no-cache, must-revalidate';
+
+function applySecurityHeaders(
+	response: Response,
+	cacheControl?: string
+): Response {
 	const headers = new Headers(response.headers);
 	for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
 		headers.set(key, value);
 	}
+	if (cacheControl) headers.set('Cache-Control', cacheControl);
 	return new Response(response.body, {
 		status: response.status,
 		statusText: response.statusText,
@@ -97,7 +109,7 @@ async function handleUnguardedPath(
 	next: () => Promise<Response>
 ): Promise<Response | null> {
 	if (!pathname.startsWith('/api/')) {
-		return applySecurityHeaders(await next());
+		return applySecurityHeaders(await next(), DOCUMENT_CACHE_CONTROL);
 	}
 	if (!PUBLIC_PATHS.has(pathname)) return null;
 	const limited = await handlePublicPath(context, pathname);

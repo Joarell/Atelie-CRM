@@ -1,10 +1,20 @@
 import type { AppContext } from '../../state/AppContext';
+import type { Purchase, PurchaseItem } from '../../domain/types';
+import type { Ingredient } from '../../domain/types';
 import { formatBRL, escapeText, escapeAtrib } from '../../domain/format';
 import { openModal, closeModal } from '../Modal';
 import { showToast } from '../Toast';
 import { autoRerender } from '../reactive';
-import { qs, formValues } from '../dom';
+import { qs, qsIf, formValues } from '../dom';
 import { renderEmptyState } from '../CrudTable';
+
+// One row of the purchase form, as the DOM holds it while the modal is open.
+interface FormItem {
+	ingredientId: string;
+	qty: number;
+	packageSize: number;
+	packagePrice: number;
+}
 
 export function renderPurchasesView(
 	root: HTMLElement,
@@ -30,15 +40,20 @@ function draw(root: HTMLElement, ctx: AppContext): void {
 
 function sectionHeadHtml(): string {
 	return `<div class="section-head">
-		<div><h2>Compras</h2><p>Registro de compras de ingredientes para apuração do CMV</p></div>
+		<div>
+			<h2>Compras</h2>
+			<p>Registro de compras de ingredientes para apuração do CMV</p>
+		</div>
 		<button class="btn btn-primary" id="new-purchase">+ Nova compra</button>
 	</div>`;
 }
 
 function monthFilterHtml(): string {
+	const month = currentMonth();
 	return `<div class="field-row" style="grid-template-columns:auto 1fr;">
 		<label class="field-label" style="margin-right:8px;">Mês</label>
-		<input type="month" class="input" id="purchase-month" value="${currentMonth()}">
+		<input type="month" class="input" id="purchase-month"
+			value="${month}">
 	</div>`;
 }
 
@@ -72,13 +87,16 @@ function purchaseMainHtml(purchase: any): string {
 function purchaseActionsHtml(total: number, id: string): string {
 	return `<div class="purchase-actions">
 		<span class="num">${formatBRL(total)}</span>
-		<button class="btn btn-ghost btn-sm btn-danger" data-delete="${id}">Excluir</button>
+		<button class="btn btn-ghost btn-sm btn-danger"
+			data-delete="${id}">Excluir</button>
 	</div>`;
 }
 
 function itemHtml(item: any): string {
 	const val = (item.qty / item.packageSize) * item.packagePrice;
-	return `<span class="soft">${escapeText(item.ingredientName)}: ${item.qty} ${item.unit || ''} (R$ ${formatBRL(val)})</span>`;
+	const name = escapeText(item.ingredientName);
+	const qty = `${item.qty} ${item.unit || ''} (R$ ${formatBRL(val)})`;
+	return `<span class="soft">${name}: ${qty}</span>`;
 }
 
 function currentMonth(): string {
@@ -102,14 +120,26 @@ async function handleDelete(ctx: AppContext, id: string): Promise<void> {
 }
 
 function openForm(ctx: AppContext, existing?: any): void {
-	const items: any[] = existing ? existing.items.map((i: any) => ({ ...i })) : [];
-	const draft = existing ?? { supplier: '', invoice: '', date: currentMonth(), items: [], notes: '' };
+	const items: any[] = existing
+		? existing.items.map((i: any) => ({ ...i }))
+		: [];
+	const draft = existing ?? emptyDraft();
 	const modal = openModal({
 		title: existing ? 'Editar compra' : 'Nova compra',
 		bodyHtml: formShell(draft)
 	});
 	redrawItems(modal, ctx, items, draft);
 	wireFormEvents(modal, ctx, items, draft, existing);
+}
+
+function emptyDraft(): any {
+	return {
+		supplier: '',
+		invoice: '',
+		date: currentMonth(),
+		items: [],
+		notes: ''
+	};
 }
 
 function formShell(v: any): string {
@@ -120,136 +150,224 @@ function formShell(v: any): string {
 			${dateField('date', 'Data', v.date)}
 		</div>
 		<label class="field-label">Itens da compra</label>
-		<div class="line-item-head"><span>Ingrediente</span><span>Qtd.</span><span>Tamanho pacote</span><span>Preço pacote</span><span></span></div>
+		<div class="line-item-head">
+			<span>Ingrediente</span><span>Qtd.</span>
+			<span>Tamanho pacote</span><span>Preço pacote</span>
+			<span></span>
+		</div>
 		<div id="items-container"></div>
-		<button type="button" class="btn btn-sm" id="add-item">+ Adicionar item</button>
+		<button type="button" class="btn btn-sm" id="add-item">+ Adicionar
+		item</button>
 		<div class="modal-foot" style="padding:16px 0 0;border:none;">
 			<button type="button" class="btn" data-close-modal>Cancelar</button>
 			<button type="submit" class="btn btn-primary">Salvar compra</button>
 		</div></form>`;
 }
 
-function redrawItems(modal: HTMLElement, ctx: AppContext, items: any[], draft: any): void {
+function redrawItems(
+	modal: HTMLElement,
+	ctx: AppContext,
+	items: any[],
+	draft: any
+): void {
 	const container = qs('#items-container', modal);
-	container.innerHTML = items.map((item, index) => itemRowHtml(item, index, ctx)).join('');
+	const html = items.map((item, i) => itemRowHtml(item, i, ctx)).join('');
+	container.innerHTML = html;
 	wireItemEvents(modal, ctx, items, draft);
 }
 
 function itemRowHtml(item: any, index: number, ctx: AppContext): string {
-	const ingredients = ctx.ingredients.getAll();
-	const opts = ingredients.map(
-		(ing) => `<option value="${ing.id}" ${item.ingredientId === ing.id ? 'selected' : ''}>${escapeText(ing.name)}</option>`
-	).join('');
+	const opts = ctx.ingredients
+		.getAll()
+		.map((ing: Ingredient) => optionHtml(item, ing))
+		.join('');
 	return `<div class="line-item" data-row="${index}">
 		<select class="input" data-ingredient>${opts}</select>
-		<input class="input" type="number" step="0.01" min="0.01" data-qty value="${item.qty || ''}" placeholder="Qtd.">
-		<input class="input" type="number" step="0.01" min="0.01" data-packageSize value="${item.packageSize || ''}" placeholder="Tam. pacote">
-		<input class="input" type="number" step="0.01" min="0.01" data-packagePrice value="${item.packagePrice || ''}" placeholder="Preço pacote">
-		<button type="button" class="remove-row" data-remove-row aria-label="Remover">✕</button></div>`;
+		${numberField('data-qty', item.qty, 'Qtd.')}
+		${numberField('data-packageSize', item.packageSize, 'Tam. pacote')}
+		${numberField('data-packagePrice', item.packagePrice, 'Preço pacote')}
+		<button type="button" class="remove-row" data-remove-row
+			aria-label="Remover">✕</button></div>`;
 }
 
-function wireFormEvents(modal: HTMLElement, ctx: AppContext, items: any[], draft: any, existing?: any): void {
+function optionHtml(item: any, ing: Ingredient): string {
+	const selected = item.ingredientId === ing.id ? 'selected' : '';
+	const label = escapeText(ing.name);
+	return `<option value="${ing.id}" ${selected}>${label}</option>`;
+}
+
+function numberField(attr: string, value: unknown, hint: string): string {
+	return `<input class="input" type="number" step="0.01" min="0.01"
+		${attr} value="${value || ''}" placeholder="${hint}">`;
+}
+
+function wireFormEvents(
+	modal: HTMLElement,
+	ctx: AppContext,
+	items: any[],
+	draft: any,
+	existing?: any
+): void {
 	qs('#add-item', modal).addEventListener('click', () => {
 		items.push({ ingredientId: '', qty: 0, packageSize: 0, packagePrice: 0 });
 		redrawItems(modal, ctx, items, draft);
 	});
 	qs('#purchase-form', modal).addEventListener('submit', (event) =>
-		handleSubmit(event, ctx, items, existing, draft)
+		handleSubmit(event, ctx, existing)
 	);
 }
 
-function wireItemEvents(modal: HTMLElement, ctx: AppContext, items: any[], draft: any): void {
-	modal.querySelectorAll<HTMLElement>('[data-row]').forEach((rowEl) => {
-		const index = Number(rowEl.dataset.row);
-		qs<HTMLSelectElement>('[data-ingredient]', rowEl).addEventListener('change', (e) =>
-			updateItem(items, index, { ingredientId: (e.target as HTMLSelectElement).value })
+function wireItemEvents(
+	modal: HTMLElement,
+	ctx: AppContext,
+	items: any[],
+	draft: any
+): void {
+	modal.querySelectorAll<HTMLElement>('[data-row]').forEach((row) => {
+		const index = Number(row.dataset.row);
+		wireValue(row, '[data-ingredient]', 'change', (value) =>
+			updateItem(items, index, { ingredientId: value })
 		);
-		qs<HTMLInputElement>('[data-qty]', rowEl).addEventListener('input', (e) =>
-			updateItem(items, index, { qty: Number((e.target as HTMLInputElement).value) })
+		wireValue(row, '[data-qty]', 'input', (value) =>
+			updateItem(items, index, { qty: Number(value) })
 		);
-		qs<HTMLInputElement>('[data-packageSize]', rowEl).addEventListener('input', (e) =>
-			updateItem(items, index, { packageSize: Number((e.target as HTMLInputElement).value) })
+		wireValue(row, '[data-packageSize]', 'input', (value) =>
+			updateItem(items, index, { packageSize: Number(value) })
 		);
-		qs<HTMLInputElement>('[data-packagePrice]', rowEl).addEventListener('input', (e) =>
-			updateItem(items, index, { packagePrice: Number((e.target as HTMLInputElement).value) })
+		wireValue(row, '[data-packagePrice]', 'input', (value) =>
+			updateItem(items, index, { packagePrice: Number(value) })
 		);
-		qs('[data-remove-row]', rowEl).addEventListener('click', () => {
+		qs('[data-remove-row]', row).addEventListener('click', () => {
 			items.splice(index, 1);
 			redrawItems(modal, ctx, items, draft);
 		});
 	});
 }
 
+function wireValue(
+	row: HTMLElement,
+	selector: string,
+	type: string,
+	update: (value: string) => void
+): void {
+	qs<HTMLInputElement>(selector, row).addEventListener(type, (e) =>
+		update((e.target as HTMLInputElement).value)
+	);
+}
+
 function updateItem(items: any[], index: number, patch: any): void {
 	items[index] = { ...items[index], ...patch };
 }
 
-async function handleSubmit(event: Event, ctx: AppContext, items: any[], existing?: any, draft?: any): Promise<void> {
+async function handleSubmit(
+	event: Event,
+	ctx: AppContext,
+	existing?: any
+): Promise<void> {
 	event.preventDefault();
 	const form = event.target as HTMLFormElement;
 	const values = formValues(form);
-	
-	// Read item values directly from DOM (more reliable than closure items array)
-	const itemRows = form.querySelectorAll('[data-row]');
-	const draftItems: any[] = [];
-	for (const row of itemRows) {
-		const ingredientSelect = row.querySelector('[data-ingredient]') as HTMLSelectElement;
-		const qtyInput = row.querySelector('[data-qty]') as HTMLInputElement;
-		const packageSizeInput = row.querySelector('[data-packageSize]') as HTMLInputElement;
-		const packagePriceInput = row.querySelector('[data-packagePrice]') as HTMLInputElement;
-		
-		const ingredientId = ingredientSelect?.value;
-		const qty = Number(qtyInput?.value);
-		const packageSize = Number(packageSizeInput?.value);
-		const packagePrice = Number(packagePriceInput?.value);
-		
-		if (ingredientId && qty > 0 && packageSize > 0 && packagePrice > 0) {
-			draftItems.push({
-				ingredientId,
-				ingredientName: ctx.ingredients.getById(ingredientId)?.name || '',
-				qty,
-				packageSize,
-				packagePrice
-			});
-		}
-	}
-	
-	// Validate date not in future
-	const today = new Date().toISOString().slice(0, 10);
-	if (values.date > today) {
-		showToast('A data da compra não pode ser futura');
+	const rows = readFormItems(form);
+	const problem = dateProblem(values) ?? itemProblem(rows, ctx);
+	if (problem) {
+		showToast(problem);
 		return;
 	}
-	
-	if (draftItems.length === 0) {
-		showToast('Adicione pelo menos um item válido');
-		return;
-	}
-	
-	const purchaseDraft = {
-		supplier: values.supplier,
-		invoice: values.invoice,
-		date: values.date,
-		items: draftItems,
-		notes: values.notes || ''
-	};
-	
-	await savePurchase(ctx, existing, purchaseDraft);
+	await savePurchase(ctx, existing, buildDraft(values, rows, ctx));
 	closeModal();
 	showToast('Compra salva');
 }
 
-async function savePurchase(ctx: AppContext, existing: any, draft: any): Promise<void> {
+// Reads the rows straight from the DOM: the closure array misses whatever the
+// user typed after the last `input` event was redrawn.
+function readFormItems(form: HTMLFormElement): FormItem[] {
+	const rows: FormItem[] = [];
+	form.querySelectorAll<HTMLElement>('[data-row]').forEach((row) =>
+		rows.push(readFormItem(row))
+	);
+	return rows;
+}
+
+function readFormItem(row: HTMLElement): FormItem {
+	return {
+		ingredientId: fieldValue(row, '[data-ingredient]'),
+		qty: numberValue(row, '[data-qty]'),
+		packageSize: numberValue(row, '[data-packageSize]'),
+		packagePrice: numberValue(row, '[data-packagePrice]')
+	};
+}
+
+// `qsIf` because the workerd lib shadows `Element`: `querySelector<T>` cannot
+// take a lib.dom `HTMLSelectElement` here (see the note in dom.ts).
+function fieldValue(row: HTMLElement, selector: string): string {
+	return qsIf<HTMLInputElement | HTMLSelectElement>(selector, row)?.value ?? '';
+}
+
+function numberValue(row: HTMLElement, selector: string): number {
+	const parsed = Number(fieldValue(row, selector));
+	return Number.isFinite(parsed) ? parsed : 0;
+}
+
+// Same wording family as `PurchasesService.validateDraft`, so the toast the
+// user sees before sending matches the error the service would raise.
+function dateProblem(values: Record<string, string>): string | null {
+	const today = new Date().toISOString().slice(0, 10);
+	return values.date > today ? 'A data da compra não pode ser futura' : null;
+}
+
+function itemProblem(items: FormItem[], ctx: AppContext): string | null {
+	if (items.length === 0) return 'Adicione pelo menos um item válido';
+	for (const item of items) {
+		const name = ingredientName(item, ctx);
+		if (!name) return 'Selecione o ingrediente do item';
+		if (item.qty <= 0) return `Quantidade inválida para ${name}`;
+		if (item.packagePrice <= 0) return `Preço inválido para ${name}`;
+		if (item.packageSize <= 0) {
+			return `Tamanho de pacote inválido para ${name}`;
+		}
+	}
+	return null;
+}
+
+function buildDraft(
+	values: Record<string, string>,
+	items: FormItem[],
+	ctx: AppContext
+): Omit<Purchase, 'id'> {
+	return {
+		supplier: values.supplier,
+		invoice: values.invoice,
+		date: values.date,
+		items: items.map((item) => namedItem(item, ctx)),
+		notes: values.notes || ''
+	};
+}
+
+function namedItem(item: FormItem, ctx: AppContext): PurchaseItem {
+	return { ...item, ingredientName: ingredientName(item, ctx) };
+}
+
+function ingredientName(item: FormItem, ctx: AppContext): string {
+	return ctx.ingredients.getById(item.ingredientId)?.name ?? '';
+}
+
+async function savePurchase(
+	ctx: AppContext,
+	existing: any,
+	draft: Omit<Purchase, 'id'>
+): Promise<void> {
 	if (existing) await ctx.purchasesService.remove(existing.id);
 	await ctx.purchasesService.register(draft);
 }
 
 function textField(name: string, label: string, value: string): string {
 	return `<div class="field"><label class="field-label">${label}</label>
-		<input class="input" name="${name}" value="${escapeAtrib(value)}" required></div>`;
+		<input class="input" name="${name}" value="${escapeAtrib(value)}"
+			required></div>`;
 }
 
 function dateField(name: string, label: string, value: string): string {
 	return `<div class="field"><label class="field-label">${label}</label>
-		<input class="input" type="date" name="${name}" value="${value}" required></div>`;
+		<input class="input" type="date" name="${name}" value="${value}"
+			required></div>`;
 }

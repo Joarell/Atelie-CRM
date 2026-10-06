@@ -9,7 +9,7 @@ function makeRepos() {
 			{ id: 'flour', name: 'Farinha', unit: 'g' as Unit, packageSize: 1000, packagePrice: 10, stock: 1000, minStock: 200 },
 			{ id: 'sugar', name: 'Açúcar', unit: 'g' as Unit, packageSize: 1000, packagePrice: 8, stock: 500, minStock: 100 }
 		]),
-		orders: new InMemoryRepository<Order>([]),
+		orders: new InMemoryRepository<Order>(),
 		products: InMemoryRepository.seeded<Product>([
 			{
 				id: 'cake', name: 'Bolo', category: 'Doce', yieldUnits: 8, prepTime: 60,
@@ -19,8 +19,8 @@ function makeRepos() {
 				items: [{ kind: 'ingredient', refId: 'flour', qty: 1000 }]
 			}
 		]),
-		purchases: new InMemoryRepository<Purchase>([]),
-		movements: new InMemoryRepository<StockMovement>([])
+		purchases: new InMemoryRepository<Purchase>(),
+		movements: new InMemoryRepository<StockMovement>()
 	};
 }
 

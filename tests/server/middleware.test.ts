@@ -176,3 +176,34 @@ describe('mandatory password change blocks the API', () => {
     expect(res.status).toBe(200);
   });
 });
+
+// Sem `Cache-Control` o browser pode restaurar o shell HTML depois de um
+// POST, e recarregar a pagina reapresenta o aviso de resubmissao do Chrome.
+// O documento e a sessao autenticada, entao ele nunca deve ser cacheado.
+describe('document responses are not cacheable', () => {
+  beforeEach(async () => {
+    state.db = await dbWithSession();
+  });
+
+  it('sends no-store on an HTML page', async () => {
+    const res = await send(ctx('/'));
+    expect(res.headers.get('Cache-Control')).toBe(
+      'no-store, no-cache, must-revalidate'
+    );
+  });
+
+  it('still sends the security headers alongside it', async () => {
+    const res = await send(ctx('/atelie/painel'));
+    expect(res.headers.get('Cache-Control')).toContain('no-store');
+    expect(res.headers.get('X-Frame-Options')).toBe('DENY');
+    expect(res.headers.get('Content-Security-Policy')).toContain(
+      "default-src 'self'"
+    );
+  });
+
+  it('leaves API responses alone', async () => {
+    const res = await send(ctx('/api/auth/me'));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Cache-Control')).toBeNull();
+  });
+});

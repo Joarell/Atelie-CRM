@@ -41,8 +41,10 @@ Login local simples (sem Google/OAuth). A sessão é uma linha na tabela
 
 - `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`
 - Usuários: `GET/POST /api/users`, `PUT/DELETE /api/users/:id`
-- Senhas: PBKDF2-SHA256, 100k iterações, salt `deskcomm-seed-v1`
-  (`src/server/auth.ts`), o mesmo esquema do seed.
+- Senhas: PBKDF2-SHA256, 100k iterações, com um sal aleatório por usuário em
+  `users.passwordSalt` (`src/server/auth.ts`). Não há sal fixo nem fallback: uma
+  linha sem sal não verifica. O primeiro admin nasce por
+  `npm run admin:bootstrap` (ver "Passo a passo para rodar").
 
 ## Modelo de acesso
 
@@ -76,10 +78,15 @@ npx wrangler d1 create atelie_erp_db
 npm run db:migrate:local
 npm run db:seed:local
 
-# 3. Suba em desenvolvimento (usa o binding do D1 local via Miniflare)
+# 3. Crie o primeiro admin (o seed NAO semeia usuario nenhum)
+#    MINHA_SENHA precisa ter 12+ chars. Sem a variavel, o script imprime
+#    uma senha aleatoria de uso unico.
+ADMIN_INITIAL_PASSWORD=${MINHA_SENHA} npm run admin:bootstrap
+
+# 4. Suba em desenvolvimento (usa o binding do D1 local via Miniflare)
 npm run dev          # http://localhost:4321
 
-# 4. Build + deploy de verdade
+# 5. Build + deploy de verdade
 npm run build
 npm run db:migrate:remote   # uma vez, no D1 de produção
 npm run db:seed:remote      # opcional
@@ -89,10 +96,12 @@ npm run deploy
 > O projeto usa **bun** como gerenciador de pacotes (`bun.lock`, `mise.toml`).
 > Os scripts continuam acessíveis via `npm run <script>`.
 
-> O primeiro acesso exige troca de senha. O admin criado pelo seed entra com
-> `mustChangePassword = 1`: o login funciona, mas a API responde `403`
-> `troca_de_senha_obrigatoria` até a senha ser rotacionada. A senha do seed
-> não é mais documentada aqui — registre a sua ao criar o ambiente.
+> O login é `admin@deskcomm.local` com a senha definida no passo 3.
+> O primeiro acesso exige troca de senha: o admin entra com
+> `mustChangePassword = 1`, então o login funciona mas a API responde `403`
+> `troca_de_senha_obrigatoria` até a senha ser rotacionada. O seed não grava
+> senha alguma — por isso o passo 3 é obrigatório, sem ele não existe usuário
+> para entrar.
 
 `npm run check` roda o `tsc --noEmit` só de `src/**`; `npm run check:tests`
 estende o typecheck a `tests/**` (`tsconfig.tests.json`, com os tipos de Node).

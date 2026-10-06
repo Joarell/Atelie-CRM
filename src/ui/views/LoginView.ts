@@ -97,8 +97,14 @@ async function loginSubmit(
 	try {
 		await ctx.auth.login(values.email, values.password);
 		const name = ctx.auth.currentUser()?.name ?? '';
-		showToast(`Bem-vindo, ${name}`);
 		window.location.hash = returnPath();
+		// The redirect re-renders the shell, and `activate()` clears toasts so a
+		// confirmation cannot float over an unrelated screen. Raising the welcome
+		// before the redirect meant the very navigation it triggered wiped it, so
+		// the operator never saw it. A macrotask lands after the `hashchange`
+		// whether the host fires that synchronously or as a queued task, so the
+		// greeting reaches the screen the operator was actually sent to.
+		window.setTimeout(() => showToast(`Bem-vindo, ${name}`), 0);
 	} catch (error) {
 		errorEl.textContent = error instanceof Error
 			? friendlyError(error)

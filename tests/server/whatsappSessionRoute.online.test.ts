@@ -101,10 +101,17 @@ describe.skipIf(skip())('WAHA session route online tier', () => {
     expect(body.session?.name).toBe(configured?.session);
   });
 
+  // Asserts key acceptance only. `health.healthy` and a null `detail` also
+  // require a paired, WORKING session, which made this fail red on a freshly
+  // installed engine whose session still reads SCAN_QR_CODE — an environment
+  // state, not a key problem.
   it('the app key is the one the engine accepts', async () => {
     const res = await GET(ctx('GET', 'admin'));
-    const body = (await res.json()) as { health: { detail: string | null } | null };
-    expect(body.health?.detail ?? null).toBeNull();
+    const body = (await res.json()) as {
+      health: { reachable: boolean; authenticated: boolean } | null;
+    };
+    expect(body.health?.reachable).toBe(true);
+    expect(body.health?.authenticated).toBe(true);
   });
 
   it('a non-admin is refused before the engine is ever contacted', async () => {
@@ -112,6 +119,10 @@ describe.skipIf(skip())('WAHA session route online tier', () => {
     expect(res.status).toBe(403);
   });
 
+  // These two POSTs need a live-engine budget, not the 5000ms default: each
+  // restarts the real container and polls waitForScanQr (12 x 250ms) while
+  // syncWebhook repairs the ingress. Do not "restore" the default — the drift
+  // test below measures ~4065ms solo and overflows it under suite load.
   it('an admin can start the session, and a QR arrives when one is offered', async () => {
     const res = await POST(ctx('POST', 'admin'));
     expect(res.status).toBe(200);
@@ -124,7 +135,7 @@ describe.skipIf(skip())('WAHA session route online tier', () => {
     if (body.session.status === 'SCAN_QR_CODE') {
       expect(body.session.qr).toMatch(/^data:image\/png;base64,/);
     }
-  });
+  }, 30000);
 });
 // Regression guard for the ingress banner: the engine ignores the `webhooks`
 // argument when the session already exists, so a session whose registration
@@ -154,5 +165,5 @@ describe.skipIf(skip())('WAHA webhook drift self-heals', () => {
 
     const healed = await client.getSession(configured.session);
     expect(wahaWebhookNeedsRegistration(healed?.webhooks ?? [], settings)).toBe(false);
-  });
+  }, 30000);
 });

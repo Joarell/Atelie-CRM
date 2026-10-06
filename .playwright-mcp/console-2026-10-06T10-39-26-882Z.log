@@ -1,0 +1,112 @@
+[       0ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[       1ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/whatsapp:0
+[       8ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/whatsapp:2683
+[     431ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/ingredients:0
+[     434ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/components:0
+[     435ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/products:0
+[     435ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/customers:0
+[     435ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/orders:0
+[     435ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/stock-movements:0
+[     435ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/settings:0
+[     438ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/users:0
+[     442ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/contacts:0
+[     442ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/pipelines:0
+[     442ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/stages:0
+[     442ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/deals:0
+[     442ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/tasks:0
+[     442ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/quick-replies:0
+[     442ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/calendar-events:0
+[     443ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/conversations:0
+[     443ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/messages:0
+[     445ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/catalog-products:0
+[     445ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/activities:0
+[     445ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/conversation-notes:0
+[     445ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/tags:0
+[     447ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4322/api/crm/appointment-types:0
+[     842ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/whatsapp/session:0
+[    1055ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/events?since=1791283167362:0
+[   14208ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/login:0
+[   14210ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/login:0
+[   14234ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/login:2683
+[   15153ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/orders:0
+[   15153ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/components:0
+[   15154ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/ingredients:0
+[   15172ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/products:0
+[   15176ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/customers:0
+[   15179ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/stock-movements:0
+[   15409ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/users:0
+[   15427ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/settings:0
+[   15436ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/contacts:0
+[   15436ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/pipelines:0
+[   15440ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/stages:0
+[   15446ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/deals:0
+[   15676ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/tasks:0
+[   15680ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/quick-replies:0
+[   15687ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/conversations:0
+[   15720ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/messages:0
+[   15720ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/calendar-events:0
+[   15723ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/catalog-products:0
+[   15930ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/conversation-notes:0
+[   15951ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/tags:0
+[   15952ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/activities:0
+[   15958ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/appointment-types:0
+[   15958ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:4322/api/auth/me:0
+[   16661ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/auth/login:0
+[   56375ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/login:0
+[   56376ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/login:0
+[   56393ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/login:2683
+[   57149ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/ingredients:0
+[   57161ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/stock-movements:0
+[   57163ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/customers:0
+[   57176ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/components:0
+[   57176ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/orders:0
+[   57182ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/products:0
+[   57364ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/users:0
+[   57367ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/settings:0
+[   57373ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/contacts:0
+[   57389ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/stages:0
+[   57400ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/pipelines:0
+[   57401ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/deals:0
+[   57591ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/tasks:0
+[   57613ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/quick-replies:0
+[   57620ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/calendar-events:0
+[   57622ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/messages:0
+[   57625ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/conversations:0
+[   57635ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/catalog-products:0
+[   57826ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/activities:0
+[   57834ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/conversation-notes:0
+[   57850ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:4322/api/auth/me:0
+[   57856ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/appointment-types:0
+[   57860ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/tags:0
+[   58864ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/auth/login:0
+[   62054ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/whatsapp/session:0
+[   62072ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/events?since=1791283228773:0
+[   78729ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-+Kk5sOETKD4CF7MwNI5USqlZTWitAKJ7Cuqfe0t1FNo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/login:0
+[   78730ms] [ERROR] Loading the stylesheet 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline'". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ http://localhost:4322/#/login:0
+[   78737ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-On7eVgQ22VwtoIug6NF2kjCqu0nQsyICKTZWIAd3efo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked. @ http://localhost:4322/#/login:2683
+[   79451ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/ingredients:0
+[   79457ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/products:0
+[   79479ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/customers:0
+[   79486ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/orders:0
+[   79486ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/components:0
+[   79497ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/stock-movements:0
+[   79695ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/settings:0
+[   79697ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/users:0
+[   79701ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/contacts:0
+[   79710ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/pipelines:0
+[   79715ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/stages:0
+[   79722ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/deals:0
+[   79912ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/tasks:0
+[   79918ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/calendar-events:0
+[   79921ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/quick-replies:0
+[   79933ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/conversations:0
+[   79937ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/catalog-products:0
+[   79949ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/messages:0
+[   80093ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/activities:0
+[   80104ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:4322/api/auth/me:0
+[   80106ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/tags:0
+[   80108ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/conversation-notes:0
+[   80118ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/appointment-types:0
+[   80417ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/auth/login:0
+[   82613ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/whatsapp/session:0
+[   82624ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4322/api/crm/events?since=1791283249313:0
